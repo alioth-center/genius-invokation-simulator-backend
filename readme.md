@@ -43,6 +43,8 @@
 
 作者尽量拼凑个前端出来，想接手的可以发个Discussion()
 
+由于测试和自动化需要，本项目的开发版本托管在作者自己的git服务上：[genius-invokation-simulator-backend](https://code.sunist.cn/sunist-c/genius-invokation-simulator-backend)
+
 ## License
 
 MIT License

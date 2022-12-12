@@ -16,14 +16,9 @@ type ICharacter interface {
 	VisionType() definition.Element
 	WeaponType() definition.Weapon
 	Skills() []ISkill
-
 	MaxHealthPoint() uint
-	CurrentHealthPoint() uint
 	MaxMagicPoint() uint
-	CurrentMagicPoint() uint
-	Status() definition.CharacterStatus
-
-	Initialize()
+	ElementFilter(elements []definition.Element) (result []definition.Element)
 }
 
 type ICard interface {
@@ -40,4 +35,13 @@ type ISkill interface {
 	Description() string
 	Cost() definition.ElementSet
 	Type() definition.SkillType
+}
+
+type ITrigger interface {
+	Type() definition.TriggerType
+	Judge(ctx Context) bool
+}
+
+type IEffect interface {
+	Trigger() ITrigger
 }

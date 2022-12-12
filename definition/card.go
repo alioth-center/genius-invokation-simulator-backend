@@ -1,10 +1,15 @@
+/*
+ * Copyright (c) sunist@genius-invokation-simulator-backend, 2022
+ * File "card.go" LastUpdatedAt 2022/12/12 10:19:12
+ */
+
 package definition
 
 // CardType 卡牌类型，大类
-type CardType uint
+type CardType byte
 
 // CardSubType 卡牌类型，小类
-type CardSubType uint
+type CardSubType byte
 
 const (
 	CardEvent     CardType = iota << 4 // CardEvent 事件卡

@@ -1,7 +1,12 @@
+/*
+ * Copyright (c) sunist@genius-invokation-simulator-backend, 2022
+ * File "weapon.go" LastUpdatedAt 2022/12/12 15:39:12
+ */
+
 package definition
 
 // Weapon 武器类型
-type Weapon uint
+type Weapon byte
 
 const (
 	WeaponSword    Weapon = iota // WeaponSword 单手剑

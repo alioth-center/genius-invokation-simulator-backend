@@ -1,9 +1,14 @@
+/*
+ * Copyright (c) sunist@genius-invokation-simulator-backend, 2022
+ * File "element.go" LastUpdatedAt 2022/12/12 10:23:12
+ */
+
 package definition
 
 import "errors"
 
 // Element 元素类型，七元素与通用元素
-type Element uint
+type Element byte
 
 // ElementSet 元素集合，用于回合开始的骰子
 type ElementSet map[Element]uint
@@ -20,7 +25,11 @@ const (
 )
 
 // ToElement 将一个数转换为元素，如果是七元素与通用元素correct为true
-func ToElement[T uint | int | uint64 | int64](val T) (element Element, correct bool) {
+func ToElement[T uint | int | uint64 | int64 | byte | rune](val T) (element Element, correct bool) {
+	if val > 255 || val < 0 {
+		return 255, false
+	}
+
 	result := Element(val)
 	if result > ElementAnemo {
 		return result, false

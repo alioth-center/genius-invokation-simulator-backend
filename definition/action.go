@@ -1,7 +1,12 @@
+/*
+ * Copyright (c) sunist@genius-invokation-simulator-backend, 2022
+ * File "action.go" LastUpdatedAt 2022/12/12 10:18:12
+ */
+
 package definition
 
 // Action 玩家可进行的操作类型
-type Action uint
+type Action byte
 
 const (
 	ActionNormalAttack   Action = iota // ActionNormalAttack 进行普通攻击

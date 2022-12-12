@@ -1,10 +1,17 @@
+/*
+ * Copyright (c) sunist@genius-invokation-simulator-backend, 2022
+ * File "trigger.go" LastUpdatedAt 2022/12/12 10:20:12
+ */
+
 package definition
 
 // Trigger 事件触发器，定义的事件类型enum，触发该类型的触发器以后，将会调用触发者的Effector
-type Trigger uint
+type Trigger byte
 
 const (
 	TriggerNone                 Trigger = iota // TriggerNone 没有触发器，执行的时候即处理完成
+	TriggerBeforePassiveSkill                  // TriggerBeforePassiveSkill 在被动技能触发前触发
+	TriggerAfterPassiveSkill                   // TriggerAfterPassiveSkill 在被动技能触发后触发
 	TriggerBeforeNormalAttack                  // TriggerBeforeNormalAttack 在普通攻击前触发
 	TriggerAfterNormalAttack                   // TriggerAfterNormalAttack 在普通攻击后触发
 	TriggerBeforeElementalSkill                // TriggerBeforeElementalSkill 在元素战技前触发
@@ -23,4 +30,6 @@ const (
 	TriggerAfterEquip                          // TriggerAfterEquip 在装备后触发
 	TriggerBeforeReaction                      // TriggerBeforeReaction 在元素反应前触发
 	TriggerAfterReaction                       // TriggerAfterReaction 在元素反应后触发
+	TriggerBeforeBurnCard                      // TriggerBeforeBurnCard 在使用卡牌转换元素前触发
+	TriggerAfterBurnCard                       // TriggerAfterBurnCard 在使用卡牌转换元素后触发
 )

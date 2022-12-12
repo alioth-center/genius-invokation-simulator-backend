@@ -1,7 +1,12 @@
+/*
+ * Copyright (c) sunist@genius-invokation-simulator-backend, 2022
+ * File "reaction.go" LastUpdatedAt 2022/12/12 10:20:12
+ */
+
 package definition
 
 // Reaction 反应类型
-type Reaction uint
+type Reaction byte
 
 const (
 	ReactionMelt           Reaction = iota // ReactionMelt 融化

@@ -44,4 +44,5 @@ type ITrigger interface {
 
 type IEffect interface {
 	Trigger() ITrigger
+	Effect(ctx *Context)
 }

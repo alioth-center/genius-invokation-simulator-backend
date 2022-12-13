@@ -14,20 +14,22 @@ type Element byte
 type ElementSet map[Element]uint
 
 const (
-	ElementCurrency Element = iota // ElementCurrency 通用元素
-	ElementHydro                   // ElementHydro 水元素
-	ElementPyro                    // ElementPyro 火元素
-	ElementDendro                  // ElementDendro 草元素
-	ElementGeo                     // ElementGeo 岩元素
-	ElementCryo                    // ElementCryo 冰元素
-	ElementElectro                 // ElementElectro 雷元素
-	ElementAnemo                   // ElementAnemo 风元素
+	ElementNone      Element = iota // ElementNone 无元素
+	ElementCurrency                 // ElementCurrency 通用元素
+	ElementHydro                    // ElementHydro 水元素
+	ElementPyro                     // ElementPyro 火元素
+	ElementDendro                   // ElementDendro 草元素
+	ElementGeo                      // ElementGeo 岩元素
+	ElementCryo                     // ElementCryo 冰元素
+	ElementElectro                  // ElementElectro 雷元素
+	ElementAnemo                    // ElementAnemo 风元素
+	ElementUndefined Element = 255  // ElementUndefined 未定义元素，转化错误时传出此元素
 )
 
 // ToElement 将一个数转换为元素，如果是七元素与通用元素correct为true
 func ToElement[T uint | int | uint64 | int64 | byte | rune](val T) (element Element, correct bool) {
-	if val > 255 || val < 0 {
-		return 255, false
+	if val > T(ElementUndefined) || val < 0 {
+		return ElementUndefined, false
 	}
 
 	result := Element(val)

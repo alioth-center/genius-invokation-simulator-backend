@@ -23,3 +23,13 @@ type EventShufflePlayerChainInterface interface {
 	Type() definition.RuleType
 	Shuffle(start, end int, array []*Player)
 }
+
+type EventReactionCalculatorInterface interface {
+	Type() definition.RuleType
+	Calculate(elementNew definition.Element, elementAttached []definition.Element) (reaction definition.Reaction, elementSurplus []definition.Element)
+}
+
+type EventOnAttackInterface interface {
+	Type() definition.RuleType
+	Handler(ctx *Context)
+}

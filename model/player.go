@@ -15,7 +15,7 @@ type Player struct {
 	IP           uint
 	Deck         PlayerDeck
 	HoldingCards CardDeck
-	Characters   []ICharacter
+	Characters   []Character
 	StackCards   CardStack
 }
 

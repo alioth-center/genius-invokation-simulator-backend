@@ -79,7 +79,7 @@ func TestShuffleCardStackImplement_Shuffle(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := standard.ShuffleCardStackImplement{}
+			s := standard.NewShuffleCardStackImplement()
 			s.Shuffle(tt.args.start, tt.args.end, tt.args.array)
 			fmt.Println(tt.args.array)
 		})
@@ -95,7 +95,7 @@ func TestShuffleCardStackImplement_Type(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := standard.ShuffleCardStackImplement{}
+			s := standard.NewShuffleCardStackImplement()
 			if got := s.Type(); got != tt.want {
 				t.Errorf("Type() = %v, want %v", got, tt.want)
 			}
@@ -126,7 +126,7 @@ func TestShufflePlayerChainImplement_Shuffle(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := standard.ShufflePlayerChainImplement{}
+			s := standard.NewShufflePlayerChainImplement()
 			s.Shuffle(tt.args.start, tt.args.end, tt.args.array)
 			fmt.Printf("%+v\n", tt.args.array)
 		})
@@ -142,7 +142,7 @@ func TestShufflePlayerChainImplement_Type(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := standard.ShufflePlayerChainImplement{}
+			s := standard.NewShufflePlayerChainImplement()
 			if got := s.Type(); got != tt.want {
 				t.Errorf("Type() = %v, want %v", got, tt.want)
 			}

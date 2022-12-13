@@ -29,6 +29,12 @@ type EventReactionCalculatorInterface interface {
 	Calculate(elementNew definition.Element, elementAttached []definition.Element) (reaction definition.Reaction, elementSurplus []definition.Element)
 }
 
+type EventRollStageHandlerInterface interface {
+	Type() definition.RuleType
+	Roll(setCaps uint) (set definition.ElementSet)
+	ReRoll(originSet definition.ElementSet, dropSet definition.ElementSet) (result definition.ElementSet)
+}
+
 type EventOnAttackInterface interface {
 	Type() definition.RuleType
 	Handler(ctx *Context)

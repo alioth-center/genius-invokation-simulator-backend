@@ -2,6 +2,8 @@
 
 ----
 
+[![Build Status](https://drone.sunist.cn/api/badges/sunist-c/genius-invokation-simulator-backend/status.svg)](https://drone.sunist.cn/sunist-c/genius-invokation-simulator-backend)
+
 这里是原神(Genshin Impact)的《七圣召唤》模拟器，是参考原神3.3版本的“七圣召唤”玩法重新实现的后端(服务端)，包括所有的原神内的游戏内容，并拓展一些米哈游没有做的内容。~~不过这个后端只能让你在Postman/ApiFox/Terminal里对局~~
 
 ## Features

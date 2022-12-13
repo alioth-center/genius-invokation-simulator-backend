@@ -21,7 +21,7 @@ type Character struct {
 	MaxMagicPoint      uint
 	CurrentMagicPoint  uint
 	ElementsAttached   []definition.Element
-	elementFilter      func(elements []definition.Element) (result []definition.Element)
+	Effects            *EffectSet
 }
 
 func (character *Character) OnAttachedElement(element definition.Element) {
@@ -47,6 +47,5 @@ func GenerateCharacter(character ICharacter) (entity *Character) {
 		MaxMagicPoint:      character.MaxMagicPoint(),
 		CurrentMagicPoint:  0,
 		ElementsAttached:   []definition.Element{},
-		elementFilter:      character.ElementFilter,
 	}
 }

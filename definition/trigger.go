@@ -9,7 +9,7 @@ package definition
 type TriggerType byte
 
 const (
-	TriggerNone                 TriggerType = iota // TriggerNone 没有触发器，执行的时候即处理完成
+	TriggerNone                 TriggerType = iota // TriggerNone 一次性触发器，执行时触发
 	TriggerBeforePassiveSkill                      // TriggerBeforePassiveSkill 在被动技能触发前触发
 	TriggerAfterPassiveSkill                       // TriggerAfterPassiveSkill 在被动技能触发后触发
 	TriggerBeforeNormalAttack                      // TriggerBeforeNormalAttack 在普通攻击前触发
@@ -32,4 +32,13 @@ const (
 	TriggerAfterReaction                           // TriggerAfterReaction 在元素反应后触发
 	TriggerBeforeBurnCard                          // TriggerBeforeBurnCard 在使用卡牌转换元素前触发
 	TriggerAfterBurnCard                           // TriggerAfterBurnCard 在使用卡牌转换元素后触发
+	TriggerBeforeHealing                           // TriggerBeforeHealing 在角色接受治疗前触发
+	TriggerAfterHealing                            // TriggerAfterHealing 在角色接受治疗后触发
+	TriggerAfterGameStart                          // TriggerAfterGameStart 在对局开始后触发
+	TriggerAfterRollStage                          // TriggerAfterRollStage 投掷阶段结束后触发
+	TriggerAfterRoundStart                         // TriggerAfterRoundStart 回合开始后触发
+	TriggerAfterRoundBattle                        // TriggerAfterRoundBattle 在回合战斗后触发
+	TriggerAfterRoundSummon                        // TriggerAfterRoundSummon 在召唤物行动结束后触发
+	TriggerAfterRoundSupport                       // TriggerAfterRoundSupport 在支援物行动结束后触发
+	TriggerAfterRoundEnd                           // TriggerAfterRoundEnd 在回合结束后触发
 )

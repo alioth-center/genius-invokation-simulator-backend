@@ -18,7 +18,6 @@ type ICharacter interface {
 	Skills() []ISkill
 	MaxHealthPoint() uint
 	MaxMagicPoint() uint
-	ElementFilter(elements []definition.Element) (result []definition.Element)
 }
 
 type ICard interface {
@@ -27,22 +26,20 @@ type ICard interface {
 	Description() string
 	Type() definition.CardType
 	Cost() definition.ElementSet
+	Effect() IEffect
 }
 
 type ISkill interface {
-	ID() uint
 	Name() string
 	Description() string
 	Cost() definition.ElementSet
 	Type() definition.SkillType
-}
-
-type ITrigger interface {
-	Type() definition.TriggerType
-	Judge(ctx Context) bool
+	Effect() IEffect
 }
 
 type IEffect interface {
-	Trigger() ITrigger
-	Effect(ctx *Context)
+	Name() string
+	Description() string
+	Triggers() []definition.TriggerType
+	Effect(trigger definition.TriggerType, ctx *Context)
 }

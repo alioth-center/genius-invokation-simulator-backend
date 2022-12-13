@@ -38,10 +38,14 @@ func initRuntimeRuleSet(rules ...Rule) *RuntimeRuleSet {
 var (
 	ShufflePlayerChainFunction EventShufflePlayerChainInterface = nil // ShufflePlayerChainFunction 确定玩家初始顺序的规则实现
 	ShuffleCardStackFunction   EventShuffleCardStackInterface   = nil // ShuffleCardStackFunction 将牌堆打断的规则实现
+	RollStageHandlerFunction   EventRollStageHandlerInterface   = nil // RollStageHandlerFunction 投掷阶段计算骰子的规则实现
+	ReactionCalculatorFunction EventReactionCalculatorInterface = nil // ReactionCalculatorFunction 计算反应类型的规则实现
 
 	RuntimeRules RuntimeRuleSet = *initRuntimeRuleSet(
 		Rule{Name: "ShufflePlayerChain", Implement: ShufflePlayerChainFunction},
 		Rule{Name: "ShuffleCardStack", Implement: ShuffleCardStackFunction},
+		Rule{Name: "RollStageHandler", Implement: RollStageHandlerFunction},
+		Rule{Name: "ReactionCalculatorFunction", Implement: ReactionCalculatorFunction},
 	)
 )
 

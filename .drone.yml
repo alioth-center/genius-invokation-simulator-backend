@@ -11,6 +11,7 @@ steps:
     image: golang:1.19
     pull: if-not-exist
     commands:
+      - go mod tidy
       - go build .
 
   - name: unit test

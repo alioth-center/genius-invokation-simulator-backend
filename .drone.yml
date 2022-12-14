@@ -11,7 +11,7 @@ steps:
     image: golang:latest
     pull: if-not-exist
     commands:
-      - go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@1.47.2
       - golangci-lint run
 
   - name: build

@@ -18,7 +18,7 @@ steps:
     image: golang:1.19
     pull: if-not-exist
     commands:
-      - go test ./...
+      - go test -v ./...
 
   - name: benchmark test
     image: golang:1.19

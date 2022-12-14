@@ -31,7 +31,7 @@ type EventReactionCalculatorInterface interface {
 
 type EventReactionHandlerInterface interface {
 	Type() definition.RuleType
-	Handle(ctx *Context)
+	Handler() AttackDamageModifier
 }
 
 type EventRollStageHandlerInterface interface {
@@ -39,30 +39,3 @@ type EventRollStageHandlerInterface interface {
 	Roll(setCaps uint) (set definition.ElementSet)
 	ReRoll(originSet definition.ElementSet, dropSet definition.ElementSet) (result definition.ElementSet)
 }
-
-type EventNormalAttackInterface interface {
-	Type() definition.RuleType
-	Handle(ctx *Context, targetPlayer *Player, targetCharacter *Character, element definition.Element, skill ISkill, beforeEvents, afterEvents []IEffect)
-}
-
-type EventElementalSkillInterface interface{}
-
-type EventElementalBurstInterface interface{}
-
-type EventPassiveSkillInterface interface{}
-
-type EventSwitchCharacterInterface interface{}
-
-type EventStartGameInterface interface{}
-
-type EventOnHitInterface interface{}
-
-type EventOnSupportInterface interface{}
-
-type EventOnSummonInterface interface{}
-
-type EventOnEquipInterface interface{}
-
-type EventOnReactionInterface interface{}
-
-type EventOnBurnCardInterface interface{}

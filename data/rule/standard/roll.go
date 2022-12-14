@@ -8,6 +8,7 @@ package standard
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/definition"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model"
+
 	"math/rand"
 	"time"
 )
@@ -45,47 +46,6 @@ func generateElementSet(count uint, random uint64) (generated bool, elements def
 	}
 }
 
-func mergeElementSet(sets ...definition.ElementSet) (result definition.ElementSet) {
-	result = map[definition.Element]uint{}
-	for _, set := range sets {
-		for element, count := range set {
-			result[element] += count
-		}
-	}
-
-	return result
-}
-
-func mixElementSet(originSet definition.ElementSet, mixSets ...definition.ElementSet) (result definition.ElementSet) {
-	result = map[definition.Element]uint{}
-	for element, count := range originSet {
-		result[element] = count
-	}
-
-	for _, set := range mixSets {
-		for element := definition.Element(0); element <= definition.ElementAnemo; element++ {
-			if _, ok := originSet[element]; ok {
-				if result[element] > set[element] {
-					result[element] = set[element]
-				}
-			}
-		}
-	}
-
-	return result
-}
-
-func subElementSet(originSet definition.ElementSet, subsets ...definition.ElementSet) (result definition.ElementSet) {
-	result = map[definition.Element]uint{}
-	subset := mergeElementSet(subsets...)
-	dropSet := mixElementSet(originSet, subset)
-	for element, count := range dropSet {
-		result[element] = originSet[element] - count
-	}
-
-	return result
-}
-
 func (r RollStageHandlerImplement) Type() definition.RuleType {
 	return definition.RuleInGameModifier
 }
@@ -108,11 +68,11 @@ func (r RollStageHandlerImplement) Roll(setCaps uint) (set definition.ElementSet
 		}
 	}
 
-	return mergeElementSet(subsets...)
+	return model.MergeElementSet(subsets...)
 }
 
 func (r RollStageHandlerImplement) ReRoll(originSet definition.ElementSet, dropSet definition.ElementSet) (result definition.ElementSet) {
-	canDropSet := mixElementSet(originSet, dropSet)
+	canDropSet := model.MixElementSet(originSet, dropSet)
 	reRollNumber := uint(0)
 	for _, count := range canDropSet {
 		reRollNumber += count
@@ -120,7 +80,7 @@ func (r RollStageHandlerImplement) ReRoll(originSet definition.ElementSet, dropS
 
 	reRolledSet := r.Roll(reRollNumber)
 
-	return mergeElementSet(subElementSet(originSet, canDropSet), reRolledSet)
+	return model.MergeElementSet(model.SubElementSet(originSet, canDropSet), reRolledSet)
 }
 
 func NewRollStageHandlerImplement() model.EventRollStageHandlerInterface {

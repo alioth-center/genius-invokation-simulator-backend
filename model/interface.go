@@ -26,7 +26,6 @@ type ICard interface {
 	Description() string
 	Type() definition.CardType
 	Cost() definition.ElementSet
-	Effect() IEffect
 }
 
 type ISkill interface {
@@ -34,12 +33,25 @@ type ISkill interface {
 	Description() string
 	Cost() definition.ElementSet
 	Type() definition.SkillType
-	Effect() IEffect
+	Buffer() func(self *Player)
 }
 
-type IEffect interface {
-	Name() string
-	Description() string
-	Triggers() []definition.TriggerType
-	Effect(trigger definition.TriggerType, ctx *Context)
+type INormalAttack interface {
+	ISkill
+	NormalAttack(target *Player) AttackDamageContext
+}
+
+type IElementalSkill interface {
+	ISkill
+	ElementalAttack(target *Player) AttackDamageContext
+}
+
+type IElementalBurst interface {
+	ISkill
+	BurstAttack(target *Player) AttackDamageContext
+}
+
+type IPassiveSkill interface {
+	ISkill
+	HandlerFunc() ModifierHandler[any]
 }

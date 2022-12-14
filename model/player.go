@@ -6,17 +6,20 @@
 package model
 
 import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/definition"
+
 	"errors"
 )
 
 type Player struct {
-	UID          uint
-	Name         string
-	IP           uint
-	Deck         PlayerDeck
-	HoldingCards CardDeck
-	Characters   []Character
-	StackCards   CardStack
+	UID             uint
+	Name            string
+	Deck            PlayerDeck
+	HoldingCards    CardDeck
+	Elements        definition.ElementSet
+	ActiveCharacter *Character
+	Characters      []*Character
+	StackCards      *CardStack
 }
 
 type PlayerChainNode struct {

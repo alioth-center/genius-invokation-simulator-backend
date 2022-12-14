@@ -21,14 +21,20 @@ type Character struct {
 	MaxMagicPoint      uint
 	CurrentMagicPoint  uint
 	ElementsAttached   []definition.Element
-	Effects            *EffectSet
+	Equipments         map[definition.EquipmentType]interface{}
+	Status             definition.CharacterStatus
+	DefenceModifiers   ModifierChain[DefenceDamageContext]
+	CostModifiers      ModifierChain[CostContext]
+	AttackModifiers    ModifierChain[AttackDamageContext]
+	HealModifiers      interface{}
+	Satiety            bool
 }
 
-func (character *Character) OnAttachedElement(element definition.Element) {
+func (character *Character) Heal(amount uint) {
 
 }
 
-func (character *Character) OnAttacked(attackElement definition.Element, damage uint) {
+func (character *Character) attack(target *Player, skill ISkill) {
 
 }
 

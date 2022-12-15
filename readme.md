@@ -4,15 +4,35 @@
 
 [![Build Status](https://drone.sunist.cn/api/badges/sunist-c/genius-invokation-simulator-backend/status.svg)](https://drone.sunist.cn/sunist-c/genius-invokation-simulator-backend)
 
-这里是原神(Genshin Impact)的《七圣召唤》模拟器，是参考原神3.3版本的“七圣召唤”玩法重新实现的后端(服务端)，包括所有的原神内的游戏内容，并拓展一些米哈游没有做的内容。~~不过这个后端只能让你在Postman/ApiFox/Terminal里对局~~
+这里是原神(Genshin Impact)的《七圣召唤》模拟器，是参考原神3.3版本的“七圣召唤”玩法重新实现的后端(服务端)，包括所有的原神内的游戏内容，并拓展一些米哈游没有做的内容。
+
+## Progress
+
+- 22.12.9 创建新文件夹
+- 22.12.11 设计、定义相关enum与接口
+- 22.12.13 重构对局生命周期
+- 22.12.15 战斗框架基本完成
+
+## Announce
+
+本模拟器侧重于提供自定义的七圣召唤对局，比如每次投十二个骰子/每回合摸四张牌/加入自定义角色、卡牌等功能，~~短期内没有~~ 项目稳定后尽快针对ai训练进行优化、适配。
+
+相关的[genius-invokation-gym](https://github.com/paladin1013/genius-invokation-gym)项目侧重于提供ai相关接口，请根据需求选择。
+
+**本模拟器接口尽量和[genius-invokation-gym](https://github.com/paladin1013/genius-invokation-gym)保持一致，其项目完善后本项目也尽量拓展相应的ai接口。**
+
+同时感谢[@Leng Yue](https://github.com/leng-yue)实现的前端项目[genius-invokation-webui](https://github.com/leng-yue/genius-invokation-webui)。
+
+本项目的交流群(QQ)为`530924402`，欢迎讨论与PR！
 
 ## Features
 
-- [ ] 游戏基本玩法
+- [x] 游戏基本玩法
   - [x] 角色与技能
   - [ ] 圣遗物与武器
   - [ ] 场景和伙伴
   - [ ] 召唤物
+  - [ ] 卡牌与元素转化
   - [x] 元素反应
 - [ ] 游戏拓展玩法
   - [ ] 创建对局
@@ -21,37 +41,23 @@
   - [ ] 观战模式
   - [ ] 比赛模式
   - [ ] 作战记录
-  - [ ] 自定义规则
-- [ ] 自定义Mod支持
-  - [ ] Go/Lua支持
-  - [ ] 自定义角色与卡牌
-  - [ ] 自定义规则与生命周期
+- [x] 自定义Mod支持
+  - [x] Go/Lua支持
+  - [x] 自定义角色与卡牌
+  - [x] 自定义规则
 - [ ] 多种通信协议连接
-  - [x] websocket接口
-  - [x] http/https接口
+  - [ ] websocket接口
+  - [ ] http/https接口
   - [ ] udp/kcp接口
   - [ ] rpc接口
 - [ ] 分布式支持
-  - [x] 自动化部署
+  - [ ] 自动化部署
   - [ ] 服务注册与服务发现
   - [ ] 服务端负载均衡
 - [ ] 管理功能
   - [ ] 公告与通知
-  - [x] IP追踪/封禁
-  - [x] QPS/TPS限制器
-
-## Progress
-
-- 22.12.9 创建新文件夹
-- 22.12.11 设计、定义相关enum与接口
-
-## Announce
-
-~~作者是菜狗，前端写的一团糟(很难看)，遂不写了，有兴趣的可以照着接口画画游戏画面~~
-
-作者尽量拼凑个前端出来，想接手的可以发个Discussion()
-
-由于测试和自动化需要，本项目的开发版本托管在作者自己的git服务上：[genius-invokation-simulator-backend](https://code.sunist.cn/sunist-c/genius-invokation-simulator-backend)
+  - [ ] IP追踪/封禁
+  - [ ] QPS/TPS限制器
 
 ## License
 

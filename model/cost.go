@@ -136,3 +136,11 @@ func (c *CostContext) SubCosts(sub definition.ElementSet) {
 func (c *CostContext) EmptyCosts() {
 	c.cost = map[definition.Element]uint{}
 }
+
+func (c CostContext) Cost() definition.ElementSet {
+	return c.cost
+}
+
+func NewCostContext(cost definition.ElementSet) *CostContext {
+	return &CostContext{cost: cost}
+}

@@ -99,7 +99,7 @@ func TestReactionCalculatorImplement_Calculate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := standard.ReactionCalculatorImplement{}
+			r := standard.ReactionTypeCalculatorImplement{}
 			gotReaction, gotElementSurplus := r.Calculate(tt.args.elementNew, tt.args.elementAttached)
 			if gotReaction != tt.wantReaction {
 				t.Errorf("Calculate() gotReaction = %v, want %v", gotReaction, tt.wantReaction)
@@ -120,7 +120,7 @@ func TestReactionCalculatorImplement_Type(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := standard.ReactionCalculatorImplement{}
+			r := standard.ReactionTypeCalculatorImplement{}
 			if got := r.Type(); got != tt.want {
 				t.Errorf("Type() = %v, want %v", got, tt.want)
 			}

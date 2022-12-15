@@ -20,7 +20,7 @@ const (
 	ElementGeo                          // ElementGeo 岩元素
 	ElementHydro                        // ElementHydro 水元素
 	ElementPyro                         // ElementPyro 火元素
-	ElementNone      Element = 1 << 4   // ElementNone 无元素，用于表示相同元素
+	ElementNone      Element = 1 << 4   // ElementNone 无元素，用于表示相同元素和物理攻击
 	ElementUndefined Element = 1<<8 - 1 // ElementUndefined 未定义元素，转化错误时传出此元素
 
 	ElementStartIndex Element = 1 // ElementStartIndex 七元素起始

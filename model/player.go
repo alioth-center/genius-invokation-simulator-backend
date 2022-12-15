@@ -12,14 +12,15 @@ import (
 )
 
 type Player struct {
-	UID             uint
-	Name            string
-	Deck            PlayerDeck
-	HoldingCards    CardDeck
-	Elements        definition.ElementSet
-	ActiveCharacter *Character
-	Characters      []*Character
-	StackCards      *CardStack
+	UID               uint
+	Name              string
+	Deck              PlayerDeck
+	HoldingCards      CardDeck
+	Elements          definition.ElementSet
+	ActiveCharacter   *Character
+	Characters        []*Character
+	StackCards        *CardStack
+	CooperativeSkills []ISkill
 }
 
 type PlayerChainNode struct {
@@ -52,7 +53,7 @@ func (pc *PlayerChain) append(node *PlayerChainNode) {
 	}
 }
 
-func (pc *PlayerChain) reset() {
+func (pc *PlayerChain) Reset() {
 	pc.Head = pc.resetPtr
 	if pc.Head != nil && pc.Head.PrevPlayer != nil {
 		pc.lastPtr = pc.Head.PrevPlayer

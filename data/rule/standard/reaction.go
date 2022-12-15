@@ -50,6 +50,17 @@ var (
 		d.ElementHydro:   true,  // 水元素可附着
 		d.ElementPyro:    true,  // 火元素可附着
 	}
+
+	// relativeReactionDictionary 相关反应表
+	relativeReactionDictionary = map[d.Element][]d.Reaction{
+		d.ElementAnemo:   []d.Reaction{d.ReactionCryoSwirl, d.ReactionElectroSwirl, d.ReactionHydroSwirl, d.ReactionPyroSwirl},                     // 风元素相关反应，冰/雷/水/火扩散
+		d.ElementCryo:    []d.Reaction{d.ReactionMelt, d.ReactionSuperconduct, d.ReactionFrozen},                                                   // 冰元素相关反应，融化/超导/冻结
+		d.ElementDendro:  []d.Reaction{d.ReactionBloom, d.ReactionBurning, d.ReactionQuicken},                                                      // 草元素相关反应，绽放/燃烧/激化
+		d.ElementElectro: []d.Reaction{d.ReactionSuperconduct, d.ReactionElectroCharged, d.ReactionOverloaded, d.ReactionQuicken},                  // 雷元素相关反应，超载/超导/感电/激化
+		d.ElementGeo:     []d.Reaction{d.ReactionCryoCrystalize, d.ReactionElectroCrystalize, d.ReactionHydroCrystalize, d.ReactionPyroCrystalize}, // 岩元素相关反应，冰/雷/水/火结晶
+		d.ElementHydro:   []d.Reaction{d.ReactionElectroCharged, d.ReactionVaporize, d.ReactionFrozen, d.ReactionBloom},                            // 水元素相关反应，感电/蒸发/冻结/绽放
+		d.ElementPyro:    []d.Reaction{d.ReactionMelt, d.ReactionVaporize, d.ReactionBurning, d.ReactionOverloaded},                                // 火元素相关反应，蒸发/融化/燃烧/超载
+	}
 )
 
 type reactivePair struct {
@@ -71,13 +82,13 @@ func elementAttach(elementNew d.Element, elementAttached []d.Element) (elementSu
 	}
 }
 
-type ReactionCalculatorImplement struct{}
+type ReactionTypeCalculatorImplement struct{}
 
-func (r ReactionCalculatorImplement) Type() d.RuleType {
+func (r ReactionTypeCalculatorImplement) Type() d.RuleType {
 	return d.RuleInGameModifier
 }
 
-func (r ReactionCalculatorImplement) Calculate(elementNew d.Element, elementAttached []d.Element) (reaction d.Reaction, elementSurplus []d.Element) {
+func (r ReactionTypeCalculatorImplement) Calculate(elementNew d.Element, elementAttached []d.Element) (reaction d.Reaction, elementSurplus []d.Element) {
 	if len(elementAttached) == 0 {
 		return d.ReactionNone, elementAttach(elementNew, elementAttached)
 	} else if len(elementAttached) == 1 {
@@ -104,4 +115,15 @@ func (r ReactionCalculatorImplement) Calculate(elementNew d.Element, elementAtta
 
 		return d.ReactionNone, elementAttach(elementNew, elementAttached)
 	}
+}
+
+func (r ReactionTypeCalculatorImplement) ContainsRelativeReaction(elementNew d.Element, elementAttached []d.Element, relativeElement d.Element) bool {
+	judge, _ := r.Calculate(elementNew, elementAttached)
+	for _, reaction := range relativeReactionDictionary[relativeElement] {
+		if judge == reaction {
+			return true
+		}
+	}
+
+	return false
 }

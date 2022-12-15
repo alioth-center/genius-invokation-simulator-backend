@@ -24,14 +24,20 @@ type EventShufflePlayerChainInterface interface {
 	Shuffle(start, end int, array []*Player)
 }
 
-type EventReactionCalculatorInterface interface {
+type EventReactionTypeCalculatorInterface interface {
 	Type() definition.RuleType
 	Calculate(elementNew definition.Element, elementAttached []definition.Element) (reaction definition.Reaction, elementSurplus []definition.Element)
+	ContainsRelativeReaction(elementNew definition.Element, elementAttached []definition.Element, relativeElement definition.Element) bool
 }
 
-type EventReactionHandlerInterface interface {
+type EventReactionDamageCalculatorInterface interface {
 	Type() definition.RuleType
-	Handler() AttackDamageModifier
+	Calculate(target *Player, ctx *AttackDamageContext)
+}
+
+type EventReactionEffectHandlerInterface interface {
+	Type() definition.RuleType
+	Handler(target *Player, ctx *DefenceDamageContext)
 }
 
 type EventRollStageHandlerInterface interface {

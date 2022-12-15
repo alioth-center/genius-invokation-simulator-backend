@@ -12,6 +12,7 @@ steps:
     pull: if-not-exist
     commands:
       - go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.1
+      - go mod tidy
       - golangci-lint run
 
   - name: go build
@@ -25,12 +26,14 @@ steps:
     image: golang:1.19
     pull: if-not-exist
     commands:
+      - go mod tidy
       - go test -v ./...
 
   - name: go bench test
     image: golang:1.19
     pull: if-not-exist
     commands:
+      - go mod tidy
       - go test -v -bench=./ -run=^$
 
   - name: feishu notification

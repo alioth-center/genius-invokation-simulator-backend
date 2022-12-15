@@ -15,7 +15,7 @@ type ModifierHandler[C any] func(ctx *ModifierContext[C])
 type ModifierContext[C any] struct {
 	index byte
 	chain []ModifierHandler[C]
-	Data  C
+	Data  *C
 }
 
 func (c *ModifierContext[C]) Continue() {
@@ -34,7 +34,7 @@ func (c *ModifierContext[C]) IsAborted() bool {
 	return c.index >= abortIndex
 }
 
-func NewContext[C any](modifiers ModifierChain[C], ctx C) *ModifierContext[C] {
+func NewContext[C any](modifiers ModifierChain[C], ctx *C) *ModifierContext[C] {
 	return &ModifierContext[C]{
 		index: 0,
 		chain: modifiers.generateModifierHandlerChain(),

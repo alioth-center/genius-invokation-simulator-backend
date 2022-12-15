@@ -6,7 +6,6 @@
 package model
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -36,27 +35,30 @@ func initRuntimeRuleSet(rules ...Rule) *RuntimeRuleSet {
 }
 
 var (
-	ShufflePlayerChainFunction EventShufflePlayerChainInterface = nil // ShufflePlayerChainFunction 确定玩家初始顺序的规则实现
-	ShuffleCardStackFunction   EventShuffleCardStackInterface   = nil // ShuffleCardStackFunction 将牌堆打断的规则实现
-	RollStageHandlerFunction   EventRollStageHandlerInterface   = nil // RollStageHandlerFunction 投掷阶段计算骰子的规则实现
-	ReactionCalculatorFunction EventReactionCalculatorInterface = nil // ReactionCalculatorFunction 计算反应类型的规则实现
+	ShufflePlayerChainFunction       EventShufflePlayerChainInterface       = nil // ShufflePlayerChainFunction 确定玩家初始顺序的规则实现
+	ShuffleCardStackFunction         EventShuffleCardStackInterface         = nil // ShuffleCardStackFunction 将牌堆打断的规则实现
+	RollStageHandlerFunction         EventRollStageHandlerInterface         = nil // RollStageHandlerFunction 投掷阶段计算骰子的规则实现
+	ReactionCalculatorFunction       EventReactionTypeCalculatorInterface   = nil // ReactionCalculatorFunction 计算反应类型的规则实现
+	ReactionDamageCalculatorFunction EventReactionDamageCalculatorInterface = nil // ReactionDamageCalculatorFunction 计算反应伤害的规则实现
+	ReactionEffectHandlerFunction    EventReactionEffectHandlerInterface    = nil // ReactionEffectHandlerFunction 执行反应附加效果的规则实现
 
 	RuntimeRules RuntimeRuleSet = *initRuntimeRuleSet(
 		Rule{Name: "ShufflePlayerChain", Implement: ShufflePlayerChainFunction},
 		Rule{Name: "ShuffleCardStack", Implement: ShuffleCardStackFunction},
 		Rule{Name: "RollStageHandler", Implement: RollStageHandlerFunction},
-		Rule{Name: "ReactionCalculatorFunction", Implement: ReactionCalculatorFunction},
+		Rule{Name: "ReactionTypeCalculatorFunction", Implement: ReactionCalculatorFunction},
+		Rule{Name: "ReactionDamageCalculatorFunction", Implement: ReactionDamageCalculatorFunction},
 	)
 )
 
 func InjectRuntimeRules(rules RuleSet) {
-	for name, _ := range RuntimeRules.rules {
+	for name := range RuntimeRules.rules {
 		if rule, ok := rules.Rules[name]; rule == nil || !ok {
 			panic(fmt.Sprintf("missing necessary function: %s", name))
 		}
 	}
 
-	for name, _ := range RuntimeRules.rules {
+	for name := range RuntimeRules.rules {
 		RuntimeRules.rules[name] = rules.Rules[name]
 	}
 }
@@ -64,7 +66,7 @@ func InjectRuntimeRules(rules RuleSet) {
 func CheckImplementation() (err error) {
 	for name, implementation := range RuntimeRules.rules {
 		if implementation == nil {
-			return errors.New(fmt.Sprintf("missing necessary function: %s", name))
+			return fmt.Errorf("missing necessary function: %s", name)
 		}
 	}
 

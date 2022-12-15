@@ -79,6 +79,10 @@ func (d *AttackDamageContext) ChangeBackgroundDamageElement(element definition.E
 	}
 }
 
+func (d AttackDamageContext) Damage() map[*Character]Damage {
+	return d.damage
+}
+
 func NewAttackDamageContext(target *Player, sender ISkill, element definition.Element) *AttackDamageContext {
 	d := &AttackDamageContext{
 		Sender: sender,
@@ -172,7 +176,11 @@ func (d *DefenceDamageContext) ChangeBackgroundDamageElement(element definition.
 	}
 }
 
-func NewDefenceDamageContext(from *Player, attack AttackDamageContext) *DefenceDamageContext {
+func (d DefenceDamageContext) Damage() map[*Character]Damage {
+	return d.damage
+}
+
+func NewDefenceDamageContext(from *Player, attack *AttackDamageContext) *DefenceDamageContext {
 	return &DefenceDamageContext{
 		sender: from,
 		self:   attack.target,

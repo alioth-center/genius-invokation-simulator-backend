@@ -7,33 +7,32 @@ clone:
   depth: 1
 
 steps:
-  - name: linter
-    image: golang:latest
+  - name: golangci-lint
+    image: golangci/golangci-lint
     pull: if-not-exist
     commands:
-      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.1
       - golangci-lint run
 
-  - name: build
+  - name: go build
     image: golang:1.19
     pull: if-not-exist
     commands:
       - go mod tidy
       - go build .
 
-  - name: unit test
+  - name: go test
     image: golang:1.19
     pull: if-not-exist
     commands:
       - go test -v ./...
 
-  - name: benchmark test
+  - name: go bench test
     image: golang:1.19
     pull: if-not-exist
     commands:
       - go test -v -bench=./ -run=^$
 
-  - name: notification
+  - name: feishu notification
     image: serialt/drone-feishu-message
     pull: if-not-exists
     settings:

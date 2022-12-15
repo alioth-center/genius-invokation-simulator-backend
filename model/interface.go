@@ -20,6 +20,10 @@ type ICharacter interface {
 	MaxMagicPoint() uint
 }
 
+type IConsumable interface {
+	Cost() definition.ElementSet
+}
+
 type ICard interface {
 	ID() uint
 	Name() string
@@ -36,19 +40,9 @@ type ISkill interface {
 	Buffer() func(self *Player)
 }
 
-type INormalAttack interface {
+type IAttackSkill interface {
 	ISkill
-	NormalAttack(target *Player) AttackDamageContext
-}
-
-type IElementalSkill interface {
-	ISkill
-	ElementalAttack(target *Player) AttackDamageContext
-}
-
-type IElementalBurst interface {
-	ISkill
-	BurstAttack(target *Player) AttackDamageContext
+	Attack(target *Player) *AttackDamageContext
 }
 
 type IPassiveSkill interface {

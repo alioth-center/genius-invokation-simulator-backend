@@ -51,7 +51,6 @@ func (r RollStageHandlerImplement) Type() definition.RuleType {
 }
 
 func (r RollStageHandlerImplement) Roll(setCaps uint) (set definition.ElementSet) {
-	set = map[definition.Element]uint{}
 	randomNumCount := setCaps/21 + 1
 	randomNumbers := r.generateRandomNumbers(randomNumCount)
 	subsets := make([]definition.ElementSet, randomNumCount)

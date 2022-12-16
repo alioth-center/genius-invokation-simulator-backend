@@ -81,3 +81,22 @@ func TestElementSetEquals(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkElementSetEquals(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		tt := struct {
+			name   string
+			origin d.ElementSet
+			cost   d.ElementSet
+			want   bool
+		}{
+			name:   "ElementSetEquals-Mixed-4",
+			origin: map[d.Element]uint{d.ElementCryo: 2, d.ElementDendro: 2, d.ElementCurrency: 1},
+			cost:   map[d.Element]uint{d.ElementCurrency: 3, d.ElementNone: 2},
+			want:   true,
+		}
+		if got := model.ElementSetEqual(tt.origin, tt.cost); got != tt.want {
+			b.Errorf("Error: %v, want %v", got, tt.want)
+		}
+	}
+}

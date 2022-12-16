@@ -13,4 +13,5 @@ const (
 	SkillNormalAttack                    // SkillNormalAttack 普通攻击
 	SkillElementalSkill                  // SkillElementalSkill 元素战技
 	SkillElementalBurst                  // SkillElementalBurst 元素爆发
+	SkillCooperative                     // SkillCooperative 协同攻击技能
 )

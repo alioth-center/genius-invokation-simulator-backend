@@ -16,4 +16,5 @@ const (
 	AffiliationFatui     Affiliation = 1<<4 + iota // AffiliationFatui 愚人众
 	AffiliationHilichurl                           // AffiliationHilichurl 丘丘人
 	AffiliationMonster                             // AffiliationMonster 魔物
+	AffiliationUndefined Affiliation = 1<<8 - 1    // AffiliationUndefined 未定义
 )

@@ -5,7 +5,9 @@
 
 package model
 
-import "github.com/sunist-c/genius-invokation-simulator-backend/definition"
+import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/definition"
+)
 
 // RuleInterface 规则接口
 type RuleInterface interface {
@@ -38,6 +40,7 @@ type EventReactionDamageCalculatorInterface interface {
 type EventReactionEffectHandlerInterface interface {
 	Type() definition.RuleType
 	Handler(target *Player, ctx *DefenceDamageContext)
+	SelfHandler(self *Player)
 }
 
 type EventRollStageHandlerInterface interface {

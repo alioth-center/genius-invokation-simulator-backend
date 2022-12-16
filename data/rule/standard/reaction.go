@@ -7,6 +7,7 @@ package standard
 
 import (
 	d "github.com/sunist-c/genius-invokation-simulator-backend/definition"
+	"github.com/sunist-c/genius-invokation-simulator-backend/model"
 )
 
 var (
@@ -68,7 +69,7 @@ type reactivePair struct {
 	new      d.Element
 }
 
-func elementAttach(elementNew d.Element, elementAttached []d.Element) (elementSurplus []d.Element) {
+func ElementAttach(elementNew d.Element, elementAttached []d.Element) (elementSurplus []d.Element) {
 	if attachable := elementAttachable[elementNew]; attachable {
 		for _, element := range elementAttached {
 			if elementNew == element {
@@ -90,7 +91,7 @@ func (r ReactionTypeCalculatorImplement) Type() d.RuleType {
 
 func (r ReactionTypeCalculatorImplement) Calculate(elementNew d.Element, elementAttached []d.Element) (reaction d.Reaction, elementSurplus []d.Element) {
 	if len(elementAttached) == 0 {
-		return d.ReactionNone, elementAttach(elementNew, elementAttached)
+		return d.ReactionNone, ElementAttach(elementNew, elementAttached)
 	} else if len(elementAttached) == 1 {
 		pair := reactivePair{
 			attached: elementAttached[0],
@@ -99,7 +100,7 @@ func (r ReactionTypeCalculatorImplement) Calculate(elementNew d.Element, element
 		if reaction, reactive := reactionDictionary[pair]; reactive {
 			return reaction, []d.Element{}
 		} else {
-			return d.ReactionNone, elementAttach(elementNew, elementAttached)
+			return d.ReactionNone, ElementAttach(elementNew, elementAttached)
 		}
 	} else {
 		for i, element := range elementAttached {
@@ -113,7 +114,7 @@ func (r ReactionTypeCalculatorImplement) Calculate(elementNew d.Element, element
 			}
 		}
 
-		return d.ReactionNone, elementAttach(elementNew, elementAttached)
+		return d.ReactionNone, ElementAttach(elementNew, elementAttached)
 	}
 }
 
@@ -124,6 +125,30 @@ func (r ReactionTypeCalculatorImplement) ContainsRelativeReaction(elementNew d.E
 			return true
 		}
 	}
-
 	return false
+}
+
+type ReactionDamageCalculatorImplement struct{}
+
+func (r ReactionDamageCalculatorImplement) Type() d.RuleType {
+	return d.RuleInGameModifier
+}
+
+func (r ReactionDamageCalculatorImplement) Calculate(target *model.Player, ctx *model.AttackDamageContext) {
+	// todo: implement reaction damage calculator
+}
+
+type ReactionEffectHandlerImplement struct {
+}
+
+func (r ReactionEffectHandlerImplement) Type() d.RuleType {
+	return d.RuleInGameModifier
+}
+
+func (r ReactionEffectHandlerImplement) Handler(target *model.Player, ctx *model.DefenceDamageContext) {
+	// todo: implement reaction effect handler
+}
+
+func (r ReactionEffectHandlerImplement) SelfHandler(self *model.Player) {
+	// todo: implement reaction self effect handler
 }

@@ -5,7 +5,9 @@
 
 package model
 
-import "github.com/sunist-c/genius-invokation-simulator-backend/definition"
+import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/definition"
+)
 
 type ICharacter interface {
 	ID() uint
@@ -32,12 +34,28 @@ type ICard interface {
 	Cost() definition.ElementSet
 }
 
+type IEquipmentCard interface {
+	ICard
+	EquipmentType() definition.EquipmentType
+	Equip() ModifierHandler[CharacterContext]
+}
+
+type IEventCard interface {
+	Event() ModifierHandler[CharacterContext]
+	CallBack() (callbackTrigger definition.Trigger, callbackEvent ICallbackEvent)
+}
+
+type ICallbackEvent interface {
+	Name() string
+	Event() ModifierHandler[CharacterContext]
+	Triggered() bool
+}
+
 type ISkill interface {
 	Name() string
 	Description() string
-	Cost() definition.ElementSet
 	Type() definition.SkillType
-	Buffer() func(self *Player)
+	Buffer() ModifierHandler[CharacterContext]
 }
 
 type IAttackSkill interface {
@@ -45,7 +63,18 @@ type IAttackSkill interface {
 	Attack(target *Player) *AttackDamageContext
 }
 
+type INormalSkill interface {
+	IAttackSkill
+	Cost() definition.ElementSet
+}
+
 type IPassiveSkill interface {
 	ISkill
-	HandlerFunc() ModifierHandler[any]
+	Cost() definition.ElementSet
+	HandlerFunc() ModifierHandler[CharacterContext]
+}
+
+type ICooperativeSkill interface {
+	IAttackSkill
+	Effective() bool
 }

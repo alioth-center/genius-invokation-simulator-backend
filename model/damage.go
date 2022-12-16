@@ -1,11 +1,13 @@
 /*
  * Copyright (c) sunist@genius-invokation-simulator-backend, 2022
- * File "damage.go" LastUpdatedAt 2022/12/14 09:23:14
+ * File "damage.go" LastUpdatedAt 2022/12/16 09:01:16
  */
 
 package model
 
-import "github.com/sunist-c/genius-invokation-simulator-backend/definition"
+import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/definition"
+)
 
 type Damage struct {
 	Element definition.Element
@@ -83,7 +85,7 @@ func (d AttackDamageContext) Damage() map[*Character]Damage {
 	return d.damage
 }
 
-func NewAttackDamageContext(target *Player, sender ISkill, element definition.Element) *AttackDamageContext {
+func NewAttackDamageContext(target *Player, sender IAttackSkill, element definition.Element) *AttackDamageContext {
 	d := &AttackDamageContext{
 		Sender: sender,
 		target: target,

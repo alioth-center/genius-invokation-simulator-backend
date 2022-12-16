@@ -12,15 +12,18 @@ import (
 )
 
 type Player struct {
-	UID               uint
-	Name              string
-	Deck              PlayerDeck
-	HoldingCards      CardDeck
-	Elements          definition.ElementSet
-	ActiveCharacter   *Character
-	Characters        []*Character
-	StackCards        *CardStack
-	CooperativeSkills []ISkill
+	UID                        uint
+	Name                       string
+	Deck                       PlayerDeck
+	HoldingCards               CardDeck
+	Elements                   definition.ElementSet
+	ActiveCharacter            *Character
+	Characters                 []*Character
+	StackCards                 *CardStack
+	CooperativeSkills          []ICooperativeSkill
+	CooperativeAttackModifiers *ModifierChain[AttackDamageContext]
+	SwitchModifiers            *ModifierChain[CharacterContext]
+	DefenceModifiers           *ModifierChain[DefenceDamageContext]
 }
 
 type PlayerChainNode struct {

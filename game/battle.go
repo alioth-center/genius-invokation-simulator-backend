@@ -11,6 +11,10 @@ import (
 )
 
 type BattleFramework struct {
+	Rules             model.RuleSet
+	Players           []model.Player
+	ActivePlayerChain model.PlayerChain
+	NextPlayerChain   model.PlayerChain
 }
 
 // PreviewAttack 预览本次攻击的最终伤害效果，不包含协同攻击
@@ -38,21 +42,12 @@ func (b BattleFramework) ExecuteAttack(sender, target *model.Player, skill model
 		}
 	}
 	model.ReactionEffectHandlerFunction.Handler(target, result)
-}
-
-// PreviewHeal 预览治疗操作的最终执行效果
-func (b BattleFramework) PreviewHeal(target *model.Character, amount uint) *model.HealContext {
-	return target.Clone().Heal(amount)
+	model.ReactionEffectHandlerFunction.SelfHandler(sender)
 }
 
 // ExecuteHeal 执行治疗操作
 func (b BattleFramework) ExecuteHeal(target *model.Character, amount uint) {
-	heal := target.Heal(amount)
-	if target.CurrentHealthPoint+heal.Heal() < target.MaxHealthPoint {
-		target.CurrentHealthPoint += heal.Heal()
-	} else {
-		target.CurrentHealthPoint = target.MaxHealthPoint
-	}
+	target.Heal(amount)
 }
 
 // PreviewCost 预览某可消耗元素骰子的操作最终的耗费

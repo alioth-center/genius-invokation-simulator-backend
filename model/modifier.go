@@ -20,7 +20,7 @@ type ModifierContext[C any] struct {
 
 func (c *ModifierContext[C]) Continue() {
 	c.index++
-	for c.index < byte(len(c.chain)) {
+	for c.index <= byte(len(c.chain)) {
 		c.chain[c.index](c)
 		c.index++
 	}
@@ -34,7 +34,7 @@ func (c *ModifierContext[C]) IsAborted() bool {
 	return c.index >= abortIndex
 }
 
-func NewContext[C any](modifiers ModifierChain[C], ctx *C) *ModifierContext[C] {
+func NewContext[C any](modifiers *ModifierChain[C], ctx *C) *ModifierContext[C] {
 	return &ModifierContext[C]{
 		index: 0,
 		chain: modifiers.generateModifierHandlerChain(),
@@ -48,8 +48,10 @@ type ModifierChain[C any] struct {
 }
 
 func (m *ModifierChain[C]) AddModifierHandler(name string, handler ModifierHandler[C]) {
-	m.names = append(m.names, name)
-	m.chain = append(m.chain, handler)
+	if handler != nil {
+		m.names = append(m.names, name)
+		m.chain = append(m.chain, handler)
+	}
 }
 
 func (m *ModifierChain[C]) RemoveModifierHandler(name string) {
@@ -61,13 +63,26 @@ func (m *ModifierChain[C]) RemoveModifierHandler(name string) {
 	}
 }
 
+func (m ModifierChain[C]) Clone() *ModifierChain[C] {
+	result := &ModifierChain[C]{
+		names: make([]string, len(m.names)),
+		chain: make([]ModifierHandler[C], len(m.chain)),
+	}
+	for i := 0; i < len(m.names); i++ {
+		result.names[i] = m.names[i]
+		result.chain[i] = m.chain[i]
+	}
+
+	return result
+}
+
+func (m *ModifierChain[C]) generateModifierHandlerChain() []ModifierHandler[C] {
+	return m.chain
+}
+
 func NewModifierChain[C any]() *ModifierChain[C] {
 	return &ModifierChain[C]{
 		names: []string{},
 		chain: []ModifierHandler[C]{},
 	}
-}
-
-func (m *ModifierChain[C]) generateModifierHandlerChain() []ModifierHandler[C] {
-	return m.chain
 }

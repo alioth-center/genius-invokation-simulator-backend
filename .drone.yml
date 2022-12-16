@@ -34,7 +34,7 @@ steps:
     pull: if-not-exist
     commands:
       - go mod tidy
-      - go test -v -bench=./ -run=^$
+      - go test -bench=. -benchtime=10s ./**/test -run=^$
 
   - name: feishu notification
     image: serialt/drone-feishu-message

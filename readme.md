@@ -4,7 +4,7 @@
 
 [![Build Status](https://drone.sunist.cn/api/badges/sunist-c/genius-invokation-simulator-backend/status.svg)](https://drone.sunist.cn/sunist-c/genius-invokation-simulator-backend)
 
-这里是原神(Genshin Impact)的《七圣召唤》模拟器，是参考原神3.3版本的“七圣召唤”玩法重新实现的后端(服务端)，包括所有的原神内的游戏内容，并拓展一些米哈游没有做的内容。
+这里是原神(Genshin Impact)的《七圣召唤》模拟器，是参考原神3.3版本的「七圣召唤」玩法重新实现的后端(服务端)，包括所有的原神内的游戏内容，并拓展一些米哈游没有做的内容。
 
 ## Progress
 
@@ -12,6 +12,13 @@
 - 22.12.11 设计、定义相关enum与接口
 - 22.12.13 重构对局生命周期
 - 22.12.15 战斗框架基本完成
+- 22.12.16 开始编写文档0.0.1版本
+- 22.12.16 (试验性)命令行操作对局
+
+## Document
+
++ 战斗框架： [Battle Framework of GISB](https://github.com/sunist-c/genius-invokation-simulator-backend/wiki/Battle-Framework)
++ 事件框架： Mkdir...
 
 ## Announce
 
@@ -28,13 +35,14 @@
 ## Features
 
 - [x] 游戏基本玩法
+  - [x] 元素反应
   - [x] 角色与技能
   - [ ] 圣遗物与武器
   - [ ] 场景和伙伴
   - [ ] 召唤物
   - [ ] 卡牌与元素转化
-  - [x] 元素反应
 - [ ] 游戏拓展玩法
+  - [x] 多人游戏(玩家$N \geq 2$，队伍$N \geq 2$)
   - [ ] 创建对局
   - [ ] 匹配对局
   - [ ] 游戏内通信

@@ -249,7 +249,6 @@ func TestContextClear(t *testing.T) {
 }
 
 // BenchmarkTestContextRemove
-// 3handlers, 30ns/op; 12handlers, 100ns/op; 24handlers, 200ns/op; 128handlers, 1000ns/op
 func BenchmarkTestContextRemove(b *testing.B) {
 	add := func(ctx *Context[int]) {
 		*ctx.data += 1
@@ -282,7 +281,6 @@ func BenchmarkTestContextRemove(b *testing.B) {
 }
 
 // BenchmarkTestContextAppend
-// 3handler, 110ns/op; 12handler, 440ns/op; 24handler, 1100ns/op; 128handler, 17000ns/op
 func BenchmarkTestContextAppend(b *testing.B) {
 	add := func(ctx *Context[int]) {
 		*ctx.data += 1
@@ -313,7 +311,6 @@ func BenchmarkTestContextAppend(b *testing.B) {
 }
 
 // BenchmarkTestContextExecute
-// 3handler, 70ns/op; 12handler, 120ns/op; 24handler, 180ns/op; 128handler, 1400ns/op
 func BenchmarkTestContextExecute(b *testing.B) {
 	add := func(ctx *Context[int]) {
 		*ctx.data += 1

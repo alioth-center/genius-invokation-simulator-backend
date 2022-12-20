@@ -29,3 +29,10 @@ func (c *CostContext) Cost() map[enum.ElementType]uint {
 
 	return result
 }
+
+// NewCostContext 新建一个空CostContext
+func NewCostContext() *CostContext {
+	return &CostContext{
+		need: map[enum.ElementType]uint{},
+	}
+}

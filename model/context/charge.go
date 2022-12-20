@@ -23,3 +23,10 @@ func (c ChargeContext) Charge() map[uint]int {
 
 	return result
 }
+
+// NewChargeContext 新建一个空的ChargeContext
+func NewChargeContext() *ChargeContext {
+	return &ChargeContext{
+		charges: map[uint]int{},
+	}
+}

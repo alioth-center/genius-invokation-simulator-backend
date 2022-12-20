@@ -2,7 +2,6 @@ package context
 
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 )
 
 type Damage struct {
@@ -83,4 +82,24 @@ func (d *DamageContext) Damage() map[uint]Damage {
 	return result
 }
 
-type DamageModifier func(ctx *modifier.Context[DamageContext])
+// NewEmptyDamageContext 新建一个空的DamageContext
+func NewEmptyDamageContext(skill, from, target uint, backgrounds []uint) *DamageContext {
+	return &DamageContext{
+		skillID:              skill,
+		sendPlayer:           from,
+		targetCharacter:      target,
+		backgroundCharacters: backgrounds,
+		damages:              map[uint]*Damage{},
+	}
+}
+
+// NewDamageContext 新建一个带有基础伤害的DamageContext
+func NewDamageContext(skill, from, target uint, backgrounds []uint, elementType enum.ElementType, damageAmount uint) *DamageContext {
+	return &DamageContext{
+		skillID:              skill,
+		sendPlayer:           from,
+		targetCharacter:      target,
+		backgroundCharacters: backgrounds,
+		damages:              map[uint]*Damage{target: &Damage{elementType: elementType, amount: damageAmount}},
+	}
+}

@@ -27,3 +27,10 @@ func (h HealContext) Heal() map[uint]uint {
 
 	return result
 }
+
+// NewHealContext 新建一个空的HealContext
+func NewHealContext() *HealContext {
+	return &HealContext{
+		heals: map[uint]uint{},
+	}
+}

@@ -44,8 +44,8 @@ func (c *Context[data]) Set(key string, value any) {
 	c.extendMap[key] = value
 }
 
-// NewContext 使用给定的data和handlers生成Context
-func NewContext[data any](ctx *data, handlers Chain[data]) *Context[data] {
+// newContext 使用给定的data和handlers生成Context
+func newContext[data any](ctx *data, handlers Chain[data]) *Context[data] {
 	return &Context[data]{
 		index:     0,
 		chain:     handlers,

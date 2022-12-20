@@ -5,27 +5,48 @@ import (
 )
 
 type testModifier struct {
-	info    Info
-	handler func(ctx *Context[int])
+	info      Info
+	innerData *int
+	handler   func(ctx *Context[int])
+	effective bool
 }
 
 func (t testModifier) Info() Info { return t.info }
 
-func (t testModifier) Handler() func(ctx *Context[int]) { return t.handler }
+func (t *testModifier) Handler() func(ctx *Context[int]) {
+	return func(ctx *Context[int]) {
+		*t.innerData = 114514
+		t.handler(ctx)
+	}
+}
 
-func (t testModifier) Clone() Modifier[int] { return nil }
+func (t testModifier) Clone() Modifier[int] {
+	return &testModifier{
+		info:      t.info,
+		innerData: new(int),
+		handler:   t.handler,
+	}
+}
 
 func (t testModifier) RoundReset() {}
 
-func (t testModifier) Effected() bool { return true }
+func (t testModifier) Effective() bool { return t.effective }
 
 func (t testModifier) EffectLeft() uint { return 0 }
 
 func newModifier(id uint, handler func(ctx *Context[int])) Modifier[int] {
-	return &testModifier{info: Info{ID: id}, handler: handler}
+	return &testModifier{info: Info{id: id}, handler: handler, innerData: new(int), effective: true}
 }
 
-func TestContext(t *testing.T) {
+func newModifierWithInnerData(id uint, handler func(ctx *Context[int]), data *int) Modifier[int] {
+	return &testModifier{info: Info{id: id}, handler: handler, innerData: data, effective: true}
+}
+
+func newModifierWithEffective(id uint, handler func(ctx *Context[int]), effective bool) Modifier[int] {
+	return &testModifier{info: Info{id: id}, handler: handler, innerData: new(int), effective: effective}
+}
+
+func TestContextExecute(t *testing.T) {
 	add := func(ctx *Context[int]) {
 		*ctx.data += 1
 	}
@@ -86,19 +107,183 @@ func TestContext(t *testing.T) {
 				handlers.Append(newModifier(uint(i), f))
 			}
 			data := 0
-			ctx := NewContext[int](&data, handlers)
-			ctx.Next()
+			handlers.Execute(&data)
 
-			if *ctx.data != tt.want {
-				t.Errorf("incorrect data: want %v, got %v", tt.want, *ctx.data)
+			if data != tt.want {
+				t.Errorf("incorrect data: want %v, got %v", tt.want, data)
 			}
 		})
 	}
 }
 
-// BenchmarkTestContextAdd
+func TestContextRemove(t *testing.T) {
+	add := func(ctx *Context[int]) {
+		*ctx.data += 1
+	}
+	addTwice := func(ctx *Context[int]) {
+		*ctx.data += 1
+		ctx.Next()
+		*ctx.data += 1
+	}
+	addBack := func(ctx *Context[int]) {
+		ctx.Next()
+		*ctx.data += 1
+	}
+
+	testCases := []struct {
+		name           string
+		addHandlers    []func(ctx *Context[int])
+		removeHandlers []uint
+		want           int
+	}{
+		{
+			name:           "TestContextRemove-1",
+			addHandlers:    []func(ctx *Context[int]){add, addTwice, addBack},
+			removeHandlers: []uint{1},
+			want:           2,
+		},
+		{
+			name:           "TestContextRemove-2",
+			addHandlers:    []func(ctx *Context[int]){add, addTwice, addTwice, addBack},
+			removeHandlers: []uint{1, 1, 1},
+			want:           4,
+		},
+		{
+			name:           "TestContextRemove-3",
+			addHandlers:    []func(ctx *Context[int]){},
+			removeHandlers: []uint{1, 1, 4},
+			want:           0,
+		},
+		{
+			name:           "TestContextRemove-4",
+			addHandlers:    []func(ctx *Context[int]){add, add, add, add, add},
+			removeHandlers: []uint{4, 2, 1, 3},
+			want:           1,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			handlers := NewChain[int]()
+			for i, f := range tt.addHandlers {
+				handlers.Append(newModifier(uint(i), f))
+			}
+			for _, id := range tt.removeHandlers {
+				handlers.Remove(id)
+			}
+			data := 0
+			handlers.Execute(&data)
+
+			if data != tt.want {
+				t.Errorf("incorrect data: want %v, got %v", tt.want, data)
+			}
+		})
+	}
+}
+
+func TestContextClone(t *testing.T) {
+	add := func(ctx *Context[int]) {
+		*ctx.data += 1
+	}
+	addTwice := func(ctx *Context[int]) {
+		*ctx.data += 1
+		ctx.Next()
+		*ctx.data += 1
+	}
+
+	testCases := []struct {
+		name       string
+		wantResult int
+		wantInner  int
+	}{
+		{
+			name:       "TestContextClone",
+			wantResult: 3,
+			wantInner:  0,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			handlers := NewChain[int]()
+			innerData := 0
+			handlers.Append(newModifierWithInnerData(0, add, &innerData))
+			handlers.Append(newModifier(1, add))
+			handlers.Append(newModifier(1, addTwice))
+
+			data := 0
+			preview := handlers.Clone()
+			preview.Execute(&data)
+
+			if data != tt.wantResult {
+				t.Errorf("incorrect result: want %v, got %v", tt.wantResult, data)
+			}
+
+			if innerData != tt.wantInner {
+				t.Errorf("incorrect data: want %v, got %v", tt.wantResult, data)
+			}
+		})
+	}
+}
+
+func TestContextClear(t *testing.T) {
+	t.Run("TestContextClear", func(t *testing.T) {
+		add := func(ctx *Context[int]) {
+			*ctx.data += 1
+		}
+		addTwice := func(ctx *Context[int]) {
+			*ctx.data += 1
+			ctx.Next()
+			*ctx.data += 1
+		}
+		handlers := NewChain[int]()
+		handlers.Append(newModifierWithEffective(0, add, false))
+		handlers.Append(newModifierWithEffective(1, addTwice, false))
+		data := 0
+		handlers.Execute(&data)
+
+		if handlers.size != 0 {
+			t.Errorf("incorrect clear result")
+		}
+	})
+}
+
+// BenchmarkTestContextRemove
+// 3handlers, 30ns/op; 12handlers, 100ns/op; 24handlers, 200ns/op; 128handlers, 1000ns/op
+func BenchmarkTestContextRemove(b *testing.B) {
+	add := func(ctx *Context[int]) {
+		*ctx.data += 1
+	}
+	addTwice := func(ctx *Context[int]) {
+		*ctx.data += 1
+		ctx.Next()
+		*ctx.data += 1
+	}
+	addBack := func(ctx *Context[int]) {
+		ctx.Next()
+		*ctx.data += 1
+	}
+	handlers := NewChain[int]()
+	for j := uint(0); j <= 128; j++ {
+		switch j % 3 {
+		case 0:
+			handlers.Append(newModifier(j, add))
+		case 1:
+			handlers.Append(newModifier(j, addTwice))
+		case 2:
+			handlers.Append(newModifier(j, addBack))
+		}
+	}
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		handlers.Remove(128)
+	}
+}
+
+// BenchmarkTestContextAppend
 // 3handler, 110ns/op; 12handler, 440ns/op; 24handler, 1100ns/op; 128handler, 17000ns/op
-func BenchmarkTestContextAdd(b *testing.B) {
+func BenchmarkTestContextAppend(b *testing.B) {
 	add := func(ctx *Context[int]) {
 		*ctx.data += 1
 	}
@@ -114,7 +299,7 @@ func BenchmarkTestContextAdd(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		handlers := NewChain[int]()
-		for j := uint(0); j <= 24; j++ {
+		for j := uint(0); j <= 128; j++ {
 			switch j % 3 {
 			case 0:
 				handlers.Append(newModifier(j, add))
@@ -157,7 +342,6 @@ func BenchmarkTestContextExecute(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		data := 0
-		ctx := NewContext(&data, handlers)
-		ctx.Next()
+		handlers.Execute(&data)
 	}
 }

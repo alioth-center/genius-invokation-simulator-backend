@@ -3,8 +3,9 @@
 ----
 
 | Branch | master | dev | release |
-| :--: | :--: | :--: |
-| status | [![Build Status](https://drone.sunist.cn/api/badges/sunist-c/genius-invokation-simulator-backend/status.svg?ref=refs/heads/master)](https://drone.sunist.cn/sunist-c/genius-invokation-simulator-backend) | [![Build Status](https://drone.sunist.cn/api/badges/sunist-c/genius-invokation-simulator-backend/status.svg?ref=refs/heads/dev)](https://drone.sunist.cn/sunist-c/genius-invokation-simulator-backend) | nil |
+| :--: | :--: | :--: | :--: |
+| drone-ci | [![Build Status](https://drone.sunist.cn/api/badges/sunist-c/genius-invokation-simulator-backend/status.svg?ref=refs/heads/master)](https://drone.sunist.cn/sunist-c/genius-invokation-simulator-backend) | [![Build Status](https://drone.sunist.cn/api/badges/sunist-c/genius-invokation-simulator-backend/status.svg?ref=refs/heads/dev)](https://drone.sunist.cn/sunist-c/genius-invokation-simulator-backend) | nil |
+| github-action | nil | nil | nil | 
  
 
 这里是原神(Genshin Impact)的《七圣召唤》模拟器，是参考原神3.3版本的「七圣召唤」玩法重新实现的后端(服务端)，包括所有的原神内的游戏内容，并拓展一些米哈游没有做的内容。
@@ -21,9 +22,10 @@
 - 22.12.15 战斗框架基本完成
 - 22.12.16 开始编写文档0.0.1版本
 - 22.12.16 (试验性)命令行操作对局
-- 22.12.19 对部份结构/实体进行了封装与优化，由于改动较大目前还未push。重新设计了HandlerChain的结构，HandlerChain目前的执行性能达到了每秒70万次，每个Chain含有128个HandlerFunc
-- 22.12.19 将ModifierChain分类为Local(仅对当前角色生效)和Global(对玩家的被激活角色生效)，由此产生的逻辑更改目前正在调试
-- 22.12.20 完成了大部份的ModifierContext和Event，重构、优化了部份entity和model
+- 22.12.19 对部份结构/实体进行了封装与优化，由于改动较大目前还未push。重新设计了HandlerChain的结构，修改已同步到dev分支中
+- 22.12.19 (dev branch)将ModifierChain分类为Local(仅对当前角色生效)和Global(对玩家的被激活角色生效)，由此产生的逻辑更改目前正在调试
+- 22.12.20 (dev branch)完成了大部份的ModifierContext和Event，重构、优化了部份entity和model
+- 22.12.21 (dev branch)优化了ModifierChain，完善了Event和EventMap，完成了ModifierContext
 
 ## Document
 

@@ -5,13 +5,13 @@ import (
 )
 
 type testModifier struct {
-	info      Info
+	info      uint
 	innerData *int
 	handler   func(ctx *Context[int])
 	effective bool
 }
 
-func (t testModifier) Info() Info { return t.info }
+func (t testModifier) ID() uint { return t.info }
 
 func (t *testModifier) Handler() func(ctx *Context[int]) {
 	return func(ctx *Context[int]) {
@@ -35,15 +35,15 @@ func (t testModifier) Effective() bool { return t.effective }
 func (t testModifier) EffectLeft() uint { return 0 }
 
 func newModifier(id uint, handler func(ctx *Context[int])) Modifier[int] {
-	return &testModifier{info: Info{id: id}, handler: handler, innerData: new(int), effective: true}
+	return &testModifier{info: id, handler: handler, innerData: new(int), effective: true}
 }
 
 func newModifierWithInnerData(id uint, handler func(ctx *Context[int]), data *int) Modifier[int] {
-	return &testModifier{info: Info{id: id}, handler: handler, innerData: data, effective: true}
+	return &testModifier{info: id, handler: handler, innerData: data, effective: true}
 }
 
 func newModifierWithEffective(id uint, handler func(ctx *Context[int]), effective bool) Modifier[int] {
-	return &testModifier{info: Info{id: id}, handler: handler, innerData: new(int), effective: effective}
+	return &testModifier{info: id, handler: handler, innerData: new(int), effective: effective}
 }
 
 func TestContextExecute(t *testing.T) {
@@ -212,8 +212,7 @@ func TestContextClone(t *testing.T) {
 			handlers.Append(newModifier(1, addTwice))
 
 			data := 0
-			preview := handlers.Clone()
-			preview.Execute(&data)
+			handlers.Preview(&data)
 
 			if data != tt.wantResult {
 				t.Errorf("incorrect result: want %v, got %v", tt.wantResult, data)
@@ -294,19 +293,20 @@ func BenchmarkTestContextAppend(b *testing.B) {
 		ctx.Next()
 		*ctx.data += 1
 	}
-
-	for i := 0; i < b.N; i++ {
-		handlers := NewChain[int]()
-		for j := uint(0); j <= 128; j++ {
-			switch j % 3 {
-			case 0:
-				handlers.Append(newModifier(j, add))
-			case 1:
-				handlers.Append(newModifier(j, addTwice))
-			case 2:
-				handlers.Append(newModifier(j, addBack))
-			}
+	handlers := NewChain[int]()
+	for j := uint(0); j <= 128; j++ {
+		switch j % 3 {
+		case 0:
+			handlers.Append(newModifier(j, add))
+		case 1:
+			handlers.Append(newModifier(j, addTwice))
+		case 2:
+			handlers.Append(newModifier(j, addBack))
 		}
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		handlers.Append(newModifier(129, add))
 	}
 }
 
@@ -325,7 +325,7 @@ func BenchmarkTestContextExecute(b *testing.B) {
 		*ctx.data += 1
 	}
 	handlers := NewChain[int]()
-	for j := uint(0); j <= 128; j++ {
+	for j := uint(0); j < 1; j++ {
 		switch j % 3 {
 		case 0:
 			handlers.Append(newModifier(j, add))

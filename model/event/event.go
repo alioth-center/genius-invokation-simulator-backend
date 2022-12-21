@@ -8,6 +8,6 @@ import (
 type Event interface {
 	ID() uint
 	TriggerAt() enum.TriggerType
-	Triggered(context.CallbackContext) bool
-	Callback() func(*context.CallbackContext)
+	CanTriggered(context.CallbackContext) bool
+	Callback(*context.CallbackContext)
 }

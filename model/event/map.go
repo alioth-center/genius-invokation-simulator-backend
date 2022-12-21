@@ -18,6 +18,14 @@ func (m *Map) Call(triggerType enum.TriggerType, ctx *context.CallbackContext) {
 	}
 }
 
+// Preview 预览某种类型的Event
+func (m Map) Preview(triggerType enum.TriggerType, ctx *context.CallbackContext) {
+	if m.sets.Exists(triggerType) {
+		set := m.sets.Get(triggerType)
+		set.preview(ctx)
+	}
+}
+
 // AddEvent 添加一个Event
 func (m *Map) AddEvent(event Event) {
 	if m.sets.Exists(event.TriggerAt()) {

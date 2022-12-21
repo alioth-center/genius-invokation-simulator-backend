@@ -370,3 +370,32 @@ func (m ModifierContext) RemoveGlobalHealModifiers() []modifier.Modifier[HealCon
 func (m ModifierContext) RemoveGlobalCostModifiers() []modifier.Modifier[CostContext] {
 	return m.removeGlobalCostModifiers
 }
+
+func NewModifierContext() *ModifierContext {
+	return &ModifierContext{
+		addLocalDirectAttackModifiers:     nil,
+		addLocalFinalAttackModifiers:      nil,
+		addLocalDefenceModifiers:          nil,
+		addLocalChargeModifiers:           nil,
+		addLocalHealModifiers:             nil,
+		addLocalCostModifiers:             nil,
+		addGlobalDirectAttackModifiers:    nil,
+		addGlobalFinalAttackModifiers:     nil,
+		addGlobalDefenceModifiers:         nil,
+		addGlobalChargeModifiers:          nil,
+		addGlobalHealModifiers:            nil,
+		addGlobalCostModifiers:            nil,
+		removeLocalDirectAttackModifiers:  nil,
+		removeLocalFinalAttackModifiers:   nil,
+		removeLocalDefenceModifiers:       nil,
+		removeLocalChargeModifiers:        nil,
+		removeLocalHealModifiers:          nil,
+		removeLocalCostModifiers:          nil,
+		removeGlobalDirectAttackModifiers: nil,
+		removeGlobalFinalAttackModifiers:  nil,
+		removeGlobalDefenceModifiers:      nil,
+		removeGlobalChargeModifiers:       nil,
+		removeGlobalHealModifiers:         nil,
+		removeGlobalCostModifiers:         nil,
+	}
+}

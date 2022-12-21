@@ -6,25 +6,8 @@ import (
 )
 
 type Event interface {
-	Info() Info
+	ID() uint
+	TriggerAt() enum.TriggerType
 	Triggered(context.CallbackContext) bool
 	Callback() func(*context.CallbackContext)
-}
-
-type Info struct {
-	triggerAt   enum.TriggerType
-	name        string
-	description string
-}
-
-func (i Info) TriggerAt() enum.TriggerType {
-	return i.triggerAt
-}
-
-func (i Info) Name() string {
-	return i.name
-}
-
-func (i Info) Description() string {
-	return i.description
 }

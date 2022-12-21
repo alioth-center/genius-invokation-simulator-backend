@@ -107,7 +107,7 @@ func (m *ModifierContext) AddLocalCostModifier(targetCharacter uint, handler mod
 	}
 }
 
-func (m *ModifierContext) AddGlobalDirectAttackModifiers(handler modifier.Modifier[DamageContext]) {
+func (m *ModifierContext) AddGlobalDirectAttackModifier(handler modifier.Modifier[DamageContext]) {
 	if m.addGlobalDirectAttackModifiers != nil {
 		m.addGlobalDirectAttackModifiers = append(m.addGlobalDirectAttackModifiers, handler)
 	} else {
@@ -115,7 +115,7 @@ func (m *ModifierContext) AddGlobalDirectAttackModifiers(handler modifier.Modifi
 	}
 }
 
-func (m *ModifierContext) AddGlobalFinalAttackModifiers(handler modifier.Modifier[DamageContext]) {
+func (m *ModifierContext) AddGlobalFinalAttackModifier(handler modifier.Modifier[DamageContext]) {
 	if m.addGlobalFinalAttackModifiers != nil {
 		m.addGlobalFinalAttackModifiers = append(m.addGlobalFinalAttackModifiers, handler)
 	} else {
@@ -123,7 +123,7 @@ func (m *ModifierContext) AddGlobalFinalAttackModifiers(handler modifier.Modifie
 	}
 }
 
-func (m *ModifierContext) AddGlobalDefenceModifiers(handler modifier.Modifier[DamageContext]) {
+func (m *ModifierContext) AddGlobalDefenceModifier(handler modifier.Modifier[DamageContext]) {
 	if m.addGlobalDefenceModifiers != nil {
 		m.addGlobalDefenceModifiers = append(m.addGlobalDefenceModifiers, handler)
 	} else {
@@ -131,7 +131,7 @@ func (m *ModifierContext) AddGlobalDefenceModifiers(handler modifier.Modifier[Da
 	}
 }
 
-func (m *ModifierContext) AddGlobalChargeModifiers(handler modifier.Modifier[ChargeContext]) {
+func (m *ModifierContext) AddGlobalChargeModifier(handler modifier.Modifier[ChargeContext]) {
 	if m.addGlobalChargeModifiers != nil {
 		m.addGlobalChargeModifiers = append(m.addGlobalChargeModifiers, handler)
 	} else {
@@ -139,7 +139,7 @@ func (m *ModifierContext) AddGlobalChargeModifiers(handler modifier.Modifier[Cha
 	}
 }
 
-func (m *ModifierContext) AddGlobalHealModifiers(handler modifier.Modifier[HealContext]) {
+func (m *ModifierContext) AddGlobalHealModifier(handler modifier.Modifier[HealContext]) {
 	if m.addGlobalHealModifiers != nil {
 		m.addGlobalHealModifiers = append(m.addGlobalHealModifiers, handler)
 	} else {
@@ -147,7 +147,7 @@ func (m *ModifierContext) AddGlobalHealModifiers(handler modifier.Modifier[HealC
 	}
 }
 
-func (m *ModifierContext) AddGlobalCostModifiers(handler modifier.Modifier[CostContext]) {
+func (m *ModifierContext) AddGlobalCostModifier(handler modifier.Modifier[CostContext]) {
 	if m.addGlobalCostModifiers != nil {
 		m.addGlobalCostModifiers = append(m.addGlobalCostModifiers, handler)
 	} else {
@@ -155,7 +155,7 @@ func (m *ModifierContext) AddGlobalCostModifiers(handler modifier.Modifier[CostC
 	}
 }
 
-func (m *ModifierContext) RemoveLocalDirectAttackModifiers(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
+func (m *ModifierContext) RemoveLocalDirectAttackModifier(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
 	var null kv.Map[uint, []modifier.Modifier[DamageContext]] = nil
 	if m.removeLocalDirectAttackModifiers != null {
 		modifiers := append(m.removeLocalDirectAttackModifiers.Get(targetCharacter), handler)
@@ -167,7 +167,7 @@ func (m *ModifierContext) RemoveLocalDirectAttackModifiers(targetCharacter uint,
 	}
 }
 
-func (m *ModifierContext) RemoveLocalFinalAttackModifiers(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
+func (m *ModifierContext) RemoveLocalFinalAttackModifier(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
 	var null kv.Map[uint, []modifier.Modifier[DamageContext]] = nil
 	if m.removeLocalFinalAttackModifiers != null {
 		modifiers := append(m.removeLocalFinalAttackModifiers.Get(targetCharacter), handler)
@@ -179,7 +179,7 @@ func (m *ModifierContext) RemoveLocalFinalAttackModifiers(targetCharacter uint, 
 	}
 }
 
-func (m *ModifierContext) RemoveLocalDefenceModifiers(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
+func (m *ModifierContext) RemoveLocalDefenceModifier(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
 	var null kv.Map[uint, []modifier.Modifier[DamageContext]] = nil
 	if m.removeLocalDefenceModifiers != null {
 		modifiers := append(m.removeLocalDefenceModifiers.Get(targetCharacter), handler)
@@ -191,7 +191,7 @@ func (m *ModifierContext) RemoveLocalDefenceModifiers(targetCharacter uint, hand
 	}
 }
 
-func (m *ModifierContext) RemoveLocalChargeModifiers(targetCharacter uint, handler modifier.Modifier[ChargeContext]) {
+func (m *ModifierContext) RemoveLocalChargeModifier(targetCharacter uint, handler modifier.Modifier[ChargeContext]) {
 	var null kv.Map[uint, []modifier.Modifier[ChargeContext]] = nil
 	if m.removeLocalChargeModifiers != null {
 		modifiers := append(m.removeLocalChargeModifiers.Get(targetCharacter), handler)
@@ -203,7 +203,7 @@ func (m *ModifierContext) RemoveLocalChargeModifiers(targetCharacter uint, handl
 	}
 }
 
-func (m *ModifierContext) RemoveLocalHealModifiers(targetCharacter uint, handler modifier.Modifier[HealContext]) {
+func (m *ModifierContext) RemoveLocalHealModifier(targetCharacter uint, handler modifier.Modifier[HealContext]) {
 	var null kv.Map[uint, []modifier.Modifier[HealContext]] = nil
 	if m.removeLocalHealModifiers != null {
 		modifiers := append(m.removeLocalHealModifiers.Get(targetCharacter), handler)
@@ -215,7 +215,7 @@ func (m *ModifierContext) RemoveLocalHealModifiers(targetCharacter uint, handler
 	}
 }
 
-func (m *ModifierContext) RemoveLocalCostModifiers(targetCharacter uint, handler modifier.Modifier[CostContext]) {
+func (m *ModifierContext) RemoveLocalCostModifier(targetCharacter uint, handler modifier.Modifier[CostContext]) {
 	var null kv.Map[uint, []modifier.Modifier[CostContext]] = nil
 	if m.removeLocalCostModifiers != null {
 		modifiers := append(m.removeLocalCostModifiers.Get(targetCharacter), handler)
@@ -227,7 +227,7 @@ func (m *ModifierContext) RemoveLocalCostModifiers(targetCharacter uint, handler
 	}
 }
 
-func (m *ModifierContext) RemoveGlobalDirectAttackModifiers(handler modifier.Modifier[DamageContext]) {
+func (m *ModifierContext) RemoveGlobalDirectAttackModifier(handler modifier.Modifier[DamageContext]) {
 	if m.removeGlobalDirectAttackModifiers != nil {
 		m.removeGlobalDirectAttackModifiers = append(m.removeGlobalDirectAttackModifiers, handler)
 	} else {
@@ -235,7 +235,7 @@ func (m *ModifierContext) RemoveGlobalDirectAttackModifiers(handler modifier.Mod
 	}
 }
 
-func (m *ModifierContext) RemoveGlobalFinalAttackModifiers(handler modifier.Modifier[DamageContext]) {
+func (m *ModifierContext) RemoveGlobalFinalAttackModifier(handler modifier.Modifier[DamageContext]) {
 	if m.removeGlobalFinalAttackModifiers != nil {
 		m.removeGlobalFinalAttackModifiers = append(m.removeGlobalFinalAttackModifiers, handler)
 	} else {
@@ -243,7 +243,7 @@ func (m *ModifierContext) RemoveGlobalFinalAttackModifiers(handler modifier.Modi
 	}
 }
 
-func (m *ModifierContext) RemoveGlobalDefenceModifiers(handler modifier.Modifier[DamageContext]) {
+func (m *ModifierContext) RemoveGlobalDefenceModifier(handler modifier.Modifier[DamageContext]) {
 	if m.removeGlobalDefenceModifiers != nil {
 		m.removeGlobalDefenceModifiers = append(m.removeGlobalDefenceModifiers, handler)
 	} else {
@@ -251,7 +251,7 @@ func (m *ModifierContext) RemoveGlobalDefenceModifiers(handler modifier.Modifier
 	}
 }
 
-func (m *ModifierContext) RemoveGlobalChargeModifiers(handler modifier.Modifier[ChargeContext]) {
+func (m *ModifierContext) RemoveGlobalChargeModifier(handler modifier.Modifier[ChargeContext]) {
 	if m.removeGlobalChargeModifiers != nil {
 		m.removeGlobalChargeModifiers = append(m.removeGlobalChargeModifiers, handler)
 	} else {
@@ -259,7 +259,7 @@ func (m *ModifierContext) RemoveGlobalChargeModifiers(handler modifier.Modifier[
 	}
 }
 
-func (m *ModifierContext) RemoveGlobalHealModifiers(handler modifier.Modifier[HealContext]) {
+func (m *ModifierContext) RemoveGlobalHealModifier(handler modifier.Modifier[HealContext]) {
 	if m.removeGlobalHealModifiers != nil {
 		m.removeGlobalHealModifiers = append(m.removeGlobalHealModifiers, handler)
 	} else {
@@ -267,10 +267,106 @@ func (m *ModifierContext) RemoveGlobalHealModifiers(handler modifier.Modifier[He
 	}
 }
 
-func (m *ModifierContext) RemoveGlobalCostModifiers(handler modifier.Modifier[CostContext]) {
+func (m *ModifierContext) RemoveGlobalCostModifier(handler modifier.Modifier[CostContext]) {
 	if m.removeGlobalCostModifiers != nil {
 		m.removeGlobalCostModifiers = append(m.removeGlobalCostModifiers, handler)
 	} else {
 		m.removeGlobalCostModifiers = []modifier.Modifier[CostContext]{handler}
 	}
+}
+
+func (m ModifierContext) AddLocalDirectAttackModifiers() kv.Map[uint, []modifier.Modifier[DamageContext]] {
+	return m.addLocalDirectAttackModifiers
+}
+
+func (m ModifierContext) AddLocalFinalAttackModifiers() kv.Map[uint, []modifier.Modifier[DamageContext]] {
+	return m.addLocalFinalAttackModifiers
+}
+
+func (m ModifierContext) AddLocalDefenceModifiers() kv.Map[uint, []modifier.Modifier[DamageContext]] {
+	return m.addLocalDefenceModifiers
+}
+
+func (m ModifierContext) AddLocalChargeModifiers() kv.Map[uint, []modifier.Modifier[ChargeContext]] {
+	return m.addLocalChargeModifiers
+}
+
+func (m ModifierContext) AddLocalHealModifiers() kv.Map[uint, []modifier.Modifier[HealContext]] {
+	return m.addLocalHealModifiers
+}
+
+func (m ModifierContext) AddLocalCostModifiers() kv.Map[uint, []modifier.Modifier[CostContext]] {
+	return m.addLocalCostModifiers
+}
+
+func (m ModifierContext) AddGlobalDirectAttackModifiers() []modifier.Modifier[DamageContext] {
+	return m.addGlobalDirectAttackModifiers
+}
+
+func (m ModifierContext) AddGlobalFinalAttackModifiers() []modifier.Modifier[DamageContext] {
+	return m.addGlobalFinalAttackModifiers
+}
+
+func (m ModifierContext) AddGlobalDefenceModifiers() []modifier.Modifier[DamageContext] {
+	return m.addGlobalDefenceModifiers
+}
+
+func (m ModifierContext) AddGlobalChargeModifiers() []modifier.Modifier[ChargeContext] {
+	return m.addGlobalChargeModifiers
+}
+
+func (m ModifierContext) AddGlobalHealModifiers() []modifier.Modifier[HealContext] {
+	return m.addGlobalHealModifiers
+}
+
+func (m ModifierContext) AddGlobalCostModifiers() []modifier.Modifier[CostContext] {
+	return m.addGlobalCostModifiers
+}
+
+func (m ModifierContext) RemoveLocalDirectAttackModifiers() kv.Map[uint, []modifier.Modifier[DamageContext]] {
+	return m.removeLocalDirectAttackModifiers
+}
+
+func (m ModifierContext) RemoveLocalFinalAttackModifiers() kv.Map[uint, []modifier.Modifier[DamageContext]] {
+	return m.removeLocalFinalAttackModifiers
+}
+
+func (m ModifierContext) RemoveLocalDefenceModifiers() kv.Map[uint, []modifier.Modifier[DamageContext]] {
+	return m.removeLocalDefenceModifiers
+}
+
+func (m ModifierContext) RemoveLocalChargeModifiers() kv.Map[uint, []modifier.Modifier[ChargeContext]] {
+	return m.removeLocalChargeModifiers
+}
+
+func (m ModifierContext) RemoveLocalHealModifiers() kv.Map[uint, []modifier.Modifier[HealContext]] {
+	return m.removeLocalHealModifiers
+}
+
+func (m ModifierContext) RemoveLocalCostModifiers() kv.Map[uint, []modifier.Modifier[CostContext]] {
+	return m.removeLocalCostModifiers
+}
+
+func (m ModifierContext) RemoveGlobalDirectAttackModifiers() []modifier.Modifier[DamageContext] {
+	return m.removeGlobalDirectAttackModifiers
+}
+
+func (m ModifierContext) RemoveGlobalFinalAttackModifiers() []modifier.Modifier[DamageContext] {
+	return m.removeGlobalFinalAttackModifiers
+}
+
+func (m ModifierContext) RemoveGlobalDefenceModifiers() []modifier.Modifier[DamageContext] {
+	return m.removeGlobalDefenceModifiers
+}
+
+func (m ModifierContext) RemoveGlobalChargeModifiers() []modifier.Modifier[ChargeContext] {
+	return m.removeGlobalChargeModifiers
+}
+
+func (m ModifierContext) RemoveGlobalHealModifiers() []modifier.Modifier[HealContext] {
+	return m.removeGlobalHealModifiers
+}
+
+func (m ModifierContext) RemoveGlobalCostModifiers() []modifier.Modifier[CostContext] {
+	return m.removeGlobalCostModifiers
 }

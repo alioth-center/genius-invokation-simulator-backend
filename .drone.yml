@@ -1,0 +1,47 @@
+kind: pipeline
+type: docker
+name: build
+
+clone:
+    disable: false
+    depth: 1
+
+steps:
+    - name: golangci-lint
+      image: golang:1.19
+      pull: if-not-exist
+      commands:
+          - go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.1
+          - go mod tidy
+          - golangci-lint run -v -D unused
+
+    - name: go build
+      image: golang:1.19
+      pull: if-not-exist
+      commands:
+          - go mod tidy
+          - go build .
+
+    - name: go test
+      image: golang:1.19
+      pull: if-not-exist
+      commands:
+          - go mod tidy
+          - go test -v ./...
+
+    - name: go bench test
+      image: golang:1.19
+      pull: if-not-exist
+      commands:
+          - go mod tidy
+          - go test -bench=. -benchtime=10s ./... -run=^$
+
+    - name: feishu notification
+      image: serialt/drone-feishu-message
+      pull: if-not-exists
+      settings:
+          token:
+              from_secret: notification_token
+          sha_link: true
+      when:
+          status: [ failure, success ]

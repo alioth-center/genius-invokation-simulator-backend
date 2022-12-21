@@ -4,21 +4,21 @@ type Simple[key comparable, value any] struct {
 	data map[key]value
 }
 
-func (m Simple[key, value]) Exists(key key) bool {
-	_, ok := m.data[key]
+func (m Simple[key, value]) Exists(k key) bool {
+	_, ok := m.data[k]
 	return ok
 }
 
-func (m Simple[key, value]) Get(key key) value {
-	return m.data[key]
+func (m Simple[key, value]) Get(k key) value {
+	return m.data[k]
 }
 
-func (m *Simple[key, value]) Set(key key, data value) {
-	m.data[key] = data
+func (m *Simple[key, value]) Set(k key, data value) {
+	m.data[k] = data
 }
 
-func (m *Simple[key, value]) Remove(key key) {
-	delete(m.data, key)
+func (m *Simple[key, value]) Remove(k key) {
+	delete(m.data, k)
 }
 
 func (m *Simple[key, value]) Range(f func(key, value) bool) {

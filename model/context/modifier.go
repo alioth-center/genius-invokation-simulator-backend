@@ -36,7 +36,8 @@ type ModifierContext struct {
 }
 
 func (m *ModifierContext) AddLocalDirectAttackModifier(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
-	if m.addLocalDirectAttackModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[DamageContext]] = nil
+	if m.addLocalDirectAttackModifiers != null {
 		modifiers := append(m.addLocalDirectAttackModifiers.Get(targetCharacter), handler)
 		m.addLocalDirectAttackModifiers.Set(targetCharacter, modifiers)
 	} else {
@@ -47,7 +48,8 @@ func (m *ModifierContext) AddLocalDirectAttackModifier(targetCharacter uint, han
 }
 
 func (m *ModifierContext) AddLocalFinalAttackModifier(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
-	if m.addLocalFinalAttackModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[DamageContext]] = nil
+	if m.addLocalFinalAttackModifiers != null {
 		modifiers := append(m.addLocalFinalAttackModifiers.Get(targetCharacter), handler)
 		m.addLocalFinalAttackModifiers.Set(targetCharacter, modifiers)
 	} else {
@@ -58,7 +60,8 @@ func (m *ModifierContext) AddLocalFinalAttackModifier(targetCharacter uint, hand
 }
 
 func (m *ModifierContext) AddLocalDefenceModifier(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
-	if m.addLocalDefenceModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[DamageContext]] = nil
+	if m.addLocalDefenceModifiers != null {
 		modifiers := append(m.addLocalDefenceModifiers.Get(targetCharacter), handler)
 		m.addLocalDefenceModifiers.Set(targetCharacter, modifiers)
 	} else {
@@ -69,7 +72,8 @@ func (m *ModifierContext) AddLocalDefenceModifier(targetCharacter uint, handler 
 }
 
 func (m *ModifierContext) AddLocalChargeModifier(targetCharacter uint, handler modifier.Modifier[ChargeContext]) {
-	if m.addLocalChargeModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[ChargeContext]] = nil
+	if m.addLocalChargeModifiers != null {
 		modifiers := append(m.addLocalChargeModifiers.Get(targetCharacter), handler)
 		m.addLocalChargeModifiers.Set(targetCharacter, modifiers)
 	} else {
@@ -80,7 +84,8 @@ func (m *ModifierContext) AddLocalChargeModifier(targetCharacter uint, handler m
 }
 
 func (m *ModifierContext) AddLocalHealModifier(targetCharacter uint, handler modifier.Modifier[HealContext]) {
-	if m.addLocalHealModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[HealContext]] = nil
+	if m.addLocalHealModifiers != null {
 		modifiers := append(m.addLocalHealModifiers.Get(targetCharacter), handler)
 		m.addLocalHealModifiers.Set(targetCharacter, modifiers)
 	} else {
@@ -91,7 +96,8 @@ func (m *ModifierContext) AddLocalHealModifier(targetCharacter uint, handler mod
 }
 
 func (m *ModifierContext) AddLocalCostModifier(targetCharacter uint, handler modifier.Modifier[CostContext]) {
-	if m.addLocalCostModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[CostContext]] = nil
+	if m.addLocalCostModifiers != null {
 		modifiers := append(m.addLocalCostModifiers.Get(targetCharacter), handler)
 		m.addLocalCostModifiers.Set(targetCharacter, modifiers)
 	} else {
@@ -150,7 +156,8 @@ func (m *ModifierContext) AddGlobalCostModifiers(handler modifier.Modifier[CostC
 }
 
 func (m *ModifierContext) RemoveLocalDirectAttackModifiers(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
-	if m.removeLocalDirectAttackModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[DamageContext]] = nil
+	if m.removeLocalDirectAttackModifiers != null {
 		modifiers := append(m.removeLocalDirectAttackModifiers.Get(targetCharacter), handler)
 		m.removeLocalDirectAttackModifiers.Set(targetCharacter, modifiers)
 	} else {
@@ -161,7 +168,8 @@ func (m *ModifierContext) RemoveLocalDirectAttackModifiers(targetCharacter uint,
 }
 
 func (m *ModifierContext) RemoveLocalFinalAttackModifiers(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
-	if m.removeLocalFinalAttackModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[DamageContext]] = nil
+	if m.removeLocalFinalAttackModifiers != null {
 		modifiers := append(m.removeLocalFinalAttackModifiers.Get(targetCharacter), handler)
 		m.removeLocalFinalAttackModifiers.Set(targetCharacter, modifiers)
 	} else {
@@ -172,7 +180,8 @@ func (m *ModifierContext) RemoveLocalFinalAttackModifiers(targetCharacter uint, 
 }
 
 func (m *ModifierContext) RemoveLocalDefenceModifiers(targetCharacter uint, handler modifier.Modifier[DamageContext]) {
-	if m.removeLocalDefenceModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[DamageContext]] = nil
+	if m.removeLocalDefenceModifiers != null {
 		modifiers := append(m.removeLocalDefenceModifiers.Get(targetCharacter), handler)
 		m.removeLocalDefenceModifiers.Set(targetCharacter, modifiers)
 	} else {
@@ -183,7 +192,8 @@ func (m *ModifierContext) RemoveLocalDefenceModifiers(targetCharacter uint, hand
 }
 
 func (m *ModifierContext) RemoveLocalChargeModifiers(targetCharacter uint, handler modifier.Modifier[ChargeContext]) {
-	if m.removeLocalChargeModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[ChargeContext]] = nil
+	if m.removeLocalChargeModifiers != null {
 		modifiers := append(m.removeLocalChargeModifiers.Get(targetCharacter), handler)
 		m.removeLocalChargeModifiers.Set(targetCharacter, modifiers)
 	} else {
@@ -194,7 +204,8 @@ func (m *ModifierContext) RemoveLocalChargeModifiers(targetCharacter uint, handl
 }
 
 func (m *ModifierContext) RemoveLocalHealModifiers(targetCharacter uint, handler modifier.Modifier[HealContext]) {
-	if m.removeLocalHealModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[HealContext]] = nil
+	if m.removeLocalHealModifiers != null {
 		modifiers := append(m.removeLocalHealModifiers.Get(targetCharacter), handler)
 		m.removeLocalHealModifiers.Set(targetCharacter, modifiers)
 	} else {
@@ -205,7 +216,8 @@ func (m *ModifierContext) RemoveLocalHealModifiers(targetCharacter uint, handler
 }
 
 func (m *ModifierContext) RemoveLocalCostModifiers(targetCharacter uint, handler modifier.Modifier[CostContext]) {
-	if m.removeLocalCostModifiers != nil {
+	var null kv.Map[uint, []modifier.Modifier[CostContext]] = nil
+	if m.removeLocalCostModifiers != null {
 		modifiers := append(m.removeLocalCostModifiers.Get(targetCharacter), handler)
 		m.removeLocalCostModifiers.Set(targetCharacter, modifiers)
 	} else {

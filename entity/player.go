@@ -5,7 +5,10 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
 )
 
-type Player struct {
+type Player interface {
+}
+
+type player struct {
 	uid  uint   // uid 玩家的UID，由其他模块托管
 	name string // name 玩家的名称
 
@@ -21,7 +24,14 @@ type Player struct {
 	globalDirectAttackModifiers AttackModifiers  // globalDirectAttackModifiers 全局直接攻击修正
 	globalFinalAttackModifiers  AttackModifiers  // globalFinalAttackModifiers 全局最终攻击修正
 	globalDefenceModifiers      DefenceModifiers // globalDefenceModifiers 全局防御修正
+	globalHealModifiers         HealModifiers    // globalHealModifiers 全局治疗修正
+	globalChargeModifiers       ChargeModifiers  // globalChargeModifiers 全局充能修正
+	globalCostModifiers         CostModifiers    // globalCostModifiers 全局费用修正
 
 	cooperativeAttacks []CooperativeSkill // cooperativeAttacks 协同攻击技能
-	callbackEvents     event.Set          // callbackEvents 回调事件集合
+	callbackEvents     event.Map          // callbackEvents 回调事件集合
+}
+
+func NewPlayer() Player {
+	return &player{}
 }

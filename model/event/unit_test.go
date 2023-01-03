@@ -19,6 +19,8 @@ func (t testEvent) TriggerAt() enum.TriggerType { return t.trigger }
 
 func (t testEvent) CanTriggered(callbackContext context.CallbackContext) bool { return t.enable }
 
+func (t testEvent) NeedClear() bool { return true }
+
 func (t testEvent) Callback(ctx *context.CallbackContext) { t.handler(ctx) }
 
 func newTestEvent(id uint, trigger enum.TriggerType, enable bool, handler func(callbackContext *context.CallbackContext)) Event {

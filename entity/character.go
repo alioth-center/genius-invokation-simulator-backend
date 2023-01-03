@@ -50,11 +50,20 @@ type Character interface {
 	// Status 角色的状态
 	Status() enum.CharacterStatus
 
+	// SwitchUp 切换到前台
+	SwitchUp()
+
+	// SwitchDown 切换到后台
+	SwitchDown()
+
 	// ExecuteCharge 根据ChargeContext给角色增加或减少MP
 	ExecuteCharge(ctx *context.ChargeContext)
 
 	// ExecuteHeal 根据HealContext给角色进行治疗
 	ExecuteHeal(ctx *context.HealContext)
+
+	// PreviewCostModify 预览CostModifiers的效果
+	PreviewCostModify(ctx *context.CostContext)
 
 	// ExecuteCostModify 使用角色的CostModifiers对CostContext进行修正
 	ExecuteCostModify(ctx *context.CostContext)
@@ -102,6 +111,14 @@ type character struct {
 	localCostModifiers         CostModifiers    // localCostModifiers 本地费用修正
 }
 
+func (c *character) SwitchUp() {
+	c.status = enum.CharacterStatusActive
+}
+
+func (c *character) SwitchDown() {
+	c.status = enum.CharacterStatusBackground
+}
+
 func (c *character) ExecuteCharge(ctx *context.ChargeContext) {
 	c.localChargeModifiers.Execute(ctx)
 	executeAmount := ctx.Charge()[c.id]
@@ -130,6 +147,10 @@ func (c *character) ExecuteHeal(ctx *context.HealContext) {
 	} else {
 		c.currentHP += executeAmount
 	}
+}
+
+func (c *character) PreviewCostModify(ctx *context.CostContext) {
+	c.localCostModifiers.Preview(ctx)
 }
 
 func (c *character) ExecuteCostModify(ctx *context.CostContext) {

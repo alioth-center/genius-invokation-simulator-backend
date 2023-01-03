@@ -1,12 +1,5 @@
 package kv
 
-type Pair[key, value any] interface {
-	Key() key
-	Value() value
-	SetKey(key)
-	SetValue(value)
-}
-
 type pair[key, value any] struct {
 	k key
 	v value

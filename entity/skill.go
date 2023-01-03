@@ -7,13 +7,13 @@ import (
 
 type Skill interface {
 	ID() uint
-	Name() string
 	Type() enum.SkillType
 }
 
 type AttackSkill interface {
-	Cost()
-	BaseDamage() *context.DamageContext
+	Skill
+	Cost() Cost
+	BaseDamage(target, self uint, background []uint) *context.DamageContext
 }
 
 type CooperativeSkill interface {

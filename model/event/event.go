@@ -9,5 +9,6 @@ type Event interface {
 	ID() uint
 	TriggerAt() enum.TriggerType
 	CanTriggered(context.CallbackContext) bool
+	NeedClear() bool
 	Callback(*context.CallbackContext)
 }

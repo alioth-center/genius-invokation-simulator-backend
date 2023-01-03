@@ -69,10 +69,80 @@ func TestCostEquals(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			originCost := newCostFromMap(tt.origin)
-			otherCost := newCostFromMap(tt.cost)
+			originCost := NewCostFromMap(tt.origin)
+			otherCost := NewCostFromMap(tt.cost)
 			if result := originCost.Equals(*otherCost); result != tt.want {
 				t.Errorf("incorrect result, want %v, got %v", tt.want, result)
+			}
+		})
+	}
+}
+
+func TestCostAdd(t *testing.T) {
+	tests := []struct {
+		name   string
+		origin map[enum.ElementType]uint
+		other  map[enum.ElementType]uint
+		want   map[enum.ElementType]uint
+	}{
+		{
+			name:   "TestCostAdd-1",
+			origin: map[enum.ElementType]uint{},
+			other:  map[enum.ElementType]uint{enum.ElementCryo: 114514},
+			want:   map[enum.ElementType]uint{enum.ElementCryo: 114514},
+		},
+		{
+			name:   "TestCostAdd-2",
+			origin: map[enum.ElementType]uint{enum.ElementPyro: 1},
+			other:  map[enum.ElementType]uint{enum.ElementCryo: 1},
+			want:   map[enum.ElementType]uint{enum.ElementCryo: 1, enum.ElementPyro: 1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cost := NewCostFromMap(tt.origin)
+			other := NewCostFromMap(tt.other)
+			cost.Add(*other)
+			for element, amount := range cost.costs {
+				if tt.want[element] != amount {
+					t.Errorf("incorrect result, want %v, got %v", tt.want[element], amount)
+				}
+			}
+		})
+	}
+}
+
+func TestCostSub(t *testing.T) {
+	tests := []struct {
+		name   string
+		origin map[enum.ElementType]uint
+		other  map[enum.ElementType]uint
+		want   map[enum.ElementType]uint
+	}{
+		{
+			name:   "TestCostSub-1",
+			origin: map[enum.ElementType]uint{enum.ElementCryo: 114514},
+			other:  map[enum.ElementType]uint{enum.ElementCryo: 514},
+			want:   map[enum.ElementType]uint{enum.ElementCryo: 114000},
+		},
+		{
+			name:   "TestCostSub-2",
+			origin: map[enum.ElementType]uint{enum.ElementPyro: 1},
+			other:  map[enum.ElementType]uint{enum.ElementCryo: 1},
+			want:   map[enum.ElementType]uint{enum.ElementPyro: 1, enum.ElementCryo: 0},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cost := NewCostFromMap(tt.origin)
+			other := NewCostFromMap(tt.other)
+			cost.Pay(*other)
+			for element, amount := range cost.costs {
+				if tt.want[element] != amount {
+					t.Errorf("incorrect result, want %v, got %v", tt.want[element], amount)
+				}
 			}
 		})
 	}
@@ -90,8 +160,8 @@ func BenchmarkTestCostEquals(b *testing.B) {
 		cost:   map[enum.ElementType]uint{enum.ElementCurrency: 3, enum.ElementNone: 2},
 		want:   true,
 	}
-	originCost := newCostFromMap(tt.origin)
-	otherCost := newCostFromMap(tt.cost)
+	originCost := NewCostFromMap(tt.origin)
+	otherCost := NewCostFromMap(tt.cost)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if got := originCost.Equals(*otherCost); got != tt.want {

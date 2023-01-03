@@ -9,12 +9,14 @@ type set struct {
 	events kv.Map[uint, Event]
 }
 
-// call 调用EventSet中的所有Event，并在调用完成后清理调用过的Event
+// call 调用EventSet中的所有Event，并在调用完成后清理需要清理的Event
 func (s *set) call(ctx *context.CallbackContext) {
 	s.events.Range(func(id uint, event Event) bool {
 		if event.CanTriggered(*ctx) {
 			event.Callback(ctx)
-			s.events.Remove(id)
+			if event.NeedClear() {
+				s.events.Remove(id)
+			}
 		}
 		return true
 	})

@@ -113,7 +113,7 @@ func (c *character) ExecuteCharge(ctx *context.ChargeContext) {
 			c.currentMP += uint(executeAmount)
 		}
 	} else {
-		if c.currentMP-uint(executeAmount) < 0 {
+		if c.currentMP < uint(executeAmount) {
 			c.currentMP = 0
 		} else {
 			c.currentMP -= uint(executeAmount)

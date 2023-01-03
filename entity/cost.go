@@ -1,6 +1,19 @@
 package entity
 
-import "github.com/sunist-c/genius-invokation-simulator-backend/enum"
+import (
+	"math/rand"
+	"time"
+
+	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
+)
+
+var (
+	random *rand.Rand = rand.New(rand.NewSource(time.Now().UnixMilli()))
+)
+
+func init() {
+	random.Seed(time.Now().UnixNano())
+}
 
 type Cost struct {
 	costs map[enum.ElementType]uint
@@ -10,14 +23,17 @@ type Cost struct {
 // sub 从Cost中减少amount个element类型的元素骰子
 func (c *Cost) sub(element enum.ElementType, amount uint) {
 	if c.costs[element] >= amount {
+		c.total -= amount
 		c.costs[element] -= amount
 	} else {
+		c.total -= c.costs[element]
 		c.costs[element] = 0
 	}
 }
 
 // add 向Cost中增加amount个element类型的元素骰子
 func (c *Cost) add(element enum.ElementType, amount uint) {
+	c.total += amount
 	c.costs[element] += amount
 }
 
@@ -92,4 +108,29 @@ func NewCostFromMap(m map[enum.ElementType]uint) *Cost {
 	}
 
 	return result
+}
+
+// NewRandomCost 创建一个随机费用的Cost
+func NewRandomCost(elementAmount uint) *Cost {
+	costMap := map[enum.ElementType]uint{}
+	for elementAmount > 0 {
+		if elementAmount <= 21 {
+			source := random.Uint64()
+			for i := uint(0); i < elementAmount; i++ {
+				element := enum.ElementType(source % 8)
+				costMap[element] += 1
+				source = source >> 3
+			}
+			elementAmount = 0
+		} else {
+			source := random.Uint64()
+			for i := 0; i < 21; i++ {
+				element := enum.ElementType(source % 8)
+				costMap[element] += 1
+				source = source >> 3
+			}
+			elementAmount -= 21
+		}
+	}
+	return NewCostFromMap(costMap)
 }

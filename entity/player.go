@@ -5,7 +5,15 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/event"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
+	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 )
+
+type PlayerInfo interface {
+	UID() uint
+	Name() string
+	Cards()
+	Characters() map[uint]Character
+}
 
 type Player interface {
 	UID() uint
@@ -15,6 +23,7 @@ type Player interface {
 	StaticCost() Cost
 	HoldingCost() Cost
 	SwitchCharacter(target uint)
+	ExecuteAttack(skill, target uint, background []uint) (result *context.DamageContext)
 	ExecuteModify(ctx *context.ModifierContext)
 	ExecuteCharge(ctx *context.ChargeContext)
 	ExecuteHeal(ctx *context.HealContext)
@@ -96,8 +105,13 @@ func (p *player) executeCallbackModify(ctx *context.CallbackContext) {
 	}
 
 	// 执行ElementAttachment
-	// todo: implement me
-	panic("implement rule.reaction")
+	attachment := ctx.AttachElementResult()
+	for target := range attachment {
+		if p.characters.Exists(target) {
+			// todo: implement me
+			panic("implement rule.reaction")
+		}
+	}
 
 }
 
@@ -251,6 +265,10 @@ func (p *player) PreviewElementCost(basic Cost) (result Cost) {
 	return basic
 }
 
+func (p *player) ExecuteAttack(skill, target uint, background []uint) (result *context.DamageContext) {
+	return p.characters.Get(p.activeCharacter).ExecuteAttack(skill, target, background)
+}
+
 func (p *player) ExecuteElementPayment(basic, pay Cost) (success bool) {
 	if p.PreviewElementCost(basic).Equals(pay) {
 		ctx := context.NewCostContext()
@@ -281,6 +299,36 @@ func (p *player) ExecuteBurnCard(card uint, exchangeElement enum.ElementType) {
 	}
 }
 
-func NewPlayer() Player {
-	return &player{}
+func NewPlayer(info PlayerInfo) Player {
+	player := &player{
+		uid:                         info.UID(),
+		name:                        info.Name(),
+		operated:                    false,
+		reRollTimes:                 1,
+		staticCost:                  *NewCost(),
+		holdingCost:                 *NewCost(),
+		holdingCards:                kv.NewSimpleMap[uint](),
+		activeCharacter:             0,
+		characters:                  kv.NewSimpleMap[Character](),
+		summons:                     kv.NewSimpleMap[Summon](),
+		supports:                    kv.NewSimpleMap[Support](),
+		globalDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
+		globalFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
+		globalDefenceModifiers:      modifier.NewChain[context.DamageContext](),
+		globalHealModifiers:         modifier.NewChain[context.HealContext](),
+		globalChargeModifiers:       modifier.NewChain[context.ChargeContext](),
+		globalCostModifiers:         modifier.NewChain[context.CostContext](),
+		cooperativeAttacks:          nil,
+		callbackEvents:              *event.NewEventMap(),
+	}
+
+	for id, character := range info.Characters() {
+		if player.activeCharacter == 0 {
+			player.activeCharacter = id
+		}
+
+		player.characters.Set(id, character)
+	}
+
+	return player
 }

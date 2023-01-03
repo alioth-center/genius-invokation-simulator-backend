@@ -16,15 +16,19 @@ var (
 	nullCostModifiers         kv.Map[uint, []modifier.Modifier[context.CostContext]]   = nil
 )
 
+type CharacterInfo interface {
+	ID() uint
+	Affiliation() enum.Affiliation
+	Vision() enum.ElementType
+	Weapon() enum.WeaponType
+	MaxHP() uint
+	MaxMP() uint
+	Skills() map[uint]Skill
+}
+
 type Character interface {
 	// ID 角色的ID
 	ID() uint
-
-	// Name 角色的名字
-	Name() string
-
-	// Description 角色的描述
-	Description() string
 
 	// Affiliation 角色的归属地
 	Affiliation() enum.Affiliation
@@ -87,8 +91,6 @@ type Character interface {
 type character struct {
 	id          uint                // id 角色的ID，由框架确定
 	player      uint                // player 所属玩家的ID，由框架确定
-	name        string              // name 角色的名称
-	description string              // description 角色的描述
 	affiliation enum.Affiliation    // affiliation 角色的势力归属
 	vision      enum.ElementType    // vision 角色的元素类型
 	weapon      enum.WeaponType     // weapon 角色的武器类型
@@ -258,7 +260,7 @@ func (c *character) ExecuteDefence(ctx *context.DamageContext) {
 func (c *character) ExecuteAttack(skill, target uint, background []uint) (ctx *context.DamageContext) {
 	s := c.skills.Get(skill)
 	if attackSkill, ok := s.(AttackSkill); ok {
-		return attackSkill.BaseDamage()
+		return attackSkill.BaseDamage(target, c.player, background)
 	} else {
 		return context.NewEmptyDamageContext(skill, c.player, target, background)
 	}
@@ -274,14 +276,6 @@ func (c *character) ExecuteFinalAttackModifiers(ctx *context.DamageContext) {
 
 func (c character) ID() uint {
 	return c.id
-}
-
-func (c character) Name() string {
-	return c.name
-}
-
-func (c character) Description() string {
-	return c.description
 }
 
 func (c character) Affiliation() enum.Affiliation {
@@ -316,6 +310,33 @@ func (c character) Status() enum.CharacterStatus {
 	return c.status
 }
 
-func NewCharacter() Character {
-	return &character{}
+func NewCharacter(owner uint, info CharacterInfo) Character {
+	character := &character{
+		id:                         info.ID(),
+		player:                     owner,
+		affiliation:                info.Affiliation(),
+		vision:                     info.Vision(),
+		weapon:                     info.Weapon(),
+		skills:                     kv.NewSimpleMap[Skill](),
+		maxHP:                      info.MaxHP(),
+		currentHP:                  info.MaxHP(),
+		maxMP:                      info.MaxMP(),
+		currentMP:                  0,
+		status:                     enum.CharacterStatusReady,
+		elements:                   []enum.ElementType{},
+		satiety:                    false,
+		equipments:                 kv.NewSimpleMap[interface{}](),
+		localDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
+		localFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
+		localDefenceModifiers:      modifier.NewChain[context.DamageContext](),
+		localChargeModifiers:       modifier.NewChain[context.ChargeContext](),
+		localHealModifiers:         modifier.NewChain[context.HealContext](),
+		localCostModifiers:         modifier.NewChain[context.CostContext](),
+	}
+
+	for id, skill := range info.Skills() {
+		character.skills.Set(id, skill)
+	}
+
+	return character
 }

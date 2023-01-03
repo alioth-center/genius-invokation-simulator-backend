@@ -26,6 +26,7 @@
 - 22.12.19 (dev branch)将ModifierChain分类为Local(仅对当前角色生效)和Global(对玩家的被激活角色生效)，由此产生的逻辑更改目前正在调试
 - 22.12.20 (dev branch)完成了大部份的ModifierContext和Event，重构、优化了部份entity和model
 - 22.12.21 (dev branch)优化了ModifierChain，完善了Event和EventMap，完成了ModifierContext
+- 23.1.3 (dev branch)更新了GitHub Action，~~顺带一提这么久没commit的原因是大部分开发者阳了~~
 
 ## Document
 

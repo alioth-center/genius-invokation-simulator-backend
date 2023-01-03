@@ -33,7 +33,6 @@ func TestOrderedMap(t *testing.T) {
 			addValue:  []int{1, 2, 3, 4, 5},
 			removeKey: []int{3, 4, 5, 6},
 			want: func(k int, v int) bool {
-				fmt.Println(k, v)
 				if k != v {
 					return false
 				} else {

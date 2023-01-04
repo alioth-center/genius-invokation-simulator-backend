@@ -36,11 +36,7 @@ type ruleSet struct {
 }
 
 func (r ruleSet) ImplementationCheck() bool {
-	if r.reactionCalculator == nullReactionCalculator {
-		return false
-	}
-
-	return true
+	return r.reactionCalculator != nullReactionCalculator
 }
 
 func (r ruleSet) ReactionCalculator() ReactionCalculator {

@@ -89,6 +89,9 @@ type Character interface {
 
 	// ExecuteFinalAttackModifiers 使用角色的FinalAttackModifiers对DamageContext进行伤害修正
 	ExecuteFinalAttackModifiers(ctx *context.DamageContext)
+
+	// ExecuteElementAttachment 判断角色能否附着attachElement元素并尝试进行附着，此时不触发元素反应
+	ExecuteElementAttachment(attachElement enum.ElementType)
 }
 
 type character struct {
@@ -114,6 +117,8 @@ type character struct {
 	localChargeModifiers       ChargeModifiers  // localChargeModifiers 本地充能修正
 	localHealModifiers         HealModifiers    // localHealModifiers 本地治疗修正
 	localCostModifiers         CostModifiers    // localCostModifiers 本地费用修正
+
+	ruleSet RuleSet // ruleSet 用于结算的规则集合
 }
 
 func (c *character) SwitchUp() {
@@ -282,6 +287,10 @@ func (c *character) ExecuteEatFood(ctx *context.ModifierContext) {
 	c.satiety = true
 }
 
+func (c *character) ExecuteElementAttachment(attachElement enum.ElementType) {
+	c.elements = c.ruleSet.ReactionCalculator().Attach(c.elements, attachElement)
+}
+
 func (c character) ID() uint {
 	return c.id
 }
@@ -318,7 +327,7 @@ func (c character) Status() enum.CharacterStatus {
 	return c.status
 }
 
-func NewCharacter(owner uint, info CharacterInfo) Character {
+func NewCharacter(owner uint, info CharacterInfo, ruleSet RuleSet) Character {
 	character := &character{
 		id:                         info.ID(),
 		player:                     owner,
@@ -340,6 +349,7 @@ func NewCharacter(owner uint, info CharacterInfo) Character {
 		localChargeModifiers:       modifier.NewChain[context.ChargeContext](),
 		localHealModifiers:         modifier.NewChain[context.HealContext](),
 		localCostModifiers:         modifier.NewChain[context.CostContext](),
+		ruleSet:                    ruleSet,
 	}
 
 	for id, skill := range info.Skills() {

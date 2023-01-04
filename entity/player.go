@@ -156,74 +156,74 @@ func (p *player) SwitchCharacter(target uint) {
 
 func (p *player) ExecuteModify(ctx *context.ModifierContext) {
 	if ctx.AddGlobalChargeModifiers() != nil {
-		for _, modifier := range ctx.AddGlobalChargeModifiers() {
-			p.globalChargeModifiers.Append(modifier)
+		for _, m := range ctx.AddGlobalChargeModifiers() {
+			p.globalChargeModifiers.Append(m)
 		}
 	}
 
 	if ctx.AddGlobalCostModifiers() != nil {
-		for _, modifier := range ctx.AddGlobalCostModifiers() {
-			p.globalCostModifiers.Append(modifier)
+		for _, m := range ctx.AddGlobalCostModifiers() {
+			p.globalCostModifiers.Append(m)
 		}
 	}
 
 	if ctx.AddGlobalDefenceModifiers() != nil {
-		for _, modifier := range ctx.AddGlobalDefenceModifiers() {
-			p.globalDefenceModifiers.Append(modifier)
+		for _, m := range ctx.AddGlobalDefenceModifiers() {
+			p.globalDefenceModifiers.Append(m)
 		}
 	}
 
 	if ctx.AddGlobalDirectAttackModifiers() != nil {
-		for _, modifier := range ctx.AddGlobalDirectAttackModifiers() {
-			p.globalDirectAttackModifiers.Append(modifier)
+		for _, m := range ctx.AddGlobalDirectAttackModifiers() {
+			p.globalDirectAttackModifiers.Append(m)
 		}
 	}
 
 	if ctx.AddGlobalFinalAttackModifiers() != nil {
-		for _, modifier := range ctx.AddGlobalFinalAttackModifiers() {
-			p.globalFinalAttackModifiers.Append(modifier)
+		for _, m := range ctx.AddGlobalFinalAttackModifiers() {
+			p.globalFinalAttackModifiers.Append(m)
 		}
 	}
 
 	if ctx.AddGlobalHealModifiers() != nil {
-		for _, modifier := range ctx.AddGlobalHealModifiers() {
-			p.globalHealModifiers.Append(modifier)
+		for _, m := range ctx.AddGlobalHealModifiers() {
+			p.globalHealModifiers.Append(m)
 		}
 	}
 
 	if ctx.RemoveGlobalChargeModifiers() != nil {
-		for _, modifier := range ctx.RemoveGlobalChargeModifiers() {
-			p.globalChargeModifiers.Remove(modifier.ID())
+		for _, m := range ctx.RemoveGlobalChargeModifiers() {
+			p.globalChargeModifiers.Remove(m.ID())
 		}
 	}
 
 	if ctx.RemoveGlobalCostModifiers() != nil {
-		for _, modifier := range ctx.RemoveGlobalCostModifiers() {
-			p.globalCostModifiers.Remove(modifier.ID())
+		for _, m := range ctx.RemoveGlobalCostModifiers() {
+			p.globalCostModifiers.Remove(m.ID())
 		}
 	}
 
 	if ctx.RemoveGlobalDefenceModifiers() != nil {
-		for _, modifier := range ctx.RemoveGlobalDefenceModifiers() {
-			p.globalDefenceModifiers.Remove(modifier.ID())
+		for _, m := range ctx.RemoveGlobalDefenceModifiers() {
+			p.globalDefenceModifiers.Remove(m.ID())
 		}
 	}
 
 	if ctx.RemoveGlobalDirectAttackModifiers() != nil {
-		for _, modifier := range ctx.RemoveGlobalDirectAttackModifiers() {
-			p.globalDirectAttackModifiers.Remove(modifier.ID())
+		for _, m := range ctx.RemoveGlobalDirectAttackModifiers() {
+			p.globalDirectAttackModifiers.Remove(m.ID())
 		}
 	}
 
 	if ctx.RemoveGlobalFinalAttackModifiers() != nil {
-		for _, modifier := range ctx.RemoveGlobalFinalAttackModifiers() {
-			p.globalFinalAttackModifiers.Remove(modifier.ID())
+		for _, m := range ctx.RemoveGlobalFinalAttackModifiers() {
+			p.globalFinalAttackModifiers.Remove(m.ID())
 		}
 	}
 
 	if ctx.RemoveGlobalHealModifiers() != nil {
-		for _, modifier := range ctx.RemoveGlobalHealModifiers() {
-			p.globalHealModifiers.Remove(modifier.ID())
+		for _, m := range ctx.RemoveGlobalHealModifiers() {
+			p.globalHealModifiers.Remove(m.ID())
 		}
 	}
 

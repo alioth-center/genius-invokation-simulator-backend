@@ -1,7 +1,6 @@
 package kv
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -19,7 +18,6 @@ func TestOrderedMap(t *testing.T) {
 			addValue:  []int{1, 2, 3, 4, 5},
 			removeKey: []int{},
 			want: func(k int, v int) bool {
-				fmt.Println(k, v)
 				if k != v {
 					return false
 				} else {

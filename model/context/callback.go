@@ -11,6 +11,7 @@ type CallbackContext struct {
 	changeModifiers *ModifierContext
 	attachElement   map[uint]enum.ElementType
 	getCards        uint
+	findCard        kv.Pair[bool, enum.CardType]
 	switchCharacter kv.Pair[bool, uint]
 	operated        kv.Pair[bool, bool]
 }
@@ -33,6 +34,13 @@ func (c *CallbackContext) AttachElement(target uint, element enum.ElementType) {
 
 func (c *CallbackContext) GetCards(amount uint) {
 	c.getCards = amount
+}
+
+func (c *CallbackContext) FindCard(cardType enum.CardType) {
+	if !c.findCard.Key() {
+		c.findCard.SetKey(true)
+	}
+	c.findCard.SetValue(cardType)
 }
 
 func (c *CallbackContext) SwitchCharacter(target uint) {
@@ -67,6 +75,10 @@ func (c CallbackContext) AttachElementResult() map[uint]enum.ElementType {
 
 func (c CallbackContext) GetCardsResult() uint {
 	return c.getCards
+}
+
+func (c CallbackContext) GetFindCardResult() (find bool, cardType enum.CardType) {
+	return c.findCard.Key(), c.findCard.Value()
 }
 
 func (c CallbackContext) SwitchCharacterResult() (switched bool, target uint) {

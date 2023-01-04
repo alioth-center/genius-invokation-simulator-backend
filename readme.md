@@ -23,18 +23,7 @@
 
 ## Progress
 
-- 22.12.9 创建项目
-- 22.12.11 设计、定义相关enum与接口
-- 22.12.13 重构对局生命周期
-- 22.12.15 战斗框架基本完成
-- 22.12.16 开始编写文档0.0.1版本
-- 22.12.16 (试验性)命令行操作对局
-- 22.12.19 对部份结构/实体进行了封装与优化，由于改动较大目前还未push。重新设计了HandlerChain的结构，修改已同步到dev分支中
-- 22.12.19 (已同步)将ModifierChain分类为Local(仅对当前角色生效)和Global(对玩家的被激活角色生效)，由此产生的逻辑更改目前正在调试
-- 22.12.20 (已同步)完成了大部份的ModifierContext和Event，重构、优化了部份entity和model
-- 22.12.21 (已同步)优化了ModifierChain，完善了Event和EventMap，完成了ModifierContext
-- 23.1.3 (已同步)更新了GitHub Action，完成了部分Character与Player的功能编排，~~顺带一提这么久没commit的原因是大部分开发者阳了~~
-- 23.1.4 (dev branch)继续完善了Character与Player的功能与逻辑，尝试进行持久化模块的设计与测试
+请转到[gisb's feature development](https://github.com/users/sunist-c/projects/2)查看项目进度
 
 ## Document
 
@@ -56,23 +45,25 @@
 
 ## Contribute
 
-您可以为本项目贡献您的想法或代码：
+如果您想增加一个功能或想法：
 
 1. 加入本项目的交流群或[genius-invokation-gym](https://github.com/paladin1013/genius-invokation-gym)的交流群或在本项目的[Discussion/Ideas](https://github.com/sunist-c/genius-invokation-simulator-backend/discussions/categories/ideas)中分享您的想法
 2. 在取得Contributor的广泛认可后将为您创建一个WIP的issue
 3. 按照正常的流程fork->coding->pull request您的修改
+
+如果您想为项目贡献代码，您可以转到[gisb's feature development](https://github.com/users/sunist-c/projects/2)查看这个项目目前在干什么，标有`help wanted`的内容可能需要一些帮助，处于`design`阶段的内容目前还没有进行开发，您可以直接在GitHub Projects/Project Issue页面与我们交流
 
 本项目有意向从Jetbrains申请开源项目的All Products License，将会提供给Code Contributors
 
 ## Features
 
 - [x] 游戏基本玩法
-  - [x] 元素反应
+  - [ ] 元素反应
   - [x] 角色与技能
   - [ ] 圣遗物与武器
   - [ ] 场景和伙伴
   - [ ] 召唤物
-  - [ ] 卡牌与元素转化
+  - [x] 卡牌与元素转化
 - [ ] 游戏拓展玩法
   - [x] 多人游戏(玩家`N>=2`，队伍`N>=2`)
   - [ ] 创建对局
@@ -85,9 +76,9 @@
   - [x] Go/Lua支持
   - [x] 自定义角色与卡牌
   - [x] 自定义规则
-- [ ] 多种通信协议连接
-  - [ ] websocket接口
-  - [ ] http/https接口
+- [x] 多种通信协议连接
+  - [x] websocket接口
+  - [x] http/https接口
   - [ ] udp/kcp接口
   - [ ] rpc接口
 - [ ] 分布式支持

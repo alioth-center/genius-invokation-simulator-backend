@@ -11,7 +11,7 @@ import (
 type PlayerInfo interface {
 	UID() uint
 	Name() string
-	Cards()
+	Cards() []Card
 	Characters() map[uint]Character
 }
 
@@ -31,6 +31,7 @@ type Player interface {
 	ExecuteElementObtain(obtain Cost)
 	ExecuteElementReRoll(drop Cost)
 	ExecuteBurnCard(card uint, exchangeElement enum.ElementType)
+	ExecuteEatFood(card, targetCharacter uint)
 }
 
 type player struct {
@@ -42,7 +43,8 @@ type player struct {
 	staticCost  Cost // staticCost 每回合投掷阶段固定产出的骰子
 
 	holdingCost     Cost                    // holdingCost 玩家持有的骰子
-	holdingCards    kv.Map[uint, uint]      // holdingCards 玩家持有的卡牌
+	cardDeck        CardDeck                // cardDeck 玩家的牌堆
+	holdingCards    kv.Map[uint, Card]      // holdingCards 玩家持有的卡牌
 	activeCharacter uint                    // activeCharacter 玩家当前的前台角色
 	characters      kv.Map[uint, Character] // characters 玩家出战的角色
 	summons         kv.Map[uint, Summon]    // summons 玩家在场的召唤物
@@ -100,8 +102,18 @@ func (p *player) executeCallbackModify(ctx *context.CallbackContext) {
 
 	// 执行GetCard
 	if ctx.GetCardsResult() > 0 {
-		// todo: implement me
-		panic("implement card-deck")
+		for i := uint(0); i < ctx.GetCardsResult(); i++ {
+			if card, success := p.cardDeck.GetOne(); success {
+				p.holdingCards.Set(card.ID(), card)
+			}
+		}
+	}
+
+	// 执行FindCard
+	if find, target := ctx.GetFindCardResult(); find {
+		if card, success := p.cardDeck.FindOne(target); success {
+			p.holdingCards.Set(card.ID(), card)
+		}
 	}
 
 	// 执行ElementAttachment
@@ -292,10 +304,22 @@ func (p *player) ExecuteElementReRoll(drop Cost) {
 }
 
 func (p *player) ExecuteBurnCard(card uint, exchangeElement enum.ElementType) {
-	if p.holdingCards.Get(card) != 0 && p.holdingCost.costs[exchangeElement] != 0 {
+	// 玩家持有卡牌、被转换元素不是通用元素且被转换元素数量大于0时，才可以转换
+	if p.holdingCards.Exists(card) && exchangeElement != enum.ElementCurrency && p.holdingCost.costs[exchangeElement] != 0 {
 		p.holdingCost.sub(exchangeElement, 1)
-		p.holdingCards.Set(card, p.holdingCards.Get(card)-1)
+		p.holdingCards.Remove(card)
 		p.holdingCost.add(p.characters.Get(p.activeCharacter).Vision(), 1)
+	}
+}
+
+func (p *player) ExecuteEatFood(card, targetCharacter uint) {
+	if p.holdingCards.Exists(card) && p.holdingCards.Get(card).Type() == enum.CardFood && p.characters.Exists(targetCharacter) {
+		if food, ok := p.holdingCards.Get(card).(FoodCard); ok {
+			ctx := context.NewModifierContext()
+			food.ExecuteModify(ctx)
+			p.characters.Get(targetCharacter).ExecuteEatFood(ctx)
+			p.executeCallbackEvent(enum.AfterEatFood)
+		}
 	}
 }
 
@@ -307,7 +331,8 @@ func NewPlayer(info PlayerInfo) Player {
 		reRollTimes:                 1,
 		staticCost:                  *NewCost(),
 		holdingCost:                 *NewCost(),
-		holdingCards:                kv.NewSimpleMap[uint](),
+		cardDeck:                    *NewCardDeck(info.Cards()),
+		holdingCards:                kv.NewSimpleMap[Card](),
 		activeCharacter:             0,
 		characters:                  kv.NewSimpleMap[Character](),
 		summons:                     kv.NewSimpleMap[Summon](),

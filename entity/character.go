@@ -78,6 +78,9 @@ type Character interface {
 	// ExecuteDefence 根据DamageContext对角色进行伤害结算，不包括效果结算
 	ExecuteDefence(ctx *context.DamageContext)
 
+	// ExecuteEatFood 根据食物卡的效果执行食物结算
+	ExecuteEatFood(ctx *context.ModifierContext)
+
 	// ExecuteAttack 使用skill进行对target角色和background后台角色进行攻击
 	ExecuteAttack(skill, target uint, background []uint) (ctx *context.DamageContext)
 
@@ -272,6 +275,11 @@ func (c *character) ExecuteDirectAttackModifiers(ctx *context.DamageContext) {
 
 func (c *character) ExecuteFinalAttackModifiers(ctx *context.DamageContext) {
 	c.localFinalAttackModifiers.Execute(ctx)
+}
+
+func (c *character) ExecuteEatFood(ctx *context.ModifierContext) {
+	c.ExecuteModify(ctx)
+	c.satiety = true
 }
 
 func (c character) ID() uint {

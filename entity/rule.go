@@ -10,7 +10,7 @@ type ReactionCalculator interface {
 	ReactionCalculate([]enum.ElementType) (reaction enum.Reaction, elementRemains []enum.ElementType)
 
 	// DamageCalculate 根据反应类型计算对应的伤害修正
-	DamageCalculate(reaction enum.Reaction, ctx *context.DamageContext)
+	DamageCalculate(reaction enum.Reaction, targetCharacter uint, ctx *context.DamageContext)
 
 	// EffectCalculate 根据反应类型计算对应的反应效果
 	EffectCalculate(reaction enum.Reaction) (ctx *context.CallbackContext)

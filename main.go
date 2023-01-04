@@ -91,10 +91,12 @@ func (d DefenceBuff) EffectLeft() uint {
 }
 
 func main() {
-	ganyu1 := entity.NewCharacter(1, Ganyu{id: 2333})
+	ruleSet := entity.NewEmptyRuleSet()
+
+	ganyu1 := entity.NewCharacter(1, Ganyu{id: 2333}, ruleSet)
 	fmt.Printf("initializing characters: %+v\n", ganyu1)
 
-	ganyu2 := entity.NewCharacter(2, Ganyu{id: 3333})
+	ganyu2 := entity.NewCharacter(2, Ganyu{id: 3333}, ruleSet)
 	fmt.Printf("initializing characters: %+v\n", ganyu2)
 
 	modifiers := &context.ModifierContext{}

@@ -2,12 +2,18 @@ package entity
 
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
+	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
 )
 
 type Card interface {
 	ID() uint
 	Type() enum.CardType
+}
+
+type FoodCard interface {
+	Card
+	ExecuteModify(ctx *context.ModifierContext)
 }
 
 // CardDeck 牌堆，记录顺序的是一个数组，正常情况下已取出的牌永远在队列的一端

@@ -61,10 +61,11 @@ func TestOrderedMap(t *testing.T) {
 			}
 
 			// 测试OrderedMap.Range
-			m.Range(0, m.Length(), func(k int, v int) {
+			m.Range(func(k int, v int) bool {
 				if judge := tt.want(k, v); !judge {
 					t.Errorf("incorrect judge result")
 				}
+				return true
 			})
 		})
 	}

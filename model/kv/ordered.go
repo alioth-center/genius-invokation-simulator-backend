@@ -52,9 +52,11 @@ func (o orderedMap[key, value]) GetKey(index uint) key {
 	return o.order[index]
 }
 
-func (o orderedMap[key, value]) Range(start, end uint, f func(key, value)) {
-	for i := start; i < end; i++ {
-		f(o.order[i], o.data[o.order[i]])
+func (o orderedMap[key, value]) Range(f func(key, value) bool) {
+	for i := uint(0); i < o.length; i++ {
+		if !f(o.order[i], o.data[o.order[i]]) {
+			break
+		}
 	}
 }
 

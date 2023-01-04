@@ -19,12 +19,8 @@ type Map[key comparable, value any] interface {
 
 // OrderedMap 有序Map的封装
 type OrderedMap[key comparable, value any] interface {
-	Exists(key) bool
-	Get(key) value
-	Set(key, value)
-	Remove(key)
+	Map[key, value]
 	Length() uint
 	GetIndex(key) uint
 	GetKey(uint) key
-	Range(start, end uint, f func(key, value))
 }

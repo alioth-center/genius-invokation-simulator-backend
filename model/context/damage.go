@@ -75,6 +75,10 @@ func (d *DamageContext) ChangeElementType(element enum.ElementType) {
 // Damage 返回DamageContext携带的伤害信息，只读
 func (d *DamageContext) Damage() map[uint]Damage {
 	result := map[uint]Damage{}
+	for _, id := range d.backgroundCharacters {
+		result[id] = Damage{elementType: enum.ElementNone, amount: 0}
+	}
+
 	for target, damage := range d.damages {
 		result[target] = *damage
 	}

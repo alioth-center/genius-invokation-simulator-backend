@@ -2,38 +2,38 @@ package kv
 
 import "sync"
 
-type Sync[value any] struct {
+type syncMap[value any] struct {
 	mutex *sync.RWMutex
 	data  map[uint]value
 }
 
-func (s *Sync[value]) Exists(key uint) bool {
+func (s *syncMap[value]) Exists(key uint) bool {
 	s.mutex.RLock()
 	_, ok := s.data[key]
 	s.mutex.RUnlock()
 	return ok
 }
 
-func (s *Sync[value]) Get(key uint) value {
+func (s *syncMap[value]) Get(key uint) value {
 	s.mutex.RLock()
 	result := s.data[key]
 	s.mutex.RUnlock()
 	return result
 }
 
-func (s *Sync[value]) Set(key uint, data value) {
+func (s *syncMap[value]) Set(key uint, data value) {
 	s.mutex.Lock()
 	s.data[key] = data
 	s.mutex.Unlock()
 }
 
-func (s *Sync[value]) Remove(key uint) {
+func (s *syncMap[value]) Remove(key uint) {
 	s.mutex.Lock()
 	delete(s.data, key)
 	s.mutex.Unlock()
 }
 
-func (s *Sync[value]) Range(f func(uint, value) bool) {
+func (s *syncMap[value]) Range(f func(uint, value) bool) {
 	s.mutex.RLock()
 	for k, v := range s.data {
 		if !f(k, v) {
@@ -44,7 +44,7 @@ func (s *Sync[value]) Range(f func(uint, value) bool) {
 }
 
 func NewSyncMap[value any]() Map[uint, value] {
-	return &Sync[value]{
+	return &syncMap[value]{
 		mutex: &sync.RWMutex{},
 		data:  map[uint]value{},
 	}

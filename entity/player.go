@@ -181,8 +181,8 @@ func (p *player) SwitchNextCharacter() {
 func (p *player) SwitchPrevCharacter() {
 	// notice: 如果只有一人，此处不进行切换
 	index := p.characters.GetIndex(p.activeCharacter)
-	for i := index - 1; i >= 0; i-- {
-		if character := p.characters.Get(p.characters.GetKey(i)); character.Status() != enum.CharacterStatusDefeated {
+	for i := int(index - 1); i >= 0; i-- {
+		if character := p.characters.Get(p.characters.GetKey(uint(i))); character.Status() != enum.CharacterStatusDefeated {
 			p.SwitchCharacter(character.ID())
 			return
 		}

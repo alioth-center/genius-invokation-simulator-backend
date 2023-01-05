@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
 )
 
@@ -50,17 +51,14 @@ func newPlayerChain() *playerChain {
 	}
 }
 
-type Framework interface {
-}
-
-type core struct {
+type Core struct {
 	ruleSet     RuleSet
 	players     kv.Map[uint, Player]
 	activeChain *playerChain
 	nextChain   *playerChain
 }
 
-func (c *core) ExecuteAttack(sender uint, target uint, skill uint) {
+func (c *Core) ExecuteAttack(sender uint, target uint, skill uint) {
 	if c.players.Exists(sender) && c.players.Exists(target) {
 		senderPlayer, targetPlayer := c.players.Get(sender), c.players.Get(target)
 
@@ -94,4 +92,26 @@ func (c *core) ExecuteAttack(sender uint, target uint, skill uint) {
 			targetPlayer.ExecuteAfterDefenceCallback()
 		}
 	}
+}
+
+func (c *Core) ExecuteBurnCard(sender uint, card uint, exchangeElement enum.ElementType) {
+	if c.players.Exists(sender) {
+		c.players.Get(sender).ExecuteBurnCard(card, exchangeElement)
+	}
+}
+
+func NewCore(rule RuleSet, players []Player) *Core {
+	core := &Core{
+		ruleSet:     rule,
+		players:     kv.NewSimpleMap[Player](),
+		activeChain: newPlayerChain(),
+		nextChain:   newPlayerChain(),
+	}
+
+	for _, player := range players {
+		core.activeChain.add(player)
+		core.players.Set(player.UID(), player)
+	}
+
+	return core
 }

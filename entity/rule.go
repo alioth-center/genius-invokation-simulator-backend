@@ -22,17 +22,30 @@ type ReactionCalculator interface {
 	Relative(reaction enum.Reaction, relativeElement enum.ElementType) bool
 }
 
+type GameOptions interface {
+	// ReRollTimes 所有玩家的基础可重掷次数
+	ReRollTimes() uint
+
+	// StaticCost 所有玩家的基础固定持有骰子
+	StaticCost() map[enum.ElementType]uint
+
+	// RollAmount 所有玩家的投掷阶段生成元素骰子数量
+	RollAmount() uint
+}
+
 var (
 	nullReactionCalculator ReactionCalculator = nil
 )
 
 type RuleSet interface {
 	ImplementationCheck() bool
+	GameOptions() GameOptions
 	ReactionCalculator() ReactionCalculator
 }
 
 type ruleSet struct {
 	reactionCalculator ReactionCalculator
+	gameOptions        GameOptions
 }
 
 func (r ruleSet) ImplementationCheck() bool {
@@ -43,9 +56,14 @@ func (r ruleSet) ReactionCalculator() ReactionCalculator {
 	return r.reactionCalculator
 }
 
+func (r ruleSet) GameOptions() GameOptions {
+	return r.gameOptions
+}
+
 func NewEmptyRuleSet() RuleSet {
 	return ruleSet{
 		reactionCalculator: nil,
+		gameOptions:        nil,
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 
 type Damage struct {
 	elementType enum.ElementType
+	reaction    enum.Reaction
 	amount      uint
 }
 
@@ -33,6 +34,11 @@ func (d Damage) Amount() uint {
 // ElementType 伤害的元素类型，只读
 func (d Damage) ElementType() enum.ElementType {
 	return d.elementType
+}
+
+// Reaction 伤害发生的反应，只读
+func (d Damage) Reaction() enum.Reaction {
+	return d.reaction
 }
 
 type DamageContext struct {
@@ -72,8 +78,28 @@ func (d *DamageContext) ChangeElementType(element enum.ElementType) {
 	d.damages[d.targetCharacter].change(element)
 }
 
+// SetReaction 目标角色身上发生的元素反应类型，仅供框架使用
+func (d *DamageContext) SetReaction(targetCharacter uint, reaction enum.Reaction) {
+	d.damages[targetCharacter].reaction = reaction
+}
+
+// GetTargetCharacter 获取伤害的目标角色ID
+func (d DamageContext) GetTargetCharacter() uint {
+	return d.targetCharacter
+}
+
+// GetBackgroundCharacters 获取伤害的目标后台角色ID
+func (d DamageContext) GetBackgroundCharacters() []uint {
+	return d.backgroundCharacters
+}
+
+// GetTargetCharacterReaction 获取伤害的目标角色发生的元素反应
+func (d DamageContext) GetTargetCharacterReaction() enum.Reaction {
+	return d.damages[d.targetCharacter].reaction
+}
+
 // Damage 返回DamageContext携带的伤害信息，只读
-func (d *DamageContext) Damage() map[uint]Damage {
+func (d DamageContext) Damage() map[uint]Damage {
 	result := map[uint]Damage{}
 	for _, id := range d.backgroundCharacters {
 		result[id] = Damage{elementType: enum.ElementNone, amount: 0}
@@ -104,6 +130,6 @@ func NewDamageContext(skill, from, target uint, backgrounds []uint, elementType 
 		sendPlayer:           from,
 		targetCharacter:      target,
 		backgroundCharacters: backgrounds,
-		damages:              map[uint]*Damage{target: &Damage{elementType: elementType, amount: damageAmount}},
+		damages:              map[uint]*Damage{target: {elementType: elementType, amount: damageAmount, reaction: enum.ReactionNone}},
 	}
 }

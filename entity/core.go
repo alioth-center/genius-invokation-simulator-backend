@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
 )
 
@@ -54,16 +53,16 @@ func newPlayerChain() *playerChain {
 type Framework interface {
 }
 
-type framework struct {
+type core struct {
 	ruleSet     RuleSet
 	players     kv.Map[uint, Player]
 	activeChain *playerChain
 	nextChain   *playerChain
 }
 
-func (f *framework) ExecuteAttack(sender uint, target uint, skill uint) {
-	if f.players.Exists(sender) && f.players.Exists(target) {
-		senderPlayer, targetPlayer := f.players.Get(sender), f.players.Get(target)
+func (c *core) ExecuteAttack(sender uint, target uint, skill uint) {
+	if c.players.Exists(sender) && c.players.Exists(target) {
+		senderPlayer, targetPlayer := c.players.Get(sender), c.players.Get(target)
 
 		if has, character := senderPlayer.GetActiveCharacter(); has && character.HasSkill(skill) {
 			// 填充DamageContext
@@ -78,18 +77,15 @@ func (f *framework) ExecuteAttack(sender uint, target uint, skill uint) {
 			// 执行攻击流程
 			senderPlayer.ExecuteDirectAttackModifiers(ctx)
 			targetPlayer.ExecuteElementAttachment(ctx)
-			activeReaction := enum.ReactionNone
 			for targetCharacterID := range ctx.Damage() {
-				_, c := targetPlayer.GetCharacter(targetCharacterID)
-				reaction := c.ExecuteElementReaction()
-				if targetCharacterID == targetCharacter.ID() {
-					activeReaction = reaction
-				}
-				f.ruleSet.ReactionCalculator().DamageCalculate(reaction, targetCharacterID, ctx)
+				_, executeCharacter := targetPlayer.GetCharacter(targetCharacterID)
+				reaction := executeCharacter.ExecuteElementReaction()
+				ctx.SetReaction(targetCharacterID, reaction)
+				c.ruleSet.ReactionCalculator().DamageCalculate(reaction, targetCharacterID, ctx)
 			}
 			senderPlayer.ExecuteFinalAttackModifiers(ctx)
 			targetPlayer.ExecuteDefence(ctx)
-			if event := f.ruleSet.ReactionCalculator().EffectCalculate(activeReaction); event != nil {
+			if event := c.ruleSet.ReactionCalculator().EffectCalculate(ctx.GetTargetCharacterReaction(), targetPlayer); event != nil {
 				targetPlayer.ExecuteCallbackModify(event)
 			}
 

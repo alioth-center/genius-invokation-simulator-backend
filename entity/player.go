@@ -45,6 +45,7 @@ type Player interface {
 	GetActiveCharacter() (has bool, character Character)
 	GetCharacter(id uint) (has bool, character Character)
 	GetBackgroundCharacters() (characters []Character)
+	HoldingCard(card uint) (holding bool)
 	Defeated() bool
 }
 
@@ -134,6 +135,10 @@ func (p *player) GetBackgroundCharacters() (characters []Character) {
 	})
 
 	return characters
+}
+
+func (p player) HoldingCard(card uint) (holding bool) {
+	return p.holdingCards.Exists(card)
 }
 
 func (p *player) Defeated() bool {

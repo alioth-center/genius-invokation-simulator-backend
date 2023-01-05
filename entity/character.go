@@ -96,7 +96,7 @@ type Character interface {
 	// ExecuteElementAttachment 判断角色能否附着attachElement元素并尝试进行附着，此时不触发元素反应
 	ExecuteElementAttachment(attachElement enum.ElementType)
 
-	// ExecuteElementReaction 尝试使用角色身上附着的元素进行反应，返回能否反应和反应类型
+	// ExecuteElementReaction 尝试使用角色身上附着的元素进行反应，返回反应类型
 	ExecuteElementReaction() (reaction enum.Reaction)
 }
 

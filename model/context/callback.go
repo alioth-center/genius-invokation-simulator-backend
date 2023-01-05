@@ -6,34 +6,51 @@ import (
 )
 
 type CallbackContext struct {
-	changeElements  *CostContext
-	changeCharge    *ChargeContext
-	changeModifiers *ModifierContext
-	attachElement   map[uint]enum.ElementType
-	getCards        uint
+	changeElements  kv.Pair[bool, *CostContext]
+	changeCharge    kv.Pair[bool, *ChargeContext]
+	changeModifiers kv.Pair[bool, *ModifierContext]
+	attachElement   kv.Pair[bool, map[uint]enum.ElementType]
+	getCards        kv.Pair[bool, uint]
 	findCard        kv.Pair[bool, enum.CardType]
 	switchCharacter kv.Pair[bool, uint]
 	operated        kv.Pair[bool, bool]
 }
 
 func (c *CallbackContext) ChangeElements(f func(ctx *CostContext)) {
-	f(c.changeElements)
+	if !c.changeElements.Key() {
+		c.changeElements.SetKey(true)
+	}
+	f(c.changeElements.Value())
 }
 
 func (c *CallbackContext) ChangeCharge(f func(ctx *ChargeContext)) {
-	f(c.changeCharge)
+	if !c.changeCharge.Key() {
+		c.changeCharge.SetKey(true)
+	}
+	f(c.changeCharge.Value())
 }
 
 func (c *CallbackContext) ChangeModifiers(f func(ctx *ModifierContext)) {
-	f(c.changeModifiers)
+	if !c.changeModifiers.Key() {
+		c.changeModifiers.SetKey(true)
+	}
+	f(c.changeModifiers.Value())
 }
 
 func (c *CallbackContext) AttachElement(target uint, element enum.ElementType) {
-	c.attachElement[target] = element
+	if !c.attachElement.Key() {
+		c.attachElement.SetKey(true)
+	}
+	value := c.attachElement.Value()
+	value[target] = element
+	c.attachElement.SetValue(value)
 }
 
 func (c *CallbackContext) GetCards(amount uint) {
-	c.getCards = amount
+	if !c.getCards.Key() {
+		c.getCards.SetKey(true)
+	}
+	c.getCards.SetValue(amount)
 }
 
 func (c *CallbackContext) FindCard(cardType enum.CardType) {
@@ -57,24 +74,24 @@ func (c *CallbackContext) ChangeOperated(operated bool) {
 	c.operated.SetValue(operated)
 }
 
-func (c CallbackContext) ChangeElementsResult() CostContext {
-	return *c.changeElements
+func (c CallbackContext) ChangeElementsResult() (changed bool, result *CostContext) {
+	return c.changeElements.Key(), c.changeElements.Value()
 }
 
-func (c CallbackContext) ChangeChargeResult() ChargeContext {
-	return *c.changeCharge
+func (c CallbackContext) ChangeChargeResult() (changed bool, result *ChargeContext) {
+	return c.changeCharge.Key(), c.changeCharge.Value()
 }
 
-func (c CallbackContext) ChangeModifiersResult() ModifierContext {
-	return *c.changeModifiers
+func (c CallbackContext) ChangeModifiersResult() (changed bool, result *ModifierContext) {
+	return c.changeModifiers.Key(), c.changeModifiers.Value()
 }
 
-func (c CallbackContext) AttachElementResult() map[uint]enum.ElementType {
-	return c.attachElement
+func (c CallbackContext) AttachElementResult() (changed bool, result map[uint]enum.ElementType) {
+	return c.attachElement.Key(), c.attachElement.Value()
 }
 
-func (c CallbackContext) GetCardsResult() uint {
-	return c.getCards
+func (c CallbackContext) GetCardsResult() (changed bool, result uint) {
+	return c.getCards.Key(), c.getCards.Value()
 }
 
 func (c CallbackContext) GetFindCardResult() (find bool, cardType enum.CardType) {
@@ -91,12 +108,13 @@ func (c CallbackContext) ChangeOperatedResult() (switched, operated bool) {
 
 func NewCallbackContext() *CallbackContext {
 	return &CallbackContext{
-		changeElements:  NewCostContext(),
-		changeCharge:    NewChargeContext(),
-		changeModifiers: NewModifierContext(),
-		attachElement:   map[uint]enum.ElementType{},
-		getCards:        0,
+		changeElements:  kv.NewPair(false, NewCostContext()),
+		changeCharge:    kv.NewPair(false, NewChargeContext()),
+		changeModifiers: kv.NewPair(false, NewModifierContext()),
+		attachElement:   kv.NewPair(false, map[uint]enum.ElementType{}),
+		getCards:        kv.NewPair(false, uint(0)),
 		switchCharacter: kv.NewPair(false, uint(0)),
 		operated:        kv.NewPair(false, false),
+		findCard:        kv.NewPair(false, enum.CardType(0)),
 	}
 }

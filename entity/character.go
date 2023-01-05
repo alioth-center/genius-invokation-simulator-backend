@@ -51,6 +51,9 @@ type Character interface {
 	// MP 角色的当前MP
 	MP() uint
 
+	// HasSkill 角色是否持有id为skill的技能
+	HasSkill(skill uint) bool
+
 	// Status 角色的状态
 	Status() enum.CharacterStatus
 
@@ -92,6 +95,9 @@ type Character interface {
 
 	// ExecuteElementAttachment 判断角色能否附着attachElement元素并尝试进行附着，此时不触发元素反应
 	ExecuteElementAttachment(attachElement enum.ElementType)
+
+	// ExecuteElementReaction 尝试使用角色身上附着的元素进行反应，返回反应类型
+	ExecuteElementReaction() (reaction enum.Reaction)
 }
 
 type character struct {
@@ -127,6 +133,10 @@ func (c *character) SwitchUp() {
 
 func (c *character) SwitchDown() {
 	c.status = enum.CharacterStatusBackground
+}
+
+func (c character) HasSkill(skill uint) bool {
+	return c.skills.Exists(skill)
 }
 
 func (c *character) ExecuteCharge(ctx *context.ChargeContext) {
@@ -289,6 +299,11 @@ func (c *character) ExecuteEatFood(ctx *context.ModifierContext) {
 
 func (c *character) ExecuteElementAttachment(attachElement enum.ElementType) {
 	c.elements = c.ruleSet.ReactionCalculator().Attach(c.elements, attachElement)
+}
+
+func (c *character) ExecuteElementReaction() (reaction enum.Reaction) {
+	reaction, c.elements = c.ruleSet.ReactionCalculator().ReactionCalculate(c.elements)
+	return reaction
 }
 
 func (c character) ID() uint {

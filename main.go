@@ -8,6 +8,27 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 )
 
+type EmptyRule struct{}
+
+func (e EmptyRule) ReactionCalculate(types []enum.ElementType) (reaction enum.Reaction, elementRemains []enum.ElementType) {
+	return enum.ReactionNone, types
+}
+
+func (e EmptyRule) DamageCalculate(reaction enum.Reaction, targetCharacter uint, ctx *context.DamageContext) {
+}
+
+func (e EmptyRule) EffectCalculate(reaction enum.Reaction, targetPlayer entity.Player) (ctx *context.CallbackContext) {
+	return nil
+}
+
+func (e EmptyRule) Attach(originalElements []enum.ElementType, newElement enum.ElementType) (resultElements []enum.ElementType) {
+	return originalElements
+}
+
+func (e EmptyRule) Relative(reaction enum.Reaction, relativeElement enum.ElementType) bool {
+	return false
+}
+
 type Ganyu struct {
 	id uint
 }
@@ -29,7 +50,7 @@ func (e Ganyu) Weapon() enum.WeaponType {
 }
 
 func (e Ganyu) MaxHP() uint {
-	return 10
+	return 16
 }
 
 func (e Ganyu) MaxMP() uint {
@@ -90,29 +111,43 @@ func (d DefenceBuff) EffectLeft() uint {
 	return 0
 }
 
+type playerInfo struct {
+	uid        uint
+	name       string
+	cards      []entity.Card
+	characters map[uint]entity.Character
+}
+
+func (p playerInfo) UID() uint { return p.uid }
+
+func (p playerInfo) Name() string { return p.name }
+
+func (p playerInfo) Cards() []entity.Card { return p.cards }
+
+func (p playerInfo) Characters() map[uint]entity.Character { return p.characters }
+
 func main() {
-	ruleSet := entity.NewEmptyRuleSet()
-
+	ruleSet := entity.NewRuleSet(EmptyRule{})
 	ganyu1 := entity.NewCharacter(1, Ganyu{id: 2333}, ruleSet)
-	fmt.Printf("initializing characters: %+v\n", ganyu1)
-
 	ganyu2 := entity.NewCharacter(2, Ganyu{id: 3333}, ruleSet)
-	fmt.Printf("initializing characters: %+v\n", ganyu2)
+	player1 := entity.NewPlayer(playerInfo{
+		uid:        1,
+		name:       "player1",
+		cards:      []entity.Card{},
+		characters: map[uint]entity.Character{2333: ganyu1},
+	})
+	player2 := entity.NewPlayer(playerInfo{
+		uid:        2,
+		name:       "player2",
+		cards:      []entity.Card{},
+		characters: map[uint]entity.Character{3333: ganyu2},
+	})
 
-	modifiers := &context.ModifierContext{}
-	modifiers.AddLocalDefenceModifier(3333, DefenceBuff{id: 2233})
-	fmt.Printf("add defence buff: %+v\n", modifiers)
-	ganyu2.ExecuteModify(modifiers)
+	core := entity.NewCore(ruleSet, []entity.Player{player1, player2})
+	fmt.Printf("player2.character: HP: %v Status: %v\n", ganyu2.HP(), ganyu2.Status())
 
-	attack1 := ganyu1.ExecuteAttack(1, ganyu2.ID(), []uint{})
-	fmt.Printf("initializing attack context: %+v\n", attack1)
-
-	ganyu2.ExecuteDefence(attack1)
-	fmt.Printf("be attacked: %+v\n", ganyu2)
-
-	attack2 := ganyu1.ExecuteAttack(1, ganyu2.ID(), []uint{})
-	fmt.Printf("initializing attack context: %+v\n", attack2)
-
-	ganyu2.ExecuteDefence(attack2)
-	fmt.Printf("be attacked: %+v\n", ganyu2)
+	core.ExecuteAttack(player1.UID(), player2.UID(), 1)
+	fmt.Printf("player2.character: HP: %v Status: %v\n", ganyu2.HP(), ganyu2.Status())
+	core.ExecuteAttack(player1.UID(), player2.UID(), 1)
+	fmt.Printf("player2.character: HP: %v Status: %v\n", ganyu2.HP(), ganyu2.Status())
 }

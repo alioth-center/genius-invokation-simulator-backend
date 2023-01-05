@@ -10,10 +10,10 @@ type ReactionCalculator interface {
 	ReactionCalculate([]enum.ElementType) (reaction enum.Reaction, elementRemains []enum.ElementType)
 
 	// DamageCalculate 根据反应类型计算对应的伤害修正
-	DamageCalculate(reaction enum.Reaction, ctx *context.DamageContext)
+	DamageCalculate(reaction enum.Reaction, targetCharacter uint, ctx *context.DamageContext)
 
 	// EffectCalculate 根据反应类型计算对应的反应效果
-	EffectCalculate(reaction enum.Reaction) (ctx *context.CallbackContext)
+	EffectCalculate(reaction enum.Reaction, targetPlayer Player) (ctx *context.CallbackContext)
 
 	// Attach 尝试让新元素附着在现有元素集合内，此时不触发元素反应，返回尝试附着后的元素集合
 	Attach(originalElements []enum.ElementType, newElement enum.ElementType) (resultElements []enum.ElementType)
@@ -36,11 +36,7 @@ type ruleSet struct {
 }
 
 func (r ruleSet) ImplementationCheck() bool {
-	if r.reactionCalculator == nullReactionCalculator {
-		return false
-	}
-
-	return true
+	return r.reactionCalculator != nullReactionCalculator
 }
 
 func (r ruleSet) ReactionCalculator() ReactionCalculator {

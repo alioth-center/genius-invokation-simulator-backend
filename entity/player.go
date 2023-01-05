@@ -25,7 +25,10 @@ type Player interface {
 	SwitchNextCharacter()
 	SwitchPrevCharacter()
 	SwitchCharacter(target uint)
+	ExecuteCallbackModify(ctx *context.CallbackContext)
+	ExecuteElementAttachment(ctx *context.DamageContext)
 	ExecuteAttack(skill, target uint, background []uint) (result *context.DamageContext)
+	ExecuteDefence(ctx *context.DamageContext)
 	ExecuteModify(ctx *context.ModifierContext)
 	ExecuteCharge(ctx *context.ChargeContext)
 	ExecuteHeal(ctx *context.HealContext)
@@ -38,6 +41,14 @@ type Player interface {
 	ExecuteFinalAttackModifiers(ctx *context.DamageContext)
 	ExecuteAfterAttackCallback()
 	ExecuteAfterDefenceCallback()
+
+	PreviewElementCost(basic Cost) (result Cost)
+
+	GetActiveCharacter() (has bool, character Character)
+	GetCharacter(id uint) (has bool, character Character)
+	GetBackgroundCharacters() (characters []Character)
+	HoldingCard(card uint) (holding bool)
+	Defeated() bool
 }
 
 type player struct {
@@ -74,67 +85,10 @@ func (p *player) executeCharacterModify(ctx *context.ModifierContext) {
 	})
 }
 
-func (p *player) executeCallbackModify(ctx *context.CallbackContext) {
-	// 执行ElementChangeResult
-	changeElementResult := ctx.ChangeElementsResult()
-	addElement, removeElement := map[enum.ElementType]uint{}, map[enum.ElementType]uint{}
-	for element, amount := range changeElementResult.Cost() {
-		if amount > 0 {
-			addElement[element] += uint(amount)
-		} else {
-			removeElement[element] += uint(-amount)
-		}
-	}
-	p.holdingCost.Pay(*NewCostFromMap(removeElement))
-	p.holdingCost.Add(*NewCostFromMap(addElement))
-
-	// 执行ChargeChangeResult
-	changeChargeResult := ctx.ChangeChargeResult()
-	p.ExecuteCharge(&changeChargeResult)
-
-	// 执行ModifiersChangeResult
-	changeModifiersResult := ctx.ChangeModifiersResult()
-	p.ExecuteModify(&changeModifiersResult)
-
-	// 执行OperatedResult
-	if switched, result := ctx.ChangeOperatedResult(); switched {
-		p.operated = result
-	}
-
-	// 执行ChangeCharacter
-	if switched, result := ctx.SwitchCharacterResult(); switched {
-		p.SwitchCharacter(result)
-	}
-
-	// 执行GetCard
-	if ctx.GetCardsResult() > 0 {
-		for i := uint(0); i < ctx.GetCardsResult(); i++ {
-			if card, success := p.cardDeck.GetOne(); success {
-				p.holdingCards.Set(card.ID(), card)
-			}
-		}
-	}
-
-	// 执行FindCard
-	if find, target := ctx.GetFindCardResult(); find {
-		if card, success := p.cardDeck.FindOne(target); success {
-			p.holdingCards.Set(card.ID(), card)
-		}
-	}
-
-	// 执行ElementAttachment
-	attachment := ctx.AttachElementResult()
-	for target, element := range attachment {
-		if p.characters.Exists(target) {
-			p.characters.Get(target).ExecuteElementAttachment(element)
-		}
-	}
-}
-
 func (p *player) executeCallbackEvent(trigger enum.TriggerType) {
 	ctx := context.NewCallbackContext()
 	p.callbackEvents.Call(trigger, ctx)
-	p.executeCallbackModify(ctx)
+	p.ExecuteCallbackModify(ctx)
 }
 
 func (p player) UID() uint {
@@ -161,6 +115,113 @@ func (p player) HoldingCost() Cost {
 	return p.holdingCost
 }
 
+func (p *player) GetCharacter(id uint) (has bool, character Character) {
+	return p.characters.Exists(id), p.characters.Get(id)
+}
+
+func (p *player) GetActiveCharacter() (has bool, character Character) {
+	if character = p.characters.Get(p.activeCharacter); character.Status() != enum.CharacterStatusDefeated {
+		return true, character
+	} else {
+		return false, nil
+	}
+}
+
+func (p *player) GetBackgroundCharacters() (characters []Character) {
+	characters = []Character{}
+	p.characters.Range(func(k uint, v Character) bool {
+		if k != p.activeCharacter && v.Status() != enum.CharacterStatusDefeated {
+			characters = append(characters, v)
+		}
+		return true
+	})
+
+	return characters
+}
+
+func (p player) HoldingCard(card uint) (holding bool) {
+	return p.holdingCards.Exists(card)
+}
+
+func (p *player) Defeated() bool {
+	tag := true
+	p.characters.Range(func(k uint, v Character) bool {
+		if v.Status() != enum.CharacterStatusDefeated {
+			tag = false
+			return false
+		}
+		return true
+	})
+	return tag
+}
+
+func (p *player) ExecuteCallbackModify(ctx *context.CallbackContext) {
+	// 执行ElementChangeResult
+	if ok, changeElementResult := ctx.ChangeElementsResult(); ok {
+		addElement, removeElement := map[enum.ElementType]uint{}, map[enum.ElementType]uint{}
+		for element, amount := range changeElementResult.Cost() {
+			if amount > 0 {
+				addElement[element] += uint(amount)
+			} else {
+				removeElement[element] += uint(-amount)
+			}
+		}
+		p.holdingCost.Pay(*NewCostFromMap(removeElement))
+		p.holdingCost.Add(*NewCostFromMap(addElement))
+	}
+
+	// 执行ChargeChangeResult
+	if ok, changeChargeResult := ctx.ChangeChargeResult(); ok {
+		p.ExecuteCharge(changeChargeResult)
+	}
+
+	// 执行ModifiersChangeResult
+	if ok, changeModifiersResult := ctx.ChangeModifiersResult(); ok {
+		p.ExecuteModify(changeModifiersResult)
+	}
+
+	// 执行OperatedResult
+	if switched, result := ctx.ChangeOperatedResult(); switched {
+		p.operated = result
+	}
+
+	// 执行ChangeCharacter
+	if switched, result := ctx.SwitchCharacterResult(); switched {
+		p.SwitchCharacter(result)
+	}
+
+	// 执行GetCard
+	if ok, result := ctx.GetCardsResult(); ok && result > 0 {
+		for i := uint(0); i < result; i++ {
+			if card, success := p.cardDeck.GetOne(); success {
+				p.holdingCards.Set(card.ID(), card)
+			}
+		}
+	}
+
+	// 执行FindCard
+	if find, target := ctx.GetFindCardResult(); find {
+		if card, success := p.cardDeck.FindOne(target); success {
+			p.holdingCards.Set(card.ID(), card)
+		}
+	}
+
+	// 执行ElementAttachment
+	if ok, attachment := ctx.AttachElementResult(); ok {
+		for target, element := range attachment {
+			if p.characters.Exists(target) {
+				p.characters.Get(target).ExecuteElementAttachment(element)
+			}
+		}
+	}
+}
+
+func (p *player) ExecuteElementAttachment(ctx *context.DamageContext) {
+	for target, damage := range ctx.Damage() {
+		p.characters.Get(target).ExecuteElementAttachment(damage.ElementType())
+	}
+}
+
 func (p *player) SwitchNextCharacter() {
 	// notice: 如果只有一人，此处不进行切换
 	index := p.characters.GetIndex(p.activeCharacter)
@@ -181,8 +242,8 @@ func (p *player) SwitchNextCharacter() {
 func (p *player) SwitchPrevCharacter() {
 	// notice: 如果只有一人，此处不进行切换
 	index := p.characters.GetIndex(p.activeCharacter)
-	for i := index - 1; i >= 0; i-- {
-		if character := p.characters.Get(p.characters.GetKey(i)); character.Status() != enum.CharacterStatusDefeated {
+	for i := int(index - 1); i >= 0; i-- {
+		if character := p.characters.Get(p.characters.GetKey(uint(i))); character.Status() != enum.CharacterStatusDefeated {
 			p.SwitchCharacter(character.ID())
 			return
 		}
@@ -329,6 +390,13 @@ func (p *player) ExecuteFinalAttackModifiers(ctx *context.DamageContext) {
 	p.characters.Get(p.activeCharacter).ExecuteFinalAttackModifiers(ctx)
 }
 
+func (p *player) ExecuteDefence(ctx *context.DamageContext) {
+	p.globalDefenceModifiers.Execute(ctx)
+	for target := range ctx.Damage() {
+		p.characters.Get(target).ExecuteDefence(ctx)
+	}
+}
+
 func (p *player) ExecuteAfterAttackCallback() {
 	p.executeCallbackEvent(enum.AfterAttack)
 }
@@ -365,6 +433,7 @@ func (p *player) ExecuteBurnCard(card uint, exchangeElement enum.ElementType) {
 		p.holdingCost.sub(exchangeElement, 1)
 		p.holdingCards.Remove(card)
 		p.holdingCost.add(p.characters.Get(p.activeCharacter).Vision(), 1)
+		p.executeCallbackEvent(enum.AfterBurnCard)
 	}
 }
 

@@ -41,8 +41,17 @@ type Player interface {
 	ExecuteFinalAttackModifiers(ctx *context.DamageContext)
 	ExecuteAfterAttackCallback()
 	ExecuteAfterDefenceCallback()
+	ExecuteResetCallback()
+	ExecuteRoundEndCallback()
+	ExecuteRoundStartCallback()
+	ExecuteSummonSkills()
+	ExecuteAddSummonRounds(summon uint, rounds uint)
+	ExecuteRemoveSummon(summon uint)
+	ExecuteRemoveAllSummons()
 
 	PreviewElementCost(basic Cost) (result Cost)
+
+	SetHoldingCost(cost Cost)
 
 	GetActiveCharacter() (has bool, character Character)
 	GetCharacter(id uint) (has bool, character Character)
@@ -405,6 +414,26 @@ func (p *player) ExecuteAfterDefenceCallback() {
 	p.executeCallbackEvent(enum.AfterDefence)
 }
 
+func (p *player) ExecuteResetCallback() {
+	p.executeCallbackEvent(enum.AfterReset)
+}
+
+func (p *player) ExecuteRoundEndCallback() {
+	p.executeCallbackEvent(enum.AfterRoundEnd)
+}
+
+func (p *player) ExecuteRoundStartCallback() {
+	p.executeCallbackEvent(enum.AfterRoundStart)
+}
+
+func (p *player) ExecuteSummonSkills() {}
+
+func (p *player) ExecuteAddSummonRounds(summon uint, rounds uint) {}
+
+func (p *player) ExecuteRemoveSummon(summon uint) {}
+
+func (p *player) ExecuteRemoveAllSummons() {}
+
 func (p *player) ExecuteElementPayment(basic, pay Cost) (success bool) {
 	if p.PreviewElementCost(basic).Equals(pay) {
 		ctx := context.NewCostContext()
@@ -446,6 +475,10 @@ func (p *player) ExecuteEatFood(card, targetCharacter uint) {
 			p.executeCallbackEvent(enum.AfterEatFood)
 		}
 	}
+}
+
+func (p *player) SetHoldingCost(cost Cost) {
+	p.holdingCost = cost
 }
 
 func NewPlayer(info PlayerInfo) Player {

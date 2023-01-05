@@ -42,6 +42,8 @@ type Player interface {
 	ExecuteAfterAttackCallback()
 	ExecuteAfterDefenceCallback()
 
+	PreviewElementCost(basic Cost) (result Cost)
+
 	GetActiveCharacter() (has bool, character Character)
 	GetCharacter(id uint) (has bool, character Character)
 	GetBackgroundCharacters() (characters []Character)
@@ -155,25 +157,28 @@ func (p *player) Defeated() bool {
 
 func (p *player) ExecuteCallbackModify(ctx *context.CallbackContext) {
 	// 执行ElementChangeResult
-	changeElementResult := ctx.ChangeElementsResult()
-	addElement, removeElement := map[enum.ElementType]uint{}, map[enum.ElementType]uint{}
-	for element, amount := range changeElementResult.Cost() {
-		if amount > 0 {
-			addElement[element] += uint(amount)
-		} else {
-			removeElement[element] += uint(-amount)
+	if ok, changeElementResult := ctx.ChangeElementsResult(); ok {
+		addElement, removeElement := map[enum.ElementType]uint{}, map[enum.ElementType]uint{}
+		for element, amount := range changeElementResult.Cost() {
+			if amount > 0 {
+				addElement[element] += uint(amount)
+			} else {
+				removeElement[element] += uint(-amount)
+			}
 		}
+		p.holdingCost.Pay(*NewCostFromMap(removeElement))
+		p.holdingCost.Add(*NewCostFromMap(addElement))
 	}
-	p.holdingCost.Pay(*NewCostFromMap(removeElement))
-	p.holdingCost.Add(*NewCostFromMap(addElement))
 
 	// 执行ChargeChangeResult
-	changeChargeResult := ctx.ChangeChargeResult()
-	p.ExecuteCharge(&changeChargeResult)
+	if ok, changeChargeResult := ctx.ChangeChargeResult(); ok {
+		p.ExecuteCharge(changeChargeResult)
+	}
 
 	// 执行ModifiersChangeResult
-	changeModifiersResult := ctx.ChangeModifiersResult()
-	p.ExecuteModify(&changeModifiersResult)
+	if ok, changeModifiersResult := ctx.ChangeModifiersResult(); ok {
+		p.ExecuteModify(changeModifiersResult)
+	}
 
 	// 执行OperatedResult
 	if switched, result := ctx.ChangeOperatedResult(); switched {
@@ -186,8 +191,8 @@ func (p *player) ExecuteCallbackModify(ctx *context.CallbackContext) {
 	}
 
 	// 执行GetCard
-	if ctx.GetCardsResult() > 0 {
-		for i := uint(0); i < ctx.GetCardsResult(); i++ {
+	if ok, result := ctx.GetCardsResult(); ok && result > 0 {
+		for i := uint(0); i < result; i++ {
 			if card, success := p.cardDeck.GetOne(); success {
 				p.holdingCards.Set(card.ID(), card)
 			}
@@ -202,10 +207,11 @@ func (p *player) ExecuteCallbackModify(ctx *context.CallbackContext) {
 	}
 
 	// 执行ElementAttachment
-	attachment := ctx.AttachElementResult()
-	for target, element := range attachment {
-		if p.characters.Exists(target) {
-			p.characters.Get(target).ExecuteElementAttachment(element)
+	if ok, attachment := ctx.AttachElementResult(); ok {
+		for target, element := range attachment {
+			if p.characters.Exists(target) {
+				p.characters.Get(target).ExecuteElementAttachment(element)
+			}
 		}
 	}
 }
@@ -427,6 +433,7 @@ func (p *player) ExecuteBurnCard(card uint, exchangeElement enum.ElementType) {
 		p.holdingCost.sub(exchangeElement, 1)
 		p.holdingCards.Remove(card)
 		p.holdingCost.add(p.characters.Get(p.activeCharacter).Vision(), 1)
+		p.executeCallbackEvent(enum.AfterBurnCard)
 	}
 }
 

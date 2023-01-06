@@ -12,6 +12,9 @@ type PlayerInfo interface {
 	UID() uint
 	Cards() []Card
 	Characters() map[uint]Character
+	SetUID(uint)
+	SetCards([]Card)
+	SetCharacters([]Character)
 }
 
 type Player interface {
@@ -417,18 +420,22 @@ func (p *player) ExecuteAfterDefenceCallback() {
 }
 
 func (p *player) ExecuteResetCallback() {
+	p.status = enum.PlayerStatusWaiting
 	p.executeCallbackEvent(enum.AfterReset)
 }
 
 func (p *player) ExecuteRoundEndCallback() {
+	p.status = enum.PlayerStatusWaiting
 	p.executeCallbackEvent(enum.AfterRoundEnd)
 }
 
 func (p *player) ExecuteRoundStartCallback() {
+	p.status = enum.PlayerStatusReady
 	p.executeCallbackEvent(enum.AfterRoundStart)
 }
 
 func (p *player) ExecuteSkipRound() {
+	p.status = enum.PlayerStatusWaiting
 	p.operated = true
 }
 
@@ -437,6 +444,7 @@ func (p *player) ExecuteConcede() {
 }
 
 func (p *player) ResetOperated() {
+	p.status = enum.PlayerStatusActing
 	p.operated = false
 }
 

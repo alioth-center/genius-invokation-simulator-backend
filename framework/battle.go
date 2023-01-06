@@ -134,39 +134,11 @@ func NewBattle(initialize message.InitializeMessage) (success bool, framework *B
 		filter: kv.NewSyncMap[filter](),
 	}
 
-	// todo: implement persistence module
-	//// 查询并填充玩家信息
-	playerList := make([]entity.Player, len(initialize.Players))
-	//for i, player := range initialize.Players {
-	//	if has, info := db.PlayerPersistence.QueryByID(player.UID); has {
-	//		var playerInfo entity.PlayerInfo
-	//
-	//		for ii, characterID := range player.Characters {
-	//			if ok, character := db.CharacterPersistence.QueryByID(characterID); ok {
-	//
-	//			} else {
-	//				return false, nil
-	//			}
-	//		}
-	//
-	//		for ii, cardID := range player.CardDeck {
-	//			if ok, card := db.CardPersistence.QueryByID(cardID); ok {
-	//
-	//			} else {
-	//				return false, nil
-	//			}
-	//		}
-	//
-	//		playerList[i] = entity.NewPlayer(playerInfo)
-	//	} else {
-	//		return false, nil
-	//	}
-	//}
-
 	// 查询并设置规则集合
 	var ruleSet entity.RuleSet
 	if has, rule := db.RuleSetPersistence.QueryByID(initialize.Options.RuleSet); has {
-		ruleSet = entity.NewRuleSet(rule.ReactionCalculator, entity.GameOptions{
+		ruleSet = rule.Ctor()()
+		ruleSet.SetOptions(entity.GameOptions{
 			ReRollTimes: initialize.Options.ReRollTime,
 			StaticCost:  initialize.Options.StaticElement,
 			RollAmount:  initialize.Options.ElementAmount,
@@ -176,7 +148,59 @@ func NewBattle(initialize message.InitializeMessage) (success bool, framework *B
 		return false, nil
 	}
 
-	// 注入战斗核心
+	// 查询并填充玩家信息
+	playerList := make([]entity.Player, len(initialize.Players))
+	for i, player := range initialize.Players {
+		if has, playerRecord := db.PlayerPersistence.QueryByID(player.UID); has {
+			playerInfo := playerRecord.Ctor()()
+
+			// 注入玩家的角色信息
+			characterList := make([]entity.Character, len(player.Characters))
+			for ii, characterID := range player.Characters {
+				if ok, character := db.CharacterPersistence.QueryByID(characterID); ok {
+					characterInfo := character.Ctor()()
+
+					// 注入角色的技能信息
+					skillList := make([]entity.Skill, len(character.Skills))
+					for jj, skillID := range character.Skills {
+						if okk, skill := db.SkillPersistence.QueryByID(skillID); okk {
+							skillEntity := skill.Ctor()()
+							skillList[jj] = skillEntity
+						}
+					}
+
+					// 实例化角色列表
+					characterInfo.SetSkills(skillList)
+					characterEntity := entity.NewCharacter(player.UID, characterInfo, ruleSet)
+					characterList[ii] = characterEntity
+				} else {
+					return false, nil
+				}
+			}
+
+			// 注入玩家的卡牌信息
+			cardList := make([]entity.Card, len(player.CardDeck))
+			for ii, cardID := range player.CardDeck {
+				if ok, card := db.CardPersistence.QueryByID(cardID); ok {
+					cardEntity := card.Ctor()()
+					cardList[ii] = cardEntity
+				} else {
+					return false, nil
+				}
+			}
+
+			// 注入玩家的基础信息
+			playerInfo.SetUID(player.UID)
+			playerInfo.SetCharacters(characterList)
+			playerInfo.SetCards(cardList)
+
+			playerList[i] = entity.NewPlayer(playerInfo)
+		} else {
+			return false, nil
+		}
+	}
+
+	// 生成战斗核心
 	framework.core = entity.NewCore(ruleSet, playerList)
 	framework.update()
 

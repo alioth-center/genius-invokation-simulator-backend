@@ -498,7 +498,7 @@ func (p *player) SetHoldingCost(cost Cost) {
 func NewPlayer(info PlayerInfo) Player {
 	player := &player{
 		uid:                         info.UID(),
-		status:                      enum.PlayerStatusReady,
+		status:                      enum.PlayerStatusViewing,
 		operated:                    false,
 		reRollTimes:                 1,
 		staticCost:                  *NewCost(),

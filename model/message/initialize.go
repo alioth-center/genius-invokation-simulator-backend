@@ -11,6 +11,7 @@ type MatchingMessage struct {
 type GameOptions struct {
 	ReRollTime    uint
 	ElementAmount uint
+	GetCards      uint
 	StaticElement map[enum.ElementType]uint
 	RuleSet       uint
 }

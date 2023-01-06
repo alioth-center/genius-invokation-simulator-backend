@@ -27,6 +27,12 @@ type CooperativeSkill struct {
 	Trigger enum.TriggerType `json:"trigger" yaml:"trigger" xml:"trigger"` // Trigger 协同攻击的触发条件
 }
 
+// Event 事件信息
+type Event struct {
+	ID      uint             `json:"id" yaml:"id" xml:"id"`                // ID 事件的实体ID
+	Trigger enum.TriggerType `json:"trigger" yaml:"trigger" xml:"trigger"` // Trigger 事件的触发条件
+}
+
 // Character 角色信息
 type Character struct {
 	ID         uint                 `json:"id" yaml:"id" xml:"id"`                         // ID 角色的实体ID
@@ -43,6 +49,7 @@ type Base struct {
 	Characters   []Character        `json:"characters" yaml:"characters" xml:"characters"`       // Characters 玩家的持有角色
 	CampEffect   []Modifier         `json:"camp_effect" yaml:"camp_effect" xml:"camp_effect"`    // CampEffect 玩家的阵营效果
 	Cooperatives []CooperativeSkill `json:"cooperatives" yaml:"cooperatives" xml:"cooperatives"` // Cooperatives 玩家可进行的协同攻击
+	Events       []Event            `json:"events" yaml:"events" xml:"events"`                   // Events 玩家身上的事件
 	RemainCards  uint               `json:"remain_cards" yaml:"remain_cards" xml:"remain_cards"` // RemainCards 玩家牌堆剩余的数量
 }
 

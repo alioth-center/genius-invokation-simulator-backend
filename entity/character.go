@@ -24,6 +24,7 @@ type CharacterInfo interface {
 	MaxHP() uint
 	MaxMP() uint
 	Skills() map[uint]Skill
+	SetSkills([]Skill)
 }
 
 type Character interface {

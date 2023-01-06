@@ -56,8 +56,9 @@ type ConcedeAction struct {
 
 // ActionMessage 玩家的操作信息
 type ActionMessage struct {
-	Type enum.ActionType `json:"type" yaml:"type" xml:"type"` // Type 玩家的操作类型
-	Args interface{}     `json:"args" yaml:"args" xml:"args"` // Args 玩家的操作信息
+	Type   enum.ActionType `json:"type" yaml:"type" xml:"type"`       // Type 玩家的操作类型
+	Sender uint            `json:"sender" yaml:"sender" xml:"sender"` // Sender 发送操作的玩家
+	Args   interface{}     `json:"args" yaml:"args" xml:"args"`       // Args 玩家的操作信息
 }
 
 func exchangeMessage[target ActionMessageInterface](message ActionMessage, conditions ...enum.ActionType) (success bool, result target) {

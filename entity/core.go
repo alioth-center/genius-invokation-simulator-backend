@@ -63,9 +63,9 @@ func newPlayerChain() *playerChain {
 }
 
 type Core struct {
-	roundCount  uint
+	Players     kv.Map[uint, Player]
+	RoundCount  uint
 	ruleSet     RuleSet
-	players     kv.Map[uint, Player]
 	activeChain *playerChain
 	nextChain   *playerChain
 }
@@ -79,16 +79,16 @@ func (c *Core) RoundEnd() {
 
 	// 按照行动队列执行召唤物结算
 	for _, player := range newCallList {
-		c.players.Get(player).ExecuteSummonSkills()
+		c.Players.Get(player).ExecuteSummonSkills()
 	}
 
 	// 按照行动队列执行结束回合结算
 	for _, player := range newCallList {
-		c.players.Get(player).ExecuteRoundEndCallback()
+		c.Players.Get(player).ExecuteRoundEndCallback()
 	}
 
 	// 回合计数器增加
-	c.roundCount++
+	c.RoundCount++
 }
 
 // RoundStart 回合开始时的结算逻辑
@@ -97,12 +97,12 @@ func (c *Core) RoundStart() {
 
 	// 按照行动队列重置所有玩家的状态
 	for _, player := range newCallList {
-		c.players.Get(player).ExecuteResetCallback()
+		c.Players.Get(player).ExecuteResetCallback()
 	}
 
 	// 按照行动队列执行玩家的开始阶段
 	for _, player := range newCallList {
-		c.players.Get(player).ExecuteRoundStartCallback()
+		c.Players.Get(player).ExecuteRoundStartCallback()
 	}
 }
 
@@ -110,11 +110,11 @@ func (c *Core) RoundStart() {
 func (c *Core) RoundRoll() {
 	newCallList := c.activeChain.allActive()
 	for _, player := range newCallList {
-		targetPlayer := c.players.Get(player)
+		targetPlayer := c.Players.Get(player)
 		holdingCost := targetPlayer.StaticCost()
 
 		// 计算需要多少随机元素骰子
-		remainRandomCount := int(c.ruleSet.GameOptions().RollAmount()) - int(holdingCost.total)
+		remainRandomCount := int(c.ruleSet.GameOptions().RollAmount) - int(holdingCost.total)
 		if remainRandomCount >= 0 {
 			// 使用随机元素骰子补足缺口
 			randomCost := NewRandomCost(uint(remainRandomCount))
@@ -124,7 +124,7 @@ func (c *Core) RoundRoll() {
 
 		} else {
 			// 如果固定骰子多余可获得骰子，舍弃多出的固定元素骰子
-			have, finalCount := uint(0), c.ruleSet.GameOptions().RollAmount()
+			have, finalCount := uint(0), c.ruleSet.GameOptions().RollAmount
 			finalCost := NewCost()
 			for element := enum.ElementType(0); element <= enum.ElementEndIndex; element++ {
 				if holdingCost.costs[element]+have > finalCount {
@@ -142,21 +142,21 @@ func (c *Core) RoundRoll() {
 }
 
 func (c *Core) ExecuteReRoll(sender uint, drop map[enum.ElementType]uint) {
-	if c.players.Exists(sender) {
-		c.players.Get(sender).ExecuteElementReRoll(*NewCostFromMap(drop))
+	if c.Players.Exists(sender) {
+		c.Players.Get(sender).ExecuteElementReRoll(*NewCostFromMap(drop))
 	}
 }
 
 func (c *Core) ExecutePayment(sender uint, need, paid map[enum.ElementType]uint) {
-	if c.players.Exists(sender) {
+	if c.Players.Exists(sender) {
 		basicCost, paidCost := NewCostFromMap(need), NewCostFromMap(paid)
-		c.players.Get(sender).ExecuteElementPayment(*basicCost, *paidCost)
+		c.Players.Get(sender).ExecuteElementPayment(*basicCost, *paidCost)
 	}
 }
 
 func (c *Core) ExecuteAttack(sender uint, target uint, skill uint) {
-	if c.players.Exists(sender) && c.players.Exists(target) {
-		senderPlayer, targetPlayer := c.players.Get(sender), c.players.Get(target)
+	if c.Players.Exists(sender) && c.Players.Exists(target) {
+		senderPlayer, targetPlayer := c.Players.Get(sender), c.Players.Get(target)
 
 		if has, character := senderPlayer.GetActiveCharacter(); has && character.HasSkill(skill) {
 			// 填充DamageContext
@@ -191,23 +191,54 @@ func (c *Core) ExecuteAttack(sender uint, target uint, skill uint) {
 }
 
 func (c *Core) ExecuteBurnCard(sender uint, card uint, exchangeElement enum.ElementType) {
-	if c.players.Exists(sender) {
-		c.players.Get(sender).ExecuteBurnCard(card, exchangeElement)
+	if c.Players.Exists(sender) {
+		c.Players.Get(sender).ExecuteBurnCard(card, exchangeElement)
+	}
+}
+
+func (c *Core) ExecuteSkipRound(sender uint) {
+	if c.Players.Exists(sender) {
+		c.Players.Get(sender).ExecuteSkipRound()
+	}
+}
+
+func (c *Core) ExecuteConcede(sender uint) {
+	if c.Players.Exists(sender) {
+		c.Players.Get(sender).ExecuteConcede()
+	}
+}
+
+func (c *Core) ExecuteSwitchCharacter(sender uint, targetCharacter uint) {
+	if c.Players.Exists(sender) {
+		player := c.Players.Get(sender)
+		if has, _ := player.GetCharacter(targetCharacter); has {
+			player.SwitchCharacter(targetCharacter)
+		}
+	}
+}
+
+func (c *Core) ExecuteUseCard(sender uint, card uint) {
+	if c.Players.Exists(sender) {
+		player := c.Players.Get(sender)
+		if player.HeldCard(card) {
+			// todo: implement use card logic
+			panic("not implemented yet")
+		}
 	}
 }
 
 func NewCore(rule RuleSet, players []Player) *Core {
 	core := &Core{
-		roundCount:  0,
+		RoundCount:  0,
 		ruleSet:     rule,
-		players:     kv.NewSimpleMap[Player](),
+		Players:     kv.NewSimpleMap[Player](),
 		activeChain: newPlayerChain(),
 		nextChain:   newPlayerChain(),
 	}
 
 	for _, player := range players {
 		core.activeChain.add(player)
-		core.players.Set(player.UID(), player)
+		core.Players.Set(player.UID(), player)
 	}
 
 	return core

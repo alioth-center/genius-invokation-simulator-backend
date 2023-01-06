@@ -22,15 +22,11 @@ type ReactionCalculator interface {
 	Relative(reaction enum.Reaction, relativeElement enum.ElementType) bool
 }
 
-type GameOptions interface {
-	// ReRollTimes 所有玩家的基础可重掷次数
-	ReRollTimes() uint
-
-	// StaticCost 所有玩家的基础固定持有骰子
-	StaticCost() map[enum.ElementType]uint
-
-	// RollAmount 所有玩家的投掷阶段生成元素骰子数量
-	RollAmount() uint
+type GameOptions struct {
+	ReRollTimes uint                      // ReRollTimes 所有玩家的基础可重掷次数
+	StaticCost  map[enum.ElementType]uint // StaticCost 所有玩家的基础固定持有骰子
+	RollAmount  uint                      // RollAmount 所有玩家的投掷阶段生成元素骰子数量
+	GetCards    uint                      // GetCards 所有玩家在回合开始时可以获得的卡牌数量
 }
 
 var (
@@ -41,6 +37,8 @@ type RuleSet interface {
 	ImplementationCheck() bool
 	GameOptions() GameOptions
 	ReactionCalculator() ReactionCalculator
+
+	SetOptions(options GameOptions)
 }
 
 type ruleSet struct {
@@ -60,17 +58,23 @@ func (r ruleSet) GameOptions() GameOptions {
 	return r.gameOptions
 }
 
+func (r *ruleSet) SetOptions(options GameOptions) {
+	r.gameOptions = options
+}
+
 func NewEmptyRuleSet() RuleSet {
-	return ruleSet{
+	return &ruleSet{
 		reactionCalculator: nil,
-		gameOptions:        nil,
+		gameOptions:        GameOptions{},
 	}
 }
 
 func NewRuleSet(
 	elementalReactionCalculator ReactionCalculator,
+	gameOptions GameOptions,
 ) RuleSet {
-	return ruleSet{
+	return &ruleSet{
 		reactionCalculator: elementalReactionCalculator,
+		gameOptions:        gameOptions,
 	}
 }

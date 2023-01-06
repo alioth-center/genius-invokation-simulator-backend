@@ -196,6 +196,37 @@ func (c *Core) ExecuteBurnCard(sender uint, card uint, exchangeElement enum.Elem
 	}
 }
 
+func (c *Core) ExecuteSkipRound(sender uint) {
+	if c.Players.Exists(sender) {
+		c.Players.Get(sender).ExecuteSkipRound()
+	}
+}
+
+func (c *Core) ExecuteConcede(sender uint) {
+	if c.Players.Exists(sender) {
+		c.Players.Get(sender).ExecuteConcede()
+	}
+}
+
+func (c *Core) ExecuteSwitchCharacter(sender uint, targetCharacter uint) {
+	if c.Players.Exists(sender) {
+		player := c.Players.Get(sender)
+		if has, _ := player.GetCharacter(targetCharacter); has {
+			player.SwitchCharacter(targetCharacter)
+		}
+	}
+}
+
+func (c *Core) ExecuteUseCard(sender uint, card uint) {
+	if c.Players.Exists(sender) {
+		player := c.Players.Get(sender)
+		if player.HeldCard(card) {
+			// todo: implement use card logic
+			panic("not implemented yet")
+		}
+	}
+}
+
 func NewCore(rule RuleSet, players []Player) *Core {
 	core := &Core{
 		RoundCount:  0,

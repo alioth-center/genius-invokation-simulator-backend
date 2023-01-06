@@ -70,7 +70,7 @@ func exchangeMessage[target ActionMessageInterface](message ActionMessage, condi
 	}
 
 	if !typeCheck {
-		return false, nil
+		return false, result
 	} else {
 		result, success = message.Args.(target)
 		return success, result

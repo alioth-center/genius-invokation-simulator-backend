@@ -114,7 +114,7 @@ func (c *Core) RoundRoll() {
 		holdingCost := targetPlayer.StaticCost()
 
 		// 计算需要多少随机元素骰子
-		remainRandomCount := int(c.ruleSet.GameOptions().RollAmount()) - int(holdingCost.total)
+		remainRandomCount := int(c.ruleSet.GameOptions().RollAmount) - int(holdingCost.total)
 		if remainRandomCount >= 0 {
 			// 使用随机元素骰子补足缺口
 			randomCost := NewRandomCost(uint(remainRandomCount))
@@ -124,7 +124,7 @@ func (c *Core) RoundRoll() {
 
 		} else {
 			// 如果固定骰子多余可获得骰子，舍弃多出的固定元素骰子
-			have, finalCount := uint(0), c.ruleSet.GameOptions().RollAmount()
+			have, finalCount := uint(0), c.ruleSet.GameOptions().RollAmount
 			finalCost := NewCost()
 			for element := enum.ElementType(0); element <= enum.ElementEndIndex; element++ {
 				if holdingCost.costs[element]+have > finalCount {

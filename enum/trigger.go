@@ -10,6 +10,7 @@ const (
 	AfterDefence                       // AfterDefence 防御结算后触发
 	AfterEatFood                       // AfterEatFood 使用食物后触发
 	AfterHeal                          // AfterHeal 治疗后触发
+	AfterReset                         // AfterReset 重置时触发
 	AfterRoundStart                    // AfterRoundStart 回合开始后触发
 	AfterRoundEnd                      // AfterRoundEnd 回合结束后触发
 	AfterSwitch                        // AfterSwitch 切换角色后触发

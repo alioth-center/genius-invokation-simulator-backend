@@ -43,6 +43,17 @@ func (pc *playerChain) add(player Player) {
 	pc.queue = append(pc.queue, player.UID())
 }
 
+func (pc *playerChain) allActive() []uint {
+	result := make([]uint, 0)
+	for _, id := range pc.queue {
+		if pc.canOperated.Get(id) {
+			result = append(result, id)
+		}
+	}
+
+	return result
+}
+
 func newPlayerChain() *playerChain {
 	return &playerChain{
 		canOperated: kv.NewSimpleMap[bool](),
@@ -52,10 +63,95 @@ func newPlayerChain() *playerChain {
 }
 
 type Core struct {
+	roundCount  uint
 	ruleSet     RuleSet
 	players     kv.Map[uint, Player]
 	activeChain *playerChain
 	nextChain   *playerChain
+}
+
+// RoundEnd 回合结束时的结算逻辑
+func (c *Core) RoundEnd() {
+	// 将行动队列更新为下回合队列
+	c.activeChain, c.nextChain = c.nextChain, c.activeChain
+	c.nextChain.empty()
+	newCallList := c.activeChain.allActive()
+
+	// 按照行动队列执行召唤物结算
+	for _, player := range newCallList {
+		c.players.Get(player).ExecuteSummonSkills()
+	}
+
+	// 按照行动队列执行结束回合结算
+	for _, player := range newCallList {
+		c.players.Get(player).ExecuteRoundEndCallback()
+	}
+
+	// 回合计数器增加
+	c.roundCount++
+}
+
+// RoundStart 回合开始时的结算逻辑
+func (c *Core) RoundStart() {
+	newCallList := c.activeChain.allActive()
+
+	// 按照行动队列重置所有玩家的状态
+	for _, player := range newCallList {
+		c.players.Get(player).ExecuteResetCallback()
+	}
+
+	// 按照行动队列执行玩家的开始阶段
+	for _, player := range newCallList {
+		c.players.Get(player).ExecuteRoundStartCallback()
+	}
+}
+
+// RoundRoll 投掷阶段的计算逻辑
+func (c *Core) RoundRoll() {
+	newCallList := c.activeChain.allActive()
+	for _, player := range newCallList {
+		targetPlayer := c.players.Get(player)
+		holdingCost := targetPlayer.StaticCost()
+
+		// 计算需要多少随机元素骰子
+		remainRandomCount := int(c.ruleSet.GameOptions().RollAmount()) - int(holdingCost.total)
+		if remainRandomCount >= 0 {
+			// 使用随机元素骰子补足缺口
+			randomCost := NewRandomCost(uint(remainRandomCount))
+			holdingCost.Add(*randomCost)
+
+			targetPlayer.SetHoldingCost(holdingCost)
+
+		} else {
+			// 如果固定骰子多余可获得骰子，舍弃多出的固定元素骰子
+			have, finalCount := uint(0), c.ruleSet.GameOptions().RollAmount()
+			finalCost := NewCost()
+			for element := enum.ElementType(0); element <= enum.ElementEndIndex; element++ {
+				if holdingCost.costs[element]+have > finalCount {
+					finalCost.add(element, finalCount-have)
+					break
+				} else {
+					finalCost.add(element, holdingCost.costs[element])
+					have += holdingCost.costs[element]
+				}
+			}
+
+			targetPlayer.SetHoldingCost(*finalCost)
+		}
+	}
+}
+
+func (c *Core) ExecuteReRoll(sender uint, drop map[enum.ElementType]uint) {
+	if c.players.Exists(sender) {
+		c.players.Get(sender).ExecuteElementReRoll(*NewCostFromMap(drop))
+	}
+}
+
+func (c *Core) ExecutePayment(sender uint, need, paid map[enum.ElementType]uint) {
+	if c.players.Exists(sender) {
+		basicCost, paidCost := NewCostFromMap(need), NewCostFromMap(paid)
+		c.players.Get(sender).ExecuteElementPayment(*basicCost, *paidCost)
+	}
 }
 
 func (c *Core) ExecuteAttack(sender uint, target uint, skill uint) {
@@ -102,6 +198,7 @@ func (c *Core) ExecuteBurnCard(sender uint, card uint, exchangeElement enum.Elem
 
 func NewCore(rule RuleSet, players []Player) *Core {
 	core := &Core{
+		roundCount:  0,
 		ruleSet:     rule,
 		players:     kv.NewSimpleMap[Player](),
 		activeChain: newPlayerChain(),

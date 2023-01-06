@@ -15,6 +15,73 @@
 
 **具体游戏内容的实现(卡牌、角色、技能等)将会以sub-module的形式发布，本项目仅为后端框架**
 
+## How to use
+
+**本环节(How to use)暂时不可用，只是先更新文档占个坑**
+
+### From source
+
+1. 确保您的设备上正常安装了`go 1.19`或以上版本，您可以通过在命令行执行下面的语句查看您的go版本与安装情况：
+
+  ```shell
+  go version
+  ```
+
+2. 选择一个存放代码的地方，Clone本仓库，选择一个源即可：
+
+  ```shell
+  git clone https://github.com/sunist-c/genius-invokation-simulator-backend.git # GitHub源
+  git clone https://code.sunist.cn/sunist-c/genius-invokation-simulator-backend.git # 作者私有源
+  ```
+
+3. 进入本项目的目录，然后构建本项目，请根据操作系统情况与实际情况替换掉`${output_name}`：
+
+  ```shell
+  go mod tidy # 同步依赖关系
+  go build -o ${output_name} # 构建可执行文件
+  ```
+
+4. 您可以在当前目录下发现新增了一个名为`${output_name}`的可执行文件，执行这个可执行文件：
+
+  ```shell
+  ./${output_name} -mode cli # 以命令行模式启动模拟器
+  ```
+
+5. 您可以使用`-h`参数来获取更多执行帮助：
+
+  ```shell
+  $ ./${output_name} -h
+  > Usage of ${output_name}:
+  >   -conf string
+  >         setup the backend configuration file, highest priority
+  >   -mode string
+  >         setup the startup mode, available [backend, cli, ai] (default "backend")
+  >   -port uint
+  >         setup the http service port (default 8086)
+  ```
+
+### From binary
+
+1. 转到本项目的[release]()页面，根据您的设备、平台与操作系统，下载对应的二进制可执行文件，这个文件等价于 `From source` 环节中 3. 步骤产生的可执行文件
+2. 参考 `From source` 环节的 4. 和 5. 步骤进行下一步操作
+
+### From docker
+
+// todo
+
+## How to modify
+
+**本环节(How to modify)暂时不可用，只是先更新文档占个坑**
+
+1. 进入 `data` 目录，这是模拟器自动扫描的目录
+2. 找到一个您中意的mod，然后将其下载至 `data` 目录下
+3. 修改**项目根目录**下的 `main.go` 文件，在imports区块内，将您获取的mod匿名引入
+4. 启动模拟器，模拟器将自动加载mod
+
+----
+
+以下的内容供开发者参考
+
 ## Branch
 
 - master 主要的分支，将在发生重要功能修改时与dev分支进行同步
@@ -29,6 +96,7 @@
 
 + 战斗框架： [Battle Framework of GISB](https://github.com/sunist-c/genius-invokation-simulator-backend/wiki/Battle-Framework)
 + 事件框架： Mkdir...
++ MOD制作： Mkdir...
 
 ## Announce
 

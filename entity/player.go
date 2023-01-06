@@ -10,14 +10,13 @@ import (
 
 type PlayerInfo interface {
 	UID() uint
-	Name() string
 	Cards() []Card
 	Characters() map[uint]Character
 }
 
 type Player interface {
 	UID() uint
-	Name() string
+	Status() enum.PlayerStatus
 	Operated() bool
 	ReRollTimes() uint
 	StaticCost() Cost
@@ -48,21 +47,24 @@ type Player interface {
 	ExecuteAddSummonRounds(summon uint, rounds uint)
 	ExecuteRemoveSummon(summon uint)
 	ExecuteRemoveAllSummons()
+	ExecuteSkipRound()
+	ExecuteConcede()
 
 	PreviewElementCost(basic Cost) (result Cost)
 
+	ResetOperated()
 	SetHoldingCost(cost Cost)
 
 	GetActiveCharacter() (has bool, character Character)
 	GetCharacter(id uint) (has bool, character Character)
 	GetBackgroundCharacters() (characters []Character)
-	HoldingCard(card uint) (holding bool)
+	HeldCard(card uint) (held bool)
 	Defeated() bool
 }
 
 type player struct {
-	uid  uint   // uid 玩家的UID，由其他模块托管
-	name string // name 玩家的名称
+	uid    uint              // uid 玩家的UID，由其他模块托管
+	status enum.PlayerStatus // status 玩家的状态
 
 	operated    bool // operated 本回合玩家是否操作过
 	reRollTimes uint // reRollTimes 重新投掷的次数
@@ -104,8 +106,8 @@ func (p player) UID() uint {
 	return p.uid
 }
 
-func (p player) Name() string {
-	return p.name
+func (p player) Status() enum.PlayerStatus {
+	return p.status
 }
 
 func (p player) Operated() bool {
@@ -148,7 +150,7 @@ func (p *player) GetBackgroundCharacters() (characters []Character) {
 	return characters
 }
 
-func (p player) HoldingCard(card uint) (holding bool) {
+func (p player) HeldCard(card uint) (held bool) {
 	return p.holdingCards.Exists(card)
 }
 
@@ -426,6 +428,18 @@ func (p *player) ExecuteRoundStartCallback() {
 	p.executeCallbackEvent(enum.AfterRoundStart)
 }
 
+func (p *player) ExecuteSkipRound() {
+	p.operated = true
+}
+
+func (p *player) ExecuteConcede() {
+	p.status = enum.PlayerStatusDefeated
+}
+
+func (p *player) ResetOperated() {
+	p.operated = false
+}
+
 func (p *player) ExecuteSummonSkills() {}
 
 func (p *player) ExecuteAddSummonRounds(summon uint, rounds uint) {}
@@ -484,7 +498,7 @@ func (p *player) SetHoldingCost(cost Cost) {
 func NewPlayer(info PlayerInfo) Player {
 	player := &player{
 		uid:                         info.UID(),
-		name:                        info.Name(),
+		status:                      enum.PlayerStatusReady,
 		operated:                    false,
 		reRollTimes:                 1,
 		staticCost:                  *NewCost(),

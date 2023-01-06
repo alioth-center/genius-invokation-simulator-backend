@@ -51,6 +51,7 @@ type Base struct {
 	Cooperatives []CooperativeSkill `json:"cooperatives" yaml:"cooperatives" xml:"cooperatives"` // Cooperatives 玩家可进行的协同攻击
 	Events       []Event            `json:"events" yaml:"events" xml:"events"`                   // Events 玩家身上的事件
 	RemainCards  uint               `json:"remain_cards" yaml:"remain_cards" xml:"remain_cards"` // RemainCards 玩家牌堆剩余的数量
+	Status       enum.PlayerStatus  `json:"status" yaml:"status" xml:"status"`                   // Status 玩家的状态信息
 }
 
 // Self 接收玩家自己的信息

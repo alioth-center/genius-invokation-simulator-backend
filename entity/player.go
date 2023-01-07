@@ -8,13 +8,10 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 )
 
-type PlayerInfo interface {
-	UID() uint
-	Cards() []Card
-	Characters() map[uint]Character
-	SetUID(uint)
-	SetCards([]Card)
-	SetCharacters([]Character)
+type PlayerInfo struct {
+	UID        uint
+	Cards      []Card
+	Characters map[uint]Character
 }
 
 type Player interface {
@@ -505,13 +502,13 @@ func (p *player) SetHoldingCost(cost Cost) {
 
 func NewPlayer(info PlayerInfo) Player {
 	player := &player{
-		uid:                         info.UID(),
+		uid:                         info.UID,
 		status:                      enum.PlayerStatusViewing,
 		operated:                    false,
 		reRollTimes:                 1,
 		staticCost:                  *NewCost(),
 		holdingCost:                 *NewCost(),
-		cardDeck:                    *NewCardDeck(info.Cards()),
+		cardDeck:                    *NewCardDeck(info.Cards),
 		holdingCards:                kv.NewSimpleMap[Card](),
 		activeCharacter:             0,
 		characters:                  kv.NewOrderedMap[uint, Character](),
@@ -527,7 +524,7 @@ func NewPlayer(info PlayerInfo) Player {
 		callbackEvents:              *event.NewEventMap(),
 	}
 
-	for id, character := range info.Characters() {
+	for id, character := range info.Characters {
 		if player.activeCharacter == 0 {
 			player.activeCharacter = id
 		}

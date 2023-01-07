@@ -69,6 +69,7 @@ func BenchmarkTestPerformanceMapRegister(b *testing.B) {
 	for i := 0; i < 114514; i++ {
 		loadList = append(loadList, PerformanceMapRecord{ID: uint(i), UID: strconv.Itoa(i)})
 	}
+	performanceMap.Load(loadList)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

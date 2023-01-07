@@ -33,48 +33,19 @@ var (
 	nullReactionCalculator ReactionCalculator = nil
 )
 
-type RuleSet interface {
-	ImplementationCheck() bool
-	GameOptions() GameOptions
-	ReactionCalculator() ReactionCalculator
-
-	SetOptions(options GameOptions)
+type RuleSet struct {
+	GameOptions        *GameOptions
+	ReactionCalculator ReactionCalculator
 }
 
-type ruleSet struct {
-	reactionCalculator ReactionCalculator
-	gameOptions        GameOptions
-}
-
-func (r ruleSet) ImplementationCheck() bool {
-	return r.reactionCalculator != nullReactionCalculator
-}
-
-func (r ruleSet) ReactionCalculator() ReactionCalculator {
-	return r.reactionCalculator
-}
-
-func (r ruleSet) GameOptions() GameOptions {
-	return r.gameOptions
-}
-
-func (r *ruleSet) SetOptions(options GameOptions) {
-	r.gameOptions = options
-}
-
-func NewEmptyRuleSet() RuleSet {
-	return &ruleSet{
-		reactionCalculator: nil,
-		gameOptions:        GameOptions{},
+func (r RuleSet) ImplementationCheck() bool {
+	if r.GameOptions == nil {
+		return false
 	}
-}
 
-func NewRuleSet(
-	elementalReactionCalculator ReactionCalculator,
-	gameOptions GameOptions,
-) RuleSet {
-	return &ruleSet{
-		reactionCalculator: elementalReactionCalculator,
-		gameOptions:        gameOptions,
+	if r.ReactionCalculator == nullReactionCalculator {
+		return false
 	}
+
+	return true
 }

@@ -13,8 +13,9 @@ const (
 	ruleSetPersistenceFileName   = "rule-set-persistence.json"
 	cardPersistenceFileName      = "card-persistence.json"
 	characterPersistenceFileName = "character-persistence.json"
-	playerPersistenceFileName    = "player-persistence.json"
 	skillPersistenceFileName     = "skill-persistence.json"
+	playerPersistenceFileName    = "gisb-sqlite3.db"
+	cardDeckPersistenceFileName  = "gisb-sqlite3.db"
 )
 
 var (
@@ -22,24 +23,25 @@ var (
 	loaded      = false
 )
 
-var (
-// RuleSetPersistence   Persistence[RuleSet]
-// CardPersistence      Persistence[Card]
-// CharacterPersistence Persistence[CharacterInfo]
-// PlayerPersistence    Persistence[PlayerInfo]
-// SkillPersistence     Persistence[Skill]
-)
-
 func init() {
-	if execPath, err := os.Executable(); err != nil {
-		panic(err)
-	} else if err = SetStoragePath(path.Join(execPath, "../data/persistence")); err != nil {
-		panic(err)
-	} else {
-		fmt.Println(path.Join(storagePath, ruleSetPersistenceFileName))
-	}
+	RuleSetPersistence = NewPersistence[RuleSet]()
+	CardPersistence = NewPersistence[Card]()
+	CharacterPersistence = NewPersistence[Character]()
+	SkillPersistence = NewPersistence[Skill]()
+	CardDeckPersistence = NewSqlite3Table[CardDeck]()
+	PlayerPersistence = NewSqlite3Table[Player]()
 }
 
+var (
+	RuleSetPersistence   Persistence[RuleSet]
+	CardPersistence      Persistence[Card]
+	CardDeckPersistence  Persistence[CardDeck]
+	CharacterPersistence Persistence[Character]
+	PlayerPersistence    Persistence[Player]
+	SkillPersistence     Persistence[Skill]
+)
+
+// SetStoragePath 设置持久化文件的存放位置
 func SetStoragePath(path string) error {
 	if s, err := os.Stat(path); err == nil && s.IsDir() {
 		storagePath = path
@@ -49,25 +51,54 @@ func SetStoragePath(path string) error {
 	}
 }
 
+// Serve 开启持久化模块的服务
+func Serve(flushFeq time.Duration, errChan chan error) {
+	RuleSetPersistence.Serve(flushFeq, storagePath, ruleSetPersistenceFileName, errChan)
+	CardPersistence.Serve(flushFeq, storagePath, cardPersistenceFileName, errChan)
+	CharacterPersistence.Serve(flushFeq, storagePath, characterPersistenceFileName, errChan)
+	PlayerPersistence.Serve(flushFeq, storagePath, playerPersistenceFileName, errChan)
+	SkillPersistence.Serve(flushFeq, storagePath, skillPersistenceFileName, errChan)
+	CardDeckPersistence.Serve(flushFeq, storagePath, cardDeckPersistenceFileName, errChan)
+}
+
 // Load 从持久化文件读取信息，写入持久化模块
-func Load() {
+func Load(errChan chan error) {
 	if !loaded {
-		//RuleSetPersistence.Load(path.Join(storagePath, ruleSetPersistenceFileName))
-		//CardPersistence.Load(path.Join(storagePath, cardPersistenceFileName))
-		//CharacterPersistence.Load(path.Join(storagePath, characterPersistenceFileName))
-		//PlayerPersistence.Load(path.Join(storagePath, playerPersistenceFileName))
-		//SkillPersistence.Load(path.Join(storagePath, skillPersistenceFileName))
+		if err := RuleSetPersistence.Load(path.Join(storagePath, ruleSetPersistenceFileName)); err != nil {
+			errChan <- err
+		}
+
+		if err := CardPersistence.Load(path.Join(storagePath, cardPersistenceFileName)); err != nil {
+			errChan <- err
+		}
+
+		if err := CharacterPersistence.Load(path.Join(storagePath, characterPersistenceFileName)); err != nil {
+			errChan <- err
+		}
+
+		if err := PlayerPersistence.Load(path.Join(storagePath, playerPersistenceFileName)); err != nil {
+			errChan <- err
+		}
+
+		if err := SkillPersistence.Load(path.Join(storagePath, skillPersistenceFileName)); err != nil {
+			errChan <- err
+		}
+
+		if err := CardDeckPersistence.Load(path.Join(storagePath, cardDeckPersistenceFileName)); err != nil {
+			errChan <- err
+		}
+
 		loaded = true
 	}
 }
 
 // Quit 持久化模块退出前将缓存写入文件
 func Quit() {
-	//RuleSetPersistence.Flush(storagePath, ruleSetPersistenceFileName)
-	//CardPersistence.Flush(storagePath, cardPersistenceFileName)
-	//CharacterPersistence.Flush(storagePath, characterPersistenceFileName)
-	//PlayerPersistence.Flush(storagePath, playerPersistenceFileName)
-	//SkillPersistence.Flush(storagePath, skillPersistenceFileName)
+	RuleSetPersistence.Exit()
+	CardPersistence.Exit()
+	CharacterPersistence.Exit()
+	PlayerPersistence.Exit()
+	SkillPersistence.Exit()
 }
 
 // Persistence 持久化接口，抽象工厂集合的持久化封装

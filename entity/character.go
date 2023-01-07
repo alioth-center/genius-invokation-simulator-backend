@@ -16,15 +16,14 @@ var (
 	nullCostModifiers         kv.Map[uint, []modifier.Modifier[context.CostContext]]   = nil
 )
 
-type CharacterInfo interface {
-	ID() uint
-	Affiliation() enum.Affiliation
-	Vision() enum.ElementType
-	Weapon() enum.WeaponType
-	MaxHP() uint
-	MaxMP() uint
-	Skills() map[uint]Skill
-	SetSkills([]Skill)
+type CharacterInfo struct {
+	ID          uint
+	Affiliation enum.Affiliation
+	Vision      enum.ElementType
+	Weapon      enum.WeaponType
+	MaxHP       uint
+	MaxMP       uint
+	Skills      map[uint]Skill
 }
 
 type Character interface {
@@ -299,11 +298,11 @@ func (c *character) ExecuteEatFood(ctx *context.ModifierContext) {
 }
 
 func (c *character) ExecuteElementAttachment(attachElement enum.ElementType) {
-	c.elements = c.ruleSet.ReactionCalculator().Attach(c.elements, attachElement)
+	c.elements = c.ruleSet.ReactionCalculator.Attach(c.elements, attachElement)
 }
 
 func (c *character) ExecuteElementReaction() (reaction enum.Reaction) {
-	reaction, c.elements = c.ruleSet.ReactionCalculator().ReactionCalculate(c.elements)
+	reaction, c.elements = c.ruleSet.ReactionCalculator.ReactionCalculate(c.elements)
 	return reaction
 }
 
@@ -345,15 +344,15 @@ func (c character) Status() enum.CharacterStatus {
 
 func NewCharacter(owner uint, info CharacterInfo, ruleSet RuleSet) Character {
 	character := &character{
-		id:                         info.ID(),
+		id:                         info.ID,
 		player:                     owner,
-		affiliation:                info.Affiliation(),
-		vision:                     info.Vision(),
-		weapon:                     info.Weapon(),
+		affiliation:                info.Affiliation,
+		vision:                     info.Vision,
+		weapon:                     info.Weapon,
 		skills:                     kv.NewSimpleMap[Skill](),
-		maxHP:                      info.MaxHP(),
-		currentHP:                  info.MaxHP(),
-		maxMP:                      info.MaxMP(),
+		maxHP:                      info.MaxHP,
+		currentHP:                  info.MaxHP,
+		maxMP:                      info.MaxMP,
 		currentMP:                  0,
 		status:                     enum.CharacterStatusReady,
 		elements:                   []enum.ElementType{},
@@ -368,7 +367,7 @@ func NewCharacter(owner uint, info CharacterInfo, ruleSet RuleSet) Character {
 		ruleSet:                    ruleSet,
 	}
 
-	for id, skill := range info.Skills() {
+	for id, skill := range info.Skills {
 		character.skills.Set(id, skill)
 	}
 

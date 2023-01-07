@@ -249,6 +249,6 @@ func newPerformanceMapSlice[index comparable, cache any]() *performanceMapSlice[
 
 // PerformanceMapRecord PerformanceMap的持久化结构
 type PerformanceMapRecord struct {
-	ID  uint
-	UID string
+	ID  uint   `json:"id"`
+	UID string `json:"uid"`
 }

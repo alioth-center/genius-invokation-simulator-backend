@@ -1,13 +1,12 @@
 package framework
 
 import (
+	"fmt"
 	"github.com/sunist-c/genius-invokation-simulator-backend/entity"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/message"
 	db "github.com/sunist-c/genius-invokation-simulator-backend/persistence"
-
-	"fmt"
 )
 
 type filter = map[enum.ActionType]bool
@@ -214,13 +213,13 @@ func NewBattle(initialize message.InitializeMessage) (success bool, framework *B
 	// 查询并设置规则集合
 	var ruleSet entity.RuleSet
 	if has, rule := db.RuleSetPersistence.QueryByID(initialize.Options.RuleSet); has {
-		ruleSet = rule.Ctor()
-		ruleSet.SetOptions(entity.GameOptions{
+		ruleSet = rule.Ctor()().Rule
+		ruleSet.GameOptions = &entity.GameOptions{
 			ReRollTimes: initialize.Options.ReRollTime,
 			StaticCost:  initialize.Options.StaticElement,
 			RollAmount:  initialize.Options.ElementAmount,
 			GetCards:    initialize.Options.GetCards,
-		})
+		}
 	} else {
 		return false, nil
 	}
@@ -229,27 +228,35 @@ func NewBattle(initialize message.InitializeMessage) (success bool, framework *B
 	playerList := make([]entity.Player, len(initialize.Players))
 	for i, player := range initialize.Players {
 		if has, playerRecord := db.PlayerPersistence.QueryByID(player.UID); has {
-			playerInfo := playerRecord.Ctor()
+			playerInfo := playerRecord.Ctor()()
 
 			// 注入玩家的角色信息
-			characterList := make([]entity.Character, len(player.Characters))
-			for ii, characterID := range player.Characters {
+			characterMap := map[uint]entity.Character{}
+			for _, characterID := range player.Characters {
 				if ok, character := db.CharacterPersistence.QueryByID(characterID); ok {
-					characterInfo := character.Ctor()
+					characterInfo := character.Ctor()()
 
 					// 注入角色的技能信息
-					skillList := make([]entity.Skill, len(character.Skills))
-					for jj, skillID := range character.Skills {
+					skillMap := map[uint]entity.Skill{}
+					for _, skillID := range characterInfo.Skills {
 						if okk, skill := db.SkillPersistence.QueryByID(skillID); okk {
-							skillEntity := skill.Ctor()
-							skillList[jj] = skillEntity
+							skillEntity := skill.Ctor()()
+							skillMap[skillEntity.Skill.ID()] = skillEntity.Skill
 						}
 					}
 
 					// 实例化角色列表
-					characterInfo.SetSkills(skillList)
-					characterEntity := entity.NewCharacter(player.UID, characterInfo, ruleSet)
-					characterList[ii] = characterEntity
+					characterEntityInfo := entity.CharacterInfo{
+						ID:          characterInfo.ID,
+						Affiliation: characterInfo.Affiliation,
+						Vision:      characterInfo.Vision,
+						Weapon:      characterInfo.Weapon,
+						MaxHP:       characterInfo.MaxHP,
+						MaxMP:       characterInfo.MaxMP,
+						Skills:      skillMap,
+					}
+					characterEntity := entity.NewCharacter(player.UID, characterEntityInfo, ruleSet)
+					characterMap[characterInfo.ID] = characterEntity
 				} else {
 					return false, nil
 				}
@@ -259,19 +266,21 @@ func NewBattle(initialize message.InitializeMessage) (success bool, framework *B
 			cardList := make([]entity.Card, len(player.CardDeck))
 			for ii, cardID := range player.CardDeck {
 				if ok, card := db.CardPersistence.QueryByID(cardID); ok {
-					cardEntity := card.Ctor()
-					cardList[ii] = cardEntity
+					cardEntity := card.Ctor()()
+					cardList[ii] = cardEntity.Card
 				} else {
 					return false, nil
 				}
 			}
 
 			// 注入玩家的基础信息
-			playerInfo.SetUID(player.UID)
-			playerInfo.SetCharacters(characterList)
-			playerInfo.SetCards(cardList)
+			playerEntityInfo := entity.PlayerInfo{
+				UID:        playerInfo.UID,
+				Cards:      cardList,
+				Characters: characterMap,
+			}
 
-			playerList[i] = entity.NewPlayer(playerInfo)
+			playerList[i] = entity.NewPlayer(playerEntityInfo)
 		} else {
 			return false, nil
 		}

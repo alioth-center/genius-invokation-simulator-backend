@@ -114,7 +114,7 @@ func (c *Core) RoundRoll() {
 		holdingCost := targetPlayer.StaticCost()
 
 		// 计算需要多少随机元素骰子
-		remainRandomCount := int(c.ruleSet.GameOptions().RollAmount) - int(holdingCost.total)
+		remainRandomCount := int(c.ruleSet.GameOptions.RollAmount) - int(holdingCost.total)
 		if remainRandomCount >= 0 {
 			// 使用随机元素骰子补足缺口
 			randomCost := NewRandomCost(uint(remainRandomCount))
@@ -124,7 +124,7 @@ func (c *Core) RoundRoll() {
 
 		} else {
 			// 如果固定骰子多余可获得骰子，舍弃多出的固定元素骰子
-			have, finalCount := uint(0), c.ruleSet.GameOptions().RollAmount
+			have, finalCount := uint(0), c.ruleSet.GameOptions.RollAmount
 			finalCost := NewCost()
 			for element := enum.ElementType(0); element <= enum.ElementEndIndex; element++ {
 				if holdingCost.costs[element]+have > finalCount {
@@ -175,11 +175,11 @@ func (c *Core) ExecuteAttack(sender uint, target uint, skill uint) {
 				_, executeCharacter := targetPlayer.GetCharacter(targetCharacterID)
 				reaction := executeCharacter.ExecuteElementReaction()
 				ctx.SetReaction(targetCharacterID, reaction)
-				c.ruleSet.ReactionCalculator().DamageCalculate(reaction, targetCharacterID, ctx)
+				c.ruleSet.ReactionCalculator.DamageCalculate(reaction, targetCharacterID, ctx)
 			}
 			senderPlayer.ExecuteFinalAttackModifiers(ctx)
 			targetPlayer.ExecuteDefence(ctx)
-			if event := c.ruleSet.ReactionCalculator().EffectCalculate(ctx.GetTargetCharacterReaction(), targetPlayer); event != nil {
+			if event := c.ruleSet.ReactionCalculator.EffectCalculate(ctx.GetTargetCharacterReaction(), targetPlayer); event != nil {
 				targetPlayer.ExecuteCallbackModify(event)
 			}
 

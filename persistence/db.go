@@ -1,7 +1,9 @@
 package persistence
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"reflect"
@@ -33,7 +35,7 @@ func init() {
 	if execPath, err := os.Executable(); err != nil {
 		panic(err)
 	} else if err = SetStoragePath(path.Join(execPath, "../data/persistence")); err != nil {
-		//panic(err)
+		panic(err)
 	} else {
 		fmt.Println(path.Join(storagePath, ruleSetPersistenceFileName))
 	}
@@ -71,19 +73,95 @@ func Quit() {
 
 // Persistence 持久化接口，抽象工厂集合的持久化封装
 type Persistence[T any] interface {
-	Load(filePath string)
+	Load(filePath string) (err error)
 	QueryByID(id uint) (has bool, result Persistent[T])
 	QueryByUID(uid string) (has bool, result Persistent[T])
 	Register(ctor func() T) (success bool)
-	Flush(flushPath string, flushFile string)
+	Flush(flushPath string, flushFile string) (err error)
+}
+
+// persistence 持久化接口的实现
+type persistence[T any] struct {
+	impl *PerformanceMap[T]
+}
+
+func (p *persistence[T]) Load(filePath string) (err error) {
+	if file, err := os.Open(filePath); err != nil {
+		return err
+	} else if fileContent, err := io.ReadAll(file); err != nil {
+		return err
+	} else {
+		var persistenceEntities []PerformanceMapRecord
+		if err = json.Unmarshal(fileContent, &persistenceEntities); err != nil {
+			return err
+		} else {
+			p.impl.Load(persistenceEntities)
+			return nil
+		}
+	}
+}
+
+func (p *persistence[T]) QueryByID(id uint) (has bool, result Persistent[T]) {
+	return p.impl.QueryByID(id)
+}
+
+func (p *persistence[T]) QueryByUID(uid string) (has bool, result Persistent[T]) {
+	return p.impl.QueryByUID(uid)
+}
+
+func (p *persistence[T]) Register(ctor func() T) (success bool) {
+	return p.impl.Register(ctor)
+}
+
+func (p *persistence[T]) Flush(flushPath string, flushFile string) (err error) {
+	persistenceEntities := p.impl.Flush()
+	if fileContent, err := json.Marshal(&persistenceEntities); err != nil {
+		return err
+	} else if file, err := os.OpenFile(path.Join(flushPath, flushFile), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755); err != nil {
+		return err
+	} else {
+		_, err = file.Write(fileContent)
+		return err
+	}
+}
+
+func NewPersistence[T any]() Persistence[T] {
+	return NewPersistenceWithHighPerformance[T]()
+}
+
+func NewPersistenceWithImpl[T any](impl *PerformanceMap[T]) Persistence[T] {
+	return &persistence[T]{
+		impl: impl,
+	}
+}
+
+func NewPersistenceWithLowPerformance[T any]() Persistence[T] {
+	_, impl := NewPerformanceMapWithOpts[T](8)
+	return &persistence[T]{
+		impl: impl,
+	}
+}
+
+func NewPersistenceWithMediumPerformance[T any]() Persistence[T] {
+	_, impl := NewPerformanceMapWithOpts[T](64)
+	return &persistence[T]{
+		impl: impl,
+	}
+}
+
+func NewPersistenceWithHighPerformance[T any]() Persistence[T] {
+	return &persistence[T]{
+		impl: NewPerformanceMap[T](),
+	}
 }
 
 // PerformanceMap 高性能的并发安全KV存储
 type PerformanceMap[T any] struct {
-	slices  map[byte]*performanceMapSlice[uint, Persistent[T]] // slices 存储Persistent的分表
-	indexes map[byte]*performanceMapSlice[string, uint]        // indexes 存储索引的分表
-	mutex   sync.Mutex                                         // mutex 控制idIndex的锁
-	idIndex uint                                               // idIndex 当前的自动生成ID
+	slices    map[byte]*performanceMapSlice[uint, Persistent[T]] // slices 存储Persistent的分表
+	indexes   map[byte]*performanceMapSlice[string, uint]        // indexes 存储索引的分表
+	subTables uint                                               // subTables 子表数量，不得大于256
+	mutex     sync.Mutex                                         // mutex 控制idIndex的锁
+	idIndex   uint                                               // idIndex 当前的自动生成ID
 }
 
 // Load 将records加载到PerformanceMap中，耗时操作，写锁
@@ -170,7 +248,7 @@ func (p *PerformanceMap[T]) Register(ctor func() T) (success bool) {
 // Flush 将PerformanceMap中的数据全部取出，耗时操作，读锁
 func (p *PerformanceMap[T]) Flush() (records []PerformanceMapRecord) {
 	records = []PerformanceMapRecord{}
-	for i := 0; i < 256; i++ {
+	for i := uint(0); i < p.subTables; i++ {
 		cache := p.indexes[byte(i)].toMap()
 		for uid, id := range cache {
 			records = append(records, PerformanceMapRecord{ID: id, UID: uid})
@@ -182,7 +260,7 @@ func (p *PerformanceMap[T]) Flush() (records []PerformanceMapRecord) {
 
 // hashUint 将一个uint类型的key哈希为byte
 func (p *PerformanceMap[T]) hashUint(id uint) byte {
-	return byte(id % 256)
+	return byte(id % p.subTables)
 }
 
 // hashString 将一个string类型的key哈希为byte
@@ -213,18 +291,41 @@ func (p *PerformanceMap[T]) generateID() (id uint) {
 
 func NewPerformanceMap[T any]() *PerformanceMap[T] {
 	entity := &PerformanceMap[T]{
-		slices:  map[byte]*performanceMapSlice[uint, Persistent[T]]{},
-		indexes: map[byte]*performanceMapSlice[string, uint]{},
-		mutex:   sync.Mutex{},
-		idIndex: 0,
+		slices:    map[byte]*performanceMapSlice[uint, Persistent[T]]{},
+		indexes:   map[byte]*performanceMapSlice[string, uint]{},
+		subTables: 256,
+		mutex:     sync.Mutex{},
+		idIndex:   0,
 	}
 
-	for i := 0; i <= 255; i++ {
+	for i := uint(0); i < entity.subTables; i++ {
 		entity.slices[byte(i)] = newPerformanceMapSlice[uint, Persistent[T]]()
 		entity.indexes[byte(i)] = newPerformanceMapSlice[string, uint]()
 	}
 
 	return entity
+}
+
+// NewPerformanceMapWithOpts 使用指定的子表数量新建PerformanceMap，subTables的取值范围为[1,256]
+func NewPerformanceMapWithOpts[T any](subTables uint) (success bool, entity *PerformanceMap[T]) {
+	if subTables > 256 || subTables == 0 {
+		return false, nil
+	}
+
+	entity = &PerformanceMap[T]{
+		slices:    map[byte]*performanceMapSlice[uint, Persistent[T]]{},
+		indexes:   map[byte]*performanceMapSlice[string, uint]{},
+		subTables: subTables,
+		mutex:     sync.Mutex{},
+		idIndex:   0,
+	}
+
+	for i := uint(0); i < entity.subTables; i++ {
+		entity.slices[byte(i)] = newPerformanceMapSlice[uint, Persistent[T]]()
+		entity.indexes[byte(i)] = newPerformanceMapSlice[string, uint]()
+	}
+
+	return true, entity
 }
 
 // performanceMapSlice PerformanceMap的存储切片，并发安全，底层为map

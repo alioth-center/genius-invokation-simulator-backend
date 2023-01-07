@@ -42,8 +42,12 @@ func initArgs() {
 }
 
 func callQuit() {
+	fmt.Printf("[main.log] main.callQuit(): daemon running\n")
 	s := <-sig
+	fmt.Printf("[main.log] main.callQuit(): quit signal received %v\n", s.String())
+	fmt.Printf("[main.log] main.callQuit(): quiting persistence\n")
 	persistence.Quit()
+	fmt.Printf("[main.log] main.callQuit(): quited persistence\n")
 
 	switch *args.mode {
 	case backendMode:
@@ -54,14 +58,27 @@ func callQuit() {
 
 	}
 
-	fmt.Println("quit called:", s.String())
+	fmt.Printf("[main.log] main.callQuit(): quited with code 114\n")
 	os.Exit(114)
 }
 
 func init() {
+	fmt.Printf("[main.log] main.init(): initializing main package\n")
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGHUP)
+	fmt.Printf("[main.log] main.init(): setuped signal channel\n")
 	initArgs()
 	flag.Parse()
+	fmt.Printf("[main.log] main.init(): parsed command line arguments\n")
+	_ = persistence.SetStoragePath("/Users/sunist/Projects/GitHub/gisb/data/persistence")
+	ch := make(chan error, 10)
+	persistence.Load(ch)
+	fmt.Printf("[main.log] main.init(): initializing persistent storage\n")
+	go func() {
+		for err := range ch {
+			fmt.Println(err)
+		}
+	}()
+	fmt.Printf("[main.log] main.init(): initialize completed\n")
 }
 
 func main() {

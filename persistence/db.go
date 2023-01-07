@@ -6,16 +6,19 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
 	"time"
+
+	"github.com/go-xorm/xorm"
+	"xorm.io/core"
 )
 
 const (
-	ruleSetPersistenceFileName   = "rule-set-persistence.json"
-	cardPersistenceFileName      = "card-persistence.json"
-	characterPersistenceFileName = "character-persistence.json"
-	skillPersistenceFileName     = "skill-persistence.json"
-	playerPersistenceFileName    = "gisb-sqlite3.db"
-	cardDeckPersistenceFileName  = "gisb-sqlite3.db"
+	ruleSetPersistenceFileName   = "rule-set-persistence.psc"
+	cardPersistenceFileName      = "card-persistence.psc"
+	characterPersistenceFileName = "character-persistence.psc"
+	skillPersistenceFileName     = "skill-persistence.psc"
+	sqlite3DBFileName            = "gisb-sqlite3.db"
 )
 
 var (
@@ -28,8 +31,6 @@ func init() {
 	CardPersistence = NewPersistence[Card]()
 	CharacterPersistence = NewPersistence[Character]()
 	SkillPersistence = NewPersistence[Skill]()
-	CardDeckPersistence = NewSqlite3Table[CardDeck]()
-	PlayerPersistence = NewSqlite3Table[Player]()
 }
 
 var (
@@ -56,35 +57,42 @@ func Serve(flushFeq time.Duration, errChan chan error) {
 	RuleSetPersistence.Serve(flushFeq, storagePath, ruleSetPersistenceFileName, errChan)
 	CardPersistence.Serve(flushFeq, storagePath, cardPersistenceFileName, errChan)
 	CharacterPersistence.Serve(flushFeq, storagePath, characterPersistenceFileName, errChan)
-	PlayerPersistence.Serve(flushFeq, storagePath, playerPersistenceFileName, errChan)
 	SkillPersistence.Serve(flushFeq, storagePath, skillPersistenceFileName, errChan)
-	CardDeckPersistence.Serve(flushFeq, storagePath, cardDeckPersistenceFileName, errChan)
+	PlayerPersistence.Serve(flushFeq, storagePath, sqlite3DBFileName, errChan)
+	CardDeckPersistence.Serve(flushFeq, storagePath, sqlite3DBFileName, errChan)
 }
 
 // Load 从持久化文件读取信息，写入持久化模块
 func Load(errChan chan error) {
 	if !loaded {
-		if err := RuleSetPersistence.Load(path.Join(storagePath, ruleSetPersistenceFileName)); err != nil {
+		var err error
+
+		// 初始化Sqlite3
+		if sqlite3DB, err = xorm.NewEngine("sqlite3", path.Join(storagePath, sqlite3DBFileName)); err != nil {
+			errChan <- err
+		} else {
+			sqlite3DB.SetMapper(core.SameMapper{})
+			if err = sqlite3DB.Sync2(Player{}, CardDeck{}); err != nil {
+				errChan <- err
+			}
+
+			CardDeckPersistence = NewSqlite3Table[CardDeck]()
+			PlayerPersistence = NewSqlite3Table[Player]()
+		}
+
+		if err = RuleSetPersistence.Load(path.Join(storagePath, ruleSetPersistenceFileName)); err != nil {
 			errChan <- err
 		}
 
-		if err := CardPersistence.Load(path.Join(storagePath, cardPersistenceFileName)); err != nil {
+		if err = CardPersistence.Load(path.Join(storagePath, cardPersistenceFileName)); err != nil {
 			errChan <- err
 		}
 
-		if err := CharacterPersistence.Load(path.Join(storagePath, characterPersistenceFileName)); err != nil {
+		if err = CharacterPersistence.Load(path.Join(storagePath, characterPersistenceFileName)); err != nil {
 			errChan <- err
 		}
 
-		if err := PlayerPersistence.Load(path.Join(storagePath, playerPersistenceFileName)); err != nil {
-			errChan <- err
-		}
-
-		if err := SkillPersistence.Load(path.Join(storagePath, skillPersistenceFileName)); err != nil {
-			errChan <- err
-		}
-
-		if err := CardDeckPersistence.Load(path.Join(storagePath, cardDeckPersistenceFileName)); err != nil {
+		if err = SkillPersistence.Load(path.Join(storagePath, skillPersistenceFileName)); err != nil {
 			errChan <- err
 		}
 
@@ -97,7 +105,6 @@ func Quit() {
 	RuleSetPersistence.Exit()
 	CardPersistence.Exit()
 	CharacterPersistence.Exit()
-	PlayerPersistence.Exit()
 	SkillPersistence.Exit()
 }
 
@@ -124,7 +131,7 @@ func (p *persistence[T]) Serve(flushFrequency time.Duration, flushPath, flushFil
 			select {
 			case <-p.exit:
 				// 收到退出信号，立即将缓存写入文件
-				if err := p.Flush(flushPath, flushFile); err != nil {
+				if err := p.Flush(flushPath, strings.Join([]string{flushFile, "quick"}, ".")); err != nil {
 					errChan <- err
 				}
 				return
@@ -190,7 +197,7 @@ func NewPersistence[T any]() Persistence[T] {
 func NewPersistenceWithImpl[T any](impl *PerformanceMap[T]) Persistence[T] {
 	return &persistence[T]{
 		impl: impl,
-		exit: make(chan struct{}),
+		exit: make(chan struct{}, 1),
 	}
 }
 
@@ -198,7 +205,7 @@ func NewPersistenceWithLowPerformance[T any]() Persistence[T] {
 	_, impl := NewPerformanceMapWithOpts[T](8)
 	return &persistence[T]{
 		impl: impl,
-		exit: make(chan struct{}),
+		exit: make(chan struct{}, 1),
 	}
 }
 
@@ -206,13 +213,13 @@ func NewPersistenceWithMediumPerformance[T any]() Persistence[T] {
 	_, impl := NewPerformanceMapWithOpts[T](64)
 	return &persistence[T]{
 		impl: impl,
-		exit: make(chan struct{}),
+		exit: make(chan struct{}, 1),
 	}
 }
 
 func NewPersistenceWithHighPerformance[T any]() Persistence[T] {
 	return &persistence[T]{
 		impl: NewPerformanceMap[T](),
-		exit: make(chan struct{}),
+		exit: make(chan struct{}, 1),
 	}
 }

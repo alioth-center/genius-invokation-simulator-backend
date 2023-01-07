@@ -33,16 +33,16 @@ type Character struct {
 
 // Player 被持久化模块托管的PlayerInfo工厂
 type Player struct {
-	UID       uint
-	NickName  string
-	CardDecks []uint
-	Password  string
+	UID       uint   `xorm:"pk autoincr notnull unique index"`
+	NickName  string `xorm:"notnull varchar(64)"`
+	CardDecks []uint `xorm:"notnull json"`
+	Password  string `xorm:"notnull varchar(64)"`
 }
 
 // CardDeck 被持久化模块托管的CardDeck工厂
 type CardDeck struct {
-	ID         uint
-	OwnerUID   uint
-	Cards      []uint
-	Characters []uint
+	ID         uint   `xorm:"pk autoincr notnull unique index"`
+	OwnerUID   uint   `xorm:"notnull index"`
+	Cards      []uint `xorm:"notnull json"`
+	Characters []uint `xorm:"notnull json"`
 }

@@ -3,6 +3,7 @@ package persistence
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/entity"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
+	"github.com/sunist-c/genius-invokation-simulator-backend/model/localization"
 )
 
 // Card 被持久化模块托管的Card工厂
@@ -45,4 +46,11 @@ type CardDeck struct {
 	OwnerUID   uint   `xorm:"notnull index"`
 	Cards      []uint `xorm:"notnull json"`
 	Characters []uint `xorm:"notnull json"`
+}
+
+// Localization 被持久化模块托管的本地化信息工厂
+type Localization struct {
+	EntityID         uint
+	EntityUID        string
+	MultipleLanguage localization.LanguagePack
 }

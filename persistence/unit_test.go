@@ -70,19 +70,19 @@ func TestPerformanceMap(t *testing.T) {
 				4:    false,
 			},
 			queriesUID: []string{
-				"github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testIntType",
-				"github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testIntType",
+				"github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType",
+				"github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType",
 			},
 			wantQueryUIDResult: map[string]testProductInterface{
-				"github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testIntType": testIntTypeFactory(),
+				"github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType": testIntTypeFactory(),
 			},
 			wantQueryUIDSuccess: map[string]bool{
-				"github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testIntType": true,
+				"github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType": true,
 			},
 			flushResult: map[uint]string{
-				3334: "github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testIntType",
-				3335: "github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testByteType",
-				3336: "github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testRuneType",
+				3334: "github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType",
+				3335: "github.com/sunist-c/genius-invokation-simulator-backend/persistence@testByteType",
+				3336: "github.com/sunist-c/genius-invokation-simulator-backend/persistence@testRuneType",
 				2333: "2333",
 				3333: "3333",
 			},

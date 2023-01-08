@@ -145,11 +145,9 @@ func (p *persistence[T]) Serve(flushFrequency time.Duration, flushPath, flushFil
 		}(exitCh)
 
 		// 监听exit信号
-		fmt.Printf("wait for exit signal\n")
 		<-p.exit
 		exitCh <- struct{}{}
 		// 收到退出信号，立即将缓存写入文件
-		fmt.Printf("quiting\n")
 		if err := p.Flush(flushPath, strings.Join([]string{flushFile, "quit"}, ".")); err != nil {
 			errChan <- err
 		}

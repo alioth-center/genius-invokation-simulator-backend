@@ -128,23 +128,31 @@ type persistence[T any] struct {
 func (p *persistence[T]) Serve(flushFrequency time.Duration, flushPath, flushFile string, errChan chan error) {
 	go func() {
 		// 执行定时任务
-		go func() {
+		exitCh := make(chan struct{})
+		go func(ch chan struct{}) {
 			for {
-				// 每隔flushFrequency，将缓存写入文件
-				if err := p.Flush(flushPath, flushFile); err != nil {
-					errChan <- err
+				select {
+				case <-exitCh:
+					return
+				default:
+					// 每隔flushFrequency，将缓存写入文件
+					if err := p.Flush(flushPath, flushFile); err != nil {
+						errChan <- err
+					}
+					time.Sleep(flushFrequency)
 				}
-				time.Sleep(flushFrequency)
 			}
-		}()
+		}(exitCh)
 
 		// 监听exit信号
+		fmt.Printf("wait for exit signal\n")
 		<-p.exit
+		exitCh <- struct{}{}
 		// 收到退出信号，立即将缓存写入文件
+		fmt.Printf("quiting\n")
 		if err := p.Flush(flushPath, strings.Join([]string{flushFile, "quit"}, ".")); err != nil {
 			errChan <- err
 		}
-		return
 	}()
 }
 

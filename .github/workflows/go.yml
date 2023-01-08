@@ -21,4 +21,4 @@ jobs:
         run: go mod tidy && go test -v ./...
 
       - name: BenchmarkTest
-        run: go mod tidy && go test -bench=. -benchtime=10s ./... -run=^$
+        run: go mod tidy && go test -bench=. -benchtime=1s ./... -run=^$

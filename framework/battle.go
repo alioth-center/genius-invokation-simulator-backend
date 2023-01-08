@@ -228,7 +228,6 @@ func NewBattle(initialize message.InitializeMessage) (success bool, framework *B
 	playerList := make([]entity.Player, len(initialize.Players))
 	for i, player := range initialize.Players {
 		if has, playerRecord := db.PlayerPersistence.QueryByID(player.UID); has {
-			playerInfo := playerRecord.Ctor()()
 
 			// 注入玩家的角色信息
 			characterMap := map[uint]entity.Character{}
@@ -275,7 +274,7 @@ func NewBattle(initialize message.InitializeMessage) (success bool, framework *B
 
 			// 注入玩家的基础信息
 			playerEntityInfo := entity.PlayerInfo{
-				UID:        playerInfo.UID,
+				UID:        playerRecord.UID,
 				Cards:      cardList,
 				Characters: characterMap,
 			}

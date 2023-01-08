@@ -7,10 +7,10 @@ import (
 )
 
 func BenchmarkTestPerformanceMapQueryByID(b *testing.B) {
-	performanceMap := NewPerformanceMap[emptyProductInterface]()
-	var loadList []PerformanceMapRecord
+	performanceMap := newPerformanceMap[emptyProductInterface]()
+	var loadList []FactoryPersistenceRecord
 	for i := 0; i < 114514; i++ {
-		loadList = append(loadList, PerformanceMapRecord{ID: uint(i), UID: strconv.Itoa(i)})
+		loadList = append(loadList, FactoryPersistenceRecord{ID: uint(i), UID: strconv.Itoa(i)})
 	}
 	performanceMap.Load(loadList)
 	randomX := uint(rand.Intn(114514))
@@ -22,10 +22,10 @@ func BenchmarkTestPerformanceMapQueryByID(b *testing.B) {
 }
 
 func BenchmarkTestPerformanceMapQueryByUID(b *testing.B) {
-	performanceMap := NewPerformanceMap[emptyProductInterface]()
-	var loadList []PerformanceMapRecord
+	performanceMap := newPerformanceMap[emptyProductInterface]()
+	var loadList []FactoryPersistenceRecord
 	for i := 0; i < 114514; i++ {
-		loadList = append(loadList, PerformanceMapRecord{ID: uint(i), UID: strconv.Itoa(i)})
+		loadList = append(loadList, FactoryPersistenceRecord{ID: uint(i), UID: strconv.Itoa(i)})
 	}
 	performanceMap.Load(loadList)
 	randomX := strconv.Itoa(rand.Intn(114514))
@@ -37,10 +37,10 @@ func BenchmarkTestPerformanceMapQueryByUID(b *testing.B) {
 }
 
 func BenchmarkTestPerformanceMapFlush(b *testing.B) {
-	performanceMap := NewPerformanceMap[emptyProductInterface]()
-	var loadList []PerformanceMapRecord
+	performanceMap := newPerformanceMap[emptyProductInterface]()
+	var loadList []FactoryPersistenceRecord
 	for i := 0; i < 114514; i++ {
-		loadList = append(loadList, PerformanceMapRecord{ID: uint(i), UID: strconv.Itoa(i)})
+		loadList = append(loadList, FactoryPersistenceRecord{ID: uint(i), UID: strconv.Itoa(i)})
 	}
 	performanceMap.Load(loadList)
 
@@ -51,10 +51,10 @@ func BenchmarkTestPerformanceMapFlush(b *testing.B) {
 }
 
 func BenchmarkTestPerformanceMapLoad(b *testing.B) {
-	performanceMap := NewPerformanceMap[emptyProductInterface]()
-	var loadList []PerformanceMapRecord
+	performanceMap := newPerformanceMap[emptyProductInterface]()
+	var loadList []FactoryPersistenceRecord
 	for i := 0; i < 114514; i++ {
-		loadList = append(loadList, PerformanceMapRecord{ID: uint(i), UID: strconv.Itoa(i)})
+		loadList = append(loadList, FactoryPersistenceRecord{ID: uint(i), UID: strconv.Itoa(i)})
 	}
 
 	b.ResetTimer()
@@ -64,15 +64,63 @@ func BenchmarkTestPerformanceMapLoad(b *testing.B) {
 }
 
 func BenchmarkTestPerformanceMapRegister(b *testing.B) {
-	performanceMap := NewPerformanceMap[testProductInterface]()
-	var loadList []PerformanceMapRecord
+	performanceMap := newPerformanceMap[testProductInterface]()
+	var loadList []FactoryPersistenceRecord
 	for i := 0; i < 114514; i++ {
-		loadList = append(loadList, PerformanceMapRecord{ID: uint(i), UID: strconv.Itoa(i)})
+		loadList = append(loadList, FactoryPersistenceRecord{ID: uint(i), UID: strconv.Itoa(i)})
 	}
 	performanceMap.Load(loadList)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		performanceMap.Register(testIntTypeFactory)
+	}
+}
+
+func BenchmarkTestMemoryCacheQueryByID(b *testing.B) {
+	memoryCache := newMemoryCache[uint, struct{}]()
+	for i := 0; i < 114514; i++ {
+		memoryCache.InsertOne(uint(i), struct{}{})
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		memoryCache.QueryByID(uint(i))
+	}
+}
+
+func BenchmarkTestMemoryCacheInsertOne(b *testing.B) {
+	memoryCache := newMemoryCache[uint, struct{}]()
+	for i := 0; i < 114514; i++ {
+		memoryCache.InsertOne(uint(i), struct{}{})
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		memoryCache.InsertOne(uint(i), struct{}{})
+	}
+}
+
+func BenchmarkTestMemoryCacheUpdateOne(b *testing.B) {
+	memoryCache := newMemoryCache[uint, struct{}]()
+	for i := 0; i < 114514; i++ {
+		memoryCache.InsertOne(uint(i), struct{}{})
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		memoryCache.UpdateByID(uint(i), struct{}{})
+	}
+}
+
+func BenchmarkTestMemoryCacheDeleteOne(b *testing.B) {
+	memoryCache := newMemoryCache[uint, struct{}]()
+	for i := 0; i < 114514; i++ {
+		memoryCache.InsertOne(uint(i), struct{}{})
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		memoryCache.DeleteOne(uint(i))
 	}
 }

@@ -1,8 +1,6 @@
 package persistence
 
 import (
-	"time"
-
 	"github.com/go-xorm/xorm"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -11,71 +9,86 @@ var (
 	sqlite3DB *xorm.Engine = nil
 )
 
-func Sqlite3DBDelete[T any](entity T) (success bool) {
-	if sqlite3DB != nil {
-		_, err := sqlite3DB.Delete(entity)
-		return err == nil
-	} else {
-		return false
-	}
-}
-
-func Sqlite3DBUpdate[T any](entity T, id uint) (success bool) {
-	if sqlite3DB != nil {
-		_, err := sqlite3DB.Table(entity).ID(id).Update(entity)
-		return err == nil
-	} else {
-		return false
-	}
-}
-
-type Sqlite3Table[T any] struct {
+type sqliteTable[PK Increasable, T any] struct {
 	session *xorm.Session
 	errChan chan error
 }
 
-func (s *Sqlite3Table[T]) Serve(flushFrequency time.Duration, flushPath, flushFile string, errChan chan error) {
-}
-
-func (s *Sqlite3Table[T]) Exit() {}
-
-func (s *Sqlite3Table[T]) Load(filePath string) (err error) { return nil }
-
-func (s *Sqlite3Table[T]) QueryByID(id uint) (has bool, result Persistent[T]) {
-	var entity T
-	if ok, err := s.session.ID(id).Get(&entity); ok && err == nil {
-		return true, &persistent[T]{
-			ctor:   func() T { return entity },
-			status: true,
-			id:     id,
-			uid:    "",
-		}
-	} else {
-		if err != nil {
-			s.errChan <- err
-		}
+func (s *sqliteTable[PK, T]) QueryByID(id PK) (has bool, result T) {
+	if _, err := s.session.ID(id).Get(&result); err != nil {
+		s.errChan <- err
 		return false, result
+	} else {
+		return true, result
 	}
 }
 
-func (s *Sqlite3Table[T]) QueryByUID(uid string) (has bool, result Persistent[T]) {
-	return false, result
-}
-
-func (s *Sqlite3Table[T]) Register(ctor func() T) (success bool) {
-	if _, err := s.session.InsertOne(ctor()); err == nil {
-		return true
-	} else {
+func (s *sqliteTable[PK, T]) UpdateByID(id PK, newEntity T) (success bool) {
+	var condition T
+	if _, err := s.session.ID(id).Get(&condition); err != nil {
 		s.errChan <- err
 		return false
+	} else if _, err = s.session.Update(condition, newEntity); err != nil {
+		s.errChan <- err
+		return false
+	} else {
+		return true
 	}
 }
 
-func (s *Sqlite3Table[T]) Flush(flushPath string, flushFile string) (err error) { return nil }
+func (s *sqliteTable[PK, T]) InsertOne(entity T) (success bool, id PK) {
+	if pk, err := s.session.InsertOne(entity); err != nil {
+		s.errChan <- err
+		return false, id
+	} else {
+		return true, PK(pk)
+	}
+}
 
-func NewSqlite3Table[T any]() Persistence[T] {
+func (s *sqliteTable[PK, T]) DeleteOne(id PK) (success bool) {
+	var condition T
+	if _, err := s.session.ID(id).Get(&condition); err != nil {
+		s.errChan <- err
+		return false
+	} else if _, err = s.session.Delete(condition); err != nil {
+		s.errChan <- err
+		return false
+	} else {
+		return true
+	}
+}
+
+func (s *sqliteTable[PK, T]) FindOne(condition T) (has bool, result T) {
+	var results []T
+	if err := s.session.Find(&results, condition); err != nil {
+		s.errChan <- err
+		return false, result
+	} else if len(results) != 1 {
+		return false, result
+	} else {
+		return true, results[0]
+	}
+}
+
+func (s *sqliteTable[PK, T]) Find(condition T) (results []T) {
+	if err := s.session.Find(&results, condition); err != nil {
+		s.errChan <- err
+		return []T{}
+	} else {
+		return results
+	}
+}
+
+func newDatabasePersistence[PK Increasable, T any](errChan chan error) (success bool, persistence DatabasePersistence[PK, T]) {
 	var entity T
-	return &Sqlite3Table[T]{
-		session: sqlite3DB.Table(entity),
+	if err := sqlite3DB.Sync2(entity); err != nil {
+		errChan <- err
+		return false, persistence
+	} else {
+		persistence = &sqliteTable[PK, T]{
+			session: sqlite3DB.Table(entity),
+			errChan: errChan,
+		}
+		return true, persistence
 	}
 }

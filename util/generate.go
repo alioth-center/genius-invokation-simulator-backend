@@ -1,13 +1,22 @@
 package util
 
 import (
+	"crypto/md5"
+	"fmt"
 	uuid "github.com/satori/go.uuid"
+	"reflect"
 	"unsafe"
 )
 
 // GenerateUUID 生成一个UUID，长度为36
 func GenerateUUID() string {
 	return uuid.Must(uuid.NewV4(), nil).String()
+}
+
+// GenerateTypeID 根据entity的包和结构名，生成类型ID
+func GenerateTypeID[T any](entity T) (uid string) {
+	typesOfT := reflect.TypeOf(entity)
+	return fmt.Sprintf("%s@%s", typesOfT.PkgPath(), typesOfT.Name())
 }
 
 // GenerateHash 将任意结构进行哈希，使用SDBM算法作为实现
@@ -43,4 +52,10 @@ func GeneratePrefixHash[Key any](key Key, offset uintptr) (hash uint) {
 	}
 
 	return hash
+}
+
+func GenerateMD5(source string) (md5CheckSum string) {
+	hash := md5.New()
+	hash.Write([]byte(source))
+	return string(hash.Sum(nil))
 }

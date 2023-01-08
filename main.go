@@ -43,7 +43,7 @@ type argument struct {
 func initArgs() {
 	flag.StringVar(args.conf, "conf", "", "setup the backend configuration file, highest priority")
 	flag.StringVar(args.mode, "mode", "backend", "setup the startup mode, available [backend, cli, ai]")
-	flag.UintVar(args.port, "port", 8086, "setup the http service port")
+	flag.UintVar(args.port, "port", 8086, "setup the http protocol port")
 	flag.BoolVar(args.save, "save", true, "setup if to enable the persistence module")
 	flag.StringVar(args.storage, "storage", path.Join(os.Args[0], "../data/persistence"), "setup the persistence storage filepath")
 	flag.UintVar(args.flush, "flush", 3600, "setup the flush frequency(second) of persistence module")
@@ -63,7 +63,7 @@ func callQuit() {
 	case cliMode:
 		cli.Quit()
 	case aiMode:
-
+		panic("not implemented yet")
 	}
 
 	fmt.Printf("[main.log] main.callQuit(): wait 10 seconds for quit task\n")

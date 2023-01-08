@@ -3,8 +3,8 @@ package localization
 import "github.com/sunist-c/genius-invokation-simulator-backend/enum"
 
 type MultipleLanguagePack struct {
-	Languages          map[enum.Language]map[string]string
-	SupportedLanguages []enum.Language
+	Languages          map[enum.Language]map[string]string `json:"languages"`
+	SupportedLanguages []enum.Language                     `json:"supported_languages"`
 }
 
 // LanguagePack 语言包接口

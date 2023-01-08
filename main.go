@@ -11,6 +11,8 @@ import (
 	"path"
 	"syscall"
 	"time"
+
+	_ "github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/service"
 )
 
 const (

@@ -70,19 +70,19 @@ func TestPerformanceMap(t *testing.T) {
 				4:    false,
 			},
 			queriesUID: []string{
-				"github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType",
-				"github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType",
+				"github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testIntType",
+				"github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testIntType",
 			},
 			wantQueryUIDResult: map[string]testProductInterface{
-				"github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType": testIntTypeFactory(),
+				"github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testIntType": testIntTypeFactory(),
 			},
 			wantQueryUIDSuccess: map[string]bool{
-				"github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType": true,
+				"github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testIntType": true,
 			},
 			flushResult: map[uint]string{
-				3334: "github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType",
-				3335: "github.com/sunist-c/genius-invokation-simulator-backend/persistence@testByteType",
-				3336: "github.com/sunist-c/genius-invokation-simulator-backend/persistence@testRuneType",
+				3334: "github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testIntType",
+				3335: "github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testByteType",
+				3336: "github.com/sunist-c/genius-invokation-simulator-backend/factoryPersistence@testRuneType",
 				2333: "2333",
 				3333: "3333",
 			},
@@ -95,12 +95,12 @@ func TestPerformanceMap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			performanceMap := NewPerformanceMap[testProductInterface]()
+			performanceMap := newPerformanceMap[testProductInterface]()
 
 			// 测试Performance.Load
-			var loadRecords []PerformanceMapRecord
+			var loadRecords []FactoryPersistenceRecord
 			for id, uid := range tt.load {
-				loadRecords = append(loadRecords, PerformanceMapRecord{ID: id, UID: uid})
+				loadRecords = append(loadRecords, FactoryPersistenceRecord{ID: id, UID: uid})
 			}
 			performanceMap.Load(loadRecords)
 

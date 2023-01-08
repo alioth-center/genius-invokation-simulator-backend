@@ -32,6 +32,25 @@ type CooperativeSkill struct {
 	Trigger enum.TriggerType `json:"trigger" yaml:"trigger" xml:"trigger"` // Trigger 协同攻击的触发条件
 }
 
+// Summon 召唤物信息
+type Summon struct {
+	ID     uint `json:"id" yaml:"id" xml:"id"`             // ID 召唤物的ID
+	Remain uint `json:"remain" yaml:"remain" xml:"remain"` // Remain 召唤物剩余可生效次数
+}
+
+// Support 支援物信息
+type Support struct {
+	ID     uint `json:"id" yaml:"id" xml:"id"`             // ID 支援物的ID
+	Remain uint `json:"remain" yaml:"remain" xml:"remain"` // Remain 支援物的剩余可生效次数
+}
+
+// Game 对局的信息
+type Game struct {
+	ActingPlayer uint            `json:"acting_player" yaml:"acting_player" xml:"acting_player"` // ActingPlayer 当前正在操作的玩家
+	RoundStage   enum.RoundStage `json:"round_stage" yaml:"round_stage" xml:"round_stage"`       // RoundStage 当前的回合阶段
+	RoundCount   uint            `json:"round_count" yaml:"round_count" xml:"round_count"`       // RoundCount 当前的回合数
+}
+
 // Event 事件信息
 type Event struct {
 	ID      uint             `json:"id" yaml:"id" xml:"id"`                // ID 事件的实体ID
@@ -50,13 +69,16 @@ type Character struct {
 
 // Base 基础玩家信息
 type Base struct {
-	UID          uint               `json:"uid" yaml:"uid" xml:"uid"`                            // UID 玩家的UID
-	Characters   []Character        `json:"characters" yaml:"characters" xml:"characters"`       // Characters 玩家的持有角色
-	CampEffect   []Modifier         `json:"camp_effect" yaml:"camp_effect" xml:"camp_effect"`    // CampEffect 玩家的阵营效果
-	Cooperatives []CooperativeSkill `json:"cooperatives" yaml:"cooperatives" xml:"cooperatives"` // Cooperatives 玩家可进行的协同攻击
-	Events       []Event            `json:"events" yaml:"events" xml:"events"`                   // Events 玩家身上的事件
-	RemainCards  uint               `json:"remain_cards" yaml:"remain_cards" xml:"remain_cards"` // RemainCards 玩家牌堆剩余的数量
-	Status       enum.PlayerStatus  `json:"status" yaml:"status" xml:"status"`                   // Status 玩家的状态信息
+	UID          uint               `json:"uid" yaml:"uid" xml:"uid"`                               // UID 玩家的UID
+	Characters   []Character        `json:"characters" yaml:"characters" xml:"characters"`          // Characters 玩家的持有角色
+	CampEffect   []Modifier         `json:"camp_effect" yaml:"camp_effect" xml:"camp_effect"`       // CampEffect 玩家的阵营效果
+	Cooperatives []CooperativeSkill `json:"cooperatives" yaml:"cooperatives" xml:"cooperatives"`    // Cooperatives 玩家可进行的协同攻击
+	Summons      []Summon           `json:"summons" yaml:"summons" xml:"summons"`                   // Summons 玩家持有的召唤物
+	Supports     []Support          `json:"supports" yaml:"supports" xml:"supports"`                // Supports 玩家持有的支援效果
+	Events       []Event            `json:"events" yaml:"events" xml:"events"`                      // Events 玩家身上的事件
+	RemainCards  uint               `json:"remain_cards" yaml:"remain_cards" xml:"remain_cards"`    // RemainCards 玩家牌堆剩余的数量
+	LegalActions []enum.ActionType  `json:"legal_actions" yaml:"legal_actions" xml:"legal_actions"` // LegalActions 当前的合法操作
+	Status       enum.PlayerStatus  `json:"status" yaml:"status" xml:"status"`                      // Status 玩家的状态信息
 }
 
 // Self 接收玩家自己的信息
@@ -75,6 +97,7 @@ type Other struct {
 
 // SyncMessage 玩家接收到的同步消息
 type SyncMessage struct {
+	Game    Game        `json:"game" yaml:"game" xml:"game"`          // Game 对局信息
 	Target  uint        `json:"target"   yaml:"target" xml:"target"`  // Target 接收同步消息的玩家
 	Message interface{} `json:"message" yaml:"message" xml:"message"` // Message 同步消息
 }
@@ -99,8 +122,9 @@ type GuestMessage struct {
 }
 
 // NewSyncMessage 创建一个指定接收者的同步信息
-func NewSyncMessage[message SyncMessageInterface](target uint, msg message) SyncMessage {
+func NewSyncMessage[message SyncMessageInterface](target uint, msg message, game Game) SyncMessage {
 	return SyncMessage{
+		Game:    game,
 		Target:  target,
 		Message: msg,
 	}

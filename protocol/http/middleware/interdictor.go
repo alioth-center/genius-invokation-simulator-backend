@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+func Interdict(ctx *gin.Context, failedKey string) {
+	ctx.Set(failedKey, true)
+}
+
 func NewInterdictor(failedTimes uint, failedKey string, lockedTime time.Duration, traceIPKey string) func(ctx *gin.Context) {
 	limiter := kv.NewSyncMap[kv.Pair[uint, time.Time]]()
 	return func(ctx *gin.Context) {

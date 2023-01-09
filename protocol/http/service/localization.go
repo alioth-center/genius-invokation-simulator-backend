@@ -29,9 +29,22 @@ type TranslationResponse struct {
 
 func init() {
 	localizationRouter = http.RegisterServices("/localization")
-	localizationRouter.Use(append(http.EngineMiddlewares, middleware.NewQPSLimiter(time.Second))...)
-	localizationRouter.GET("/language_pack/:id", queryLanguagePackServiceHandler())
-	localizationRouter.GET("/translate", translateServiceServiceHandler())
+	cfg := http.GetConfig().Middleware
+
+	localizationRouter.Use(
+		append(
+			http.EngineMiddlewares,
+			middleware.NewQPSLimiter(time.Second, cfg.IPTranceKey),
+		)...,
+	)
+	localizationRouter.GET(
+		"/language_pack/:id",
+		queryLanguagePackServiceHandler(),
+	)
+	localizationRouter.GET(
+		"/translate",
+		translateServiceServiceHandler(),
+	)
 }
 
 func queryLanguagePackServiceHandler() func(ctx *gin.Context) {

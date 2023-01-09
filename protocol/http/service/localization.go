@@ -15,21 +15,8 @@ var (
 	localizationRouter *gin.RouterGroup
 )
 
-type LocalizationQueryResponse struct {
-	LanguagePack localization.MultipleLanguagePack `json:"language_pack"`
-}
-
-type TranslationRequest struct {
-	Words []string `json:"words"`
-}
-
-type TranslationResponse struct {
-	Translation map[string]string `json:"translation"`
-}
-
-func init() {
+func initLocalizeService() {
 	localizationRouter = http.RegisterServices("/localization")
-	cfg := http.GetConfig().Middleware
 
 	localizationRouter.Use(
 		append(
@@ -45,6 +32,18 @@ func init() {
 		"/translate",
 		translateServiceServiceHandler(),
 	)
+}
+
+type LocalizationQueryResponse struct {
+	LanguagePack localization.MultipleLanguagePack `json:"language_pack"`
+}
+
+type TranslationRequest struct {
+	Words []string `json:"words"`
+}
+
+type TranslationResponse struct {
+	Translation map[string]string `json:"translation"`
 }
 
 func queryLanguagePackServiceHandler() func(ctx *gin.Context) {

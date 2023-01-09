@@ -14,9 +14,8 @@ var (
 	playerRouter *gin.RouterGroup
 )
 
-func init() {
+func initializePlayerService() {
 	playerRouter = http.RegisterServices("/player")
-	cfg := http.GetConfig().Middleware
 	playerRouter.Use(http.EngineMiddlewares...)
 	playerRouter.GET("/login/:player_id",
 		middleware.NewQPSLimiter(time.Duration(cfg.QPSLimitTime)*time.Second, cfg.IPTranceKey),
@@ -34,11 +33,33 @@ func init() {
 	)
 	playerRouter.PUT(":player_id/password",
 		middleware.NewQPSLimiter(time.Duration(cfg.QPSLimitTime)*time.Second, cfg.IPTranceKey),
+		middleware.NewInterdictor(
+			cfg.InterdictorTriggerCount,
+			cfg.InterdictorTraceKey,
+			time.Duration(cfg.InterdictorBlockedTime)*time.Second,
+			cfg.IPTranceKey,
+		),
 		updatePasswordServiceHandler(),
 	)
 	playerRouter.PUT(":player_id/nickname",
 		middleware.NewQPSLimiter(time.Duration(cfg.QPSLimitTime)*time.Second, cfg.IPTranceKey),
+		middleware.NewInterdictor(
+			cfg.InterdictorTriggerCount,
+			cfg.InterdictorTraceKey,
+			time.Duration(cfg.InterdictorBlockedTime)*time.Second,
+			cfg.IPTranceKey,
+		),
 		updateNickNameServiceHandler(),
+	)
+	playerRouter.DELETE(":player_id",
+		middleware.NewQPSLimiter(time.Duration(cfg.QPSLimitTime)*time.Second, cfg.IPTranceKey),
+		middleware.NewInterdictor(
+			cfg.InterdictorTriggerCount,
+			cfg.InterdictorTraceKey,
+			time.Duration(cfg.InterdictorBlockedTime)*time.Second,
+			cfg.IPTranceKey,
+		),
+		destroyServiceHandler(),
 	)
 }
 
@@ -73,6 +94,15 @@ type UpdateNickNameRequest struct {
 	NewNickName string `json:"new_nick_name"`
 }
 
+type DestroyPlayerRequest struct {
+	Password string `json:"password"`
+	Confirm  bool   `json:"confirm"`
+}
+
+type DestroyPlayerResponse struct {
+	Success bool `json:"success"`
+}
+
 func loginServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
 		request := LoginRequest{}
@@ -90,6 +120,7 @@ func loginServiceHandler() func(ctx *gin.Context) {
 			ctx.JSON(500, LoginResponse{Success: false})
 		} else if string(encodeResult) != (player.Password) {
 			// 密码校验失败，Forbidden，登陆失败
+			middleware.Interdict(ctx, cfg.InterdictorTraceKey)
 			ctx.JSON(403, LoginResponse{Success: false})
 		} else {
 			// 登录成功，获取玩家卡组信息后返回登录成功响应
@@ -115,14 +146,22 @@ func registerServiceHandler() func(ctx *gin.Context) {
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if success, id := persistence.PlayerPersistence.InsertOne(persistence.Player{NickName: request.NickName}); !success {
+		} else if success, id := persistence.PlayerPersistence.InsertOne(
+			persistence.Player{
+				NickName: request.NickName,
+			}); !success {
 			// 创建Player失败，InternalError
 			ctx.AbortWithStatus(500)
 		} else if encoded, encodedPassword := util2.EncodePassword([]byte(request.Password), id); !encoded {
 			// 编码密码失败，回滚，InternalError
 			persistence.PlayerPersistence.DeleteOne(id)
 			ctx.AbortWithStatus(500)
-		} else if updated := persistence.PlayerPersistence.UpdateByID(id, persistence.Player{UID: id, NickName: request.NickName, Password: string(encodedPassword)}); !updated {
+		} else if updated := persistence.PlayerPersistence.UpdateByID(id,
+			persistence.Player{
+				UID:      id,
+				NickName: request.NickName,
+				Password: string(encodedPassword),
+			}); !updated {
 			// 更新密码失败，回滚，InternalError
 			persistence.PlayerPersistence.DeleteOne(id)
 			ctx.AbortWithStatus(500)
@@ -138,17 +177,111 @@ func registerServiceHandler() func(ctx *gin.Context) {
 
 func updatePasswordServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
+		request := UpdatePasswordRequest{}
+		if !util.BindJson(ctx, &request) {
+			// RequestBody解析失败，BadRequest
+			ctx.AbortWithStatus(400)
+		} else if hasID, id := util.QueryPathInt(ctx, ":player_id"); !hasID {
+			// 没有必须的player_id字段，BadRequest
+			ctx.AbortWithStatus(400)
+		} else if success, player := persistence.PlayerPersistence.QueryByID(uint(id)); !success {
+			// 没有找到玩家，NotFound
+			ctx.AbortWithStatus(404)
+		} else if encoded, encodedPassword := util2.EncodePassword([]byte(request.OriginalPassword), id); !encoded {
+			// 编码原密码失败，InternalError
+			ctx.AbortWithStatus(500)
+		} else if string(encodedPassword) != player.Password {
+			// 提供的原密码密码不匹配，失败，Forbidden
+			middleware.Interdict(ctx, cfg.InterdictorTraceKey)
+			ctx.AbortWithStatus(403)
+		} else if encodedNew, encodedNewPassword := util2.EncodePassword([]byte(request.NewPassword), id); !encodedNew {
+			// 编码新密码失败，InternalError
+			ctx.AbortWithStatus(500)
+		} else if updated := persistence.PlayerPersistence.UpdateByID(
+			uint(id),
+			persistence.Player{
+				UID:       player.UID,
+				NickName:  player.NickName,
+				CardDecks: player.CardDecks,
+				Password:  string(encodedNewPassword),
+			}); !updated {
+			// 更新新密码失败，InternalError
+			ctx.AbortWithStatus(500)
+		} else {
+			// 更新密码成功，Success
+			ctx.AbortWithStatus(200)
+		}
 	}
 }
 
 func updateNickNameServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-
+		request := UpdateNickNameRequest{}
+		if !util.BindJson(ctx, &request) {
+			// RequestBody解析失败，BadRequest
+			ctx.AbortWithStatus(400)
+		} else if hasID, id := util.QueryPathInt(ctx, ":player_id"); !hasID {
+			// 没有必须的player_id字段，BadRequest
+			ctx.AbortWithStatus(400)
+		} else if success, player := persistence.PlayerPersistence.QueryByID(uint(id)); !success {
+			// 没有找到玩家，NotFound
+			ctx.AbortWithStatus(404)
+		} else if encoded, encodedPassword := util2.EncodePassword([]byte(request.Password), id); !encoded {
+			// 编码原密码失败，InternalError
+			ctx.AbortWithStatus(500)
+		} else if string(encodedPassword) != player.Password {
+			// 提供的原密码密码不匹配，失败，Forbidden
+			middleware.Interdict(ctx, cfg.InterdictorTraceKey)
+			ctx.AbortWithStatus(403)
+		} else if updated := persistence.PlayerPersistence.UpdateByID(uint(id),
+			persistence.Player{
+				UID:       player.UID,
+				NickName:  request.NewNickName,
+				CardDecks: player.CardDecks,
+				Password:  player.Password,
+			},
+		); !updated {
+			// 更新新昵称失败，InternalError
+			ctx.AbortWithStatus(500)
+		} else {
+			// 更新昵称成功，Success
+			ctx.AbortWithStatus(200)
+		}
 	}
 }
 
 func destroyServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-
+		request := DestroyPlayerRequest{}
+		if !util.BindJson(ctx, &request) {
+			// RequestBody解析失败，BadRequest
+			ctx.AbortWithStatus(400)
+		} else if hasID, id := util.QueryPathInt(ctx, ":player_id"); !hasID {
+			// 没有必须的player_id字段，BadRequest
+			ctx.AbortWithStatus(400)
+		} else if !request.Confirm {
+			// 确认失败，Success
+			ctx.JSON(200, DestroyPlayerResponse{
+				Success: false,
+			})
+		} else if success, player := persistence.PlayerPersistence.QueryByID(uint(id)); !success {
+			// 没有找到玩家，NotFound
+			ctx.AbortWithStatus(404)
+		} else if encoded, encodedPassword := util2.EncodePassword([]byte(request.Password), id); !encoded {
+			// 编码原密码失败，InternalError
+			ctx.AbortWithStatus(500)
+		} else if string(encodedPassword) != player.Password {
+			// 提供的原密码密码不匹配，失败，Forbidden
+			middleware.Interdict(ctx, cfg.InterdictorTraceKey)
+			ctx.AbortWithStatus(403)
+		} else if destroyed := persistence.PlayerPersistence.DeleteOne(uint(id)); !destroyed {
+			// 删除失败，InternalError
+			ctx.AbortWithStatus(500)
+		} else {
+			// 删除成功，Success
+			ctx.JSON(200, DestroyPlayerResponse{
+				Success: true,
+			})
+		}
 	}
 }

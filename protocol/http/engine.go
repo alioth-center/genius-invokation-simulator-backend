@@ -13,7 +13,10 @@ var (
 )
 
 var (
-	EngineMiddlewares = []gin.HandlerFunc{middleware.NewUUIDTagger()}
+	EngineMiddlewares = []gin.HandlerFunc{
+		middleware.NewIPTracer(config.Middleware.UUIDKey),   // IP追踪器
+		middleware.NewUUIDTagger(config.Middleware.UUIDKey), // UUID标记器
+	}
 )
 
 func init() {

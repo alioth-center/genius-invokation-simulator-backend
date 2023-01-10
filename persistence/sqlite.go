@@ -15,8 +15,10 @@ type sqliteTable[PK Increasable, T any] struct {
 }
 
 func (s *sqliteTable[PK, T]) QueryByID(id PK) (has bool, result T) {
-	if _, err := s.session.ID(id).Get(&result); err != nil {
+	if has, err := s.session.ID(id).Get(&result); err != nil {
 		s.errChan <- err
+		return false, result
+	} else if !has {
 		return false, result
 	} else {
 		return true, result
@@ -25,8 +27,10 @@ func (s *sqliteTable[PK, T]) QueryByID(id PK) (has bool, result T) {
 
 func (s *sqliteTable[PK, T]) UpdateByID(id PK, newEntity T) (success bool) {
 	var condition T
-	if _, err := s.session.ID(id).Get(&condition); err != nil {
+	if has, err := s.session.ID(id).Get(&condition); err != nil {
 		s.errChan <- err
+		return false
+	} else if !has {
 		return false
 	} else if _, err = s.session.ID(id).Update(newEntity); err != nil {
 		s.errChan <- err
@@ -37,7 +41,7 @@ func (s *sqliteTable[PK, T]) UpdateByID(id PK, newEntity T) (success bool) {
 }
 
 func (s *sqliteTable[PK, T]) InsertOne(entity *T) (success bool, result *T) {
-	if affected, err := s.session.InsertOne(entity); err != nil || affected != 1 {
+	if _, err := s.session.InsertOne(entity); err != nil {
 		s.errChan <- err
 		return false, nil
 	} else {
@@ -47,10 +51,12 @@ func (s *sqliteTable[PK, T]) InsertOne(entity *T) (success bool, result *T) {
 
 func (s *sqliteTable[PK, T]) DeleteOne(id PK) (success bool) {
 	var condition T
-	if _, err := s.session.ID(id).Get(&condition); err != nil {
+	if exist, err := s.session.ID(id).Get(&condition); err != nil {
 		s.errChan <- err
 		return false
-	} else if _, err = s.session.ID(id).Delete(nil); err != nil {
+	} else if !exist {
+		return false
+	} else if _, err = s.session.ID(id).Delete(condition); err != nil {
 		s.errChan <- err
 		return false
 	} else {

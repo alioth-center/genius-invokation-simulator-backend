@@ -9,4 +9,5 @@ func InitServices(conf config.EngineConfig) {
 	initPlayerService()
 	initLocalizeService()
 	initCardDeckService()
+	initRoomInfoService()
 }

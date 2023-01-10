@@ -55,7 +55,5 @@ func GeneratePrefixHash[Key any](key Key, offset uintptr) (hash uint) {
 }
 
 func GenerateMD5(source string) (md5CheckSum string) {
-	hash := md5.New()
-	hash.Write([]byte(source))
-	return string(hash.Sum(nil))
+	return fmt.Sprintf("%x", md5.Sum([]byte(source)))
 }

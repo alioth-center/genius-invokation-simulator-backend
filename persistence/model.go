@@ -31,7 +31,7 @@ type Character struct {
 	Skills      []uint
 }
 
-// Player 被持久化模块托管的PlayerInfo工厂
+// Player 被持久化模块托管的Player信息
 type Player struct {
 	UID       uint   `xorm:"pk autoincr notnull unique index"` // UID Player的UID，主键
 	NickName  string `xorm:"notnull varchar(64)"`              // NickName Player的昵称
@@ -39,11 +39,17 @@ type Player struct {
 	Password  string `xorm:"notnull varchar(64)"`              // Password Player的密码Hash
 }
 
-// CardDeck 被持久化模块托管的CardDeck工厂
+// CardDeck 被持久化模块托管的CardDeck信息
 type CardDeck struct {
 	ID               uint     `xorm:"pk autoincr notnull unique index"` // ID CardDeck的记录ID，主键
 	OwnerUID         uint     `xorm:"notnull index"`                    // OwnerUID CardDeck的持有者
 	RequiredPackages []string `xorm:"notnull json"`                     // RequiredPackages CardDeck需要的包
 	Cards            []uint   `xorm:"notnull json"`                     // Cards CardDeck包含的卡组
 	Characters       []uint   `xorm:"notnull json"`                     // Characters CardDeck包含的角色
+}
+
+// Token 被持久化模块托管的Token缓存
+type Token struct {
+	UID uint
+	ID  string
 }

@@ -31,6 +31,7 @@ var (
 	SkillPersistence     = newFactoryPersistence[Skill]()
 
 	LocalizationPersistence = newMemoryCache[string, localization.LanguagePack]()
+	TokenPersistence        = newTimingMemoryCache[string, Token]()
 
 	CardDeckPersistence DatabasePersistence[uint, CardDeck]
 	PlayerPersistence   DatabasePersistence[uint, Player]
@@ -64,9 +65,6 @@ func Load(errChan chan error) {
 			errChan <- err
 		} else {
 			sqlite3DB.SetMapper(core.SameMapper{})
-			if err = sqlite3DB.Sync2(Player{}, CardDeck{}); err != nil {
-				errChan <- err
-			}
 
 			var success bool
 			if success, CardDeckPersistence = newDatabasePersistence[uint, CardDeck](errChan); !success {

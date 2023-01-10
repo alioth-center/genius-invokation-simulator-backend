@@ -14,7 +14,7 @@ func GetIPTrace(ctx *gin.Context, traceKey string) (has bool, ip uint) {
 	} else if ipResult, ok := result.(uint); !ok {
 		return false, 0
 	} else {
-		return has, ipResult
+		return true, ipResult
 	}
 }
 

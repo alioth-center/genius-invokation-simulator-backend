@@ -11,6 +11,11 @@ var (
 			InterdictorBlockedTime:  600,
 			InterdictorTriggerCount: 5,
 			QPSLimitTime:            1,
+			TokenIDKey:              "gisb_token_id",
+			TokenKey:                "gisb_token",
+			TokenRefreshTime:        7200,
+			TokenRemainingTime:      1800,
+			CookieDomain:            "localhost",
 		},
 		Backend: BackendConfig{
 			ListenPort: 8086,

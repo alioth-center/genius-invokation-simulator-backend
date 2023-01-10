@@ -3,6 +3,8 @@ package persistence
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/entity"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
+	"github.com/sunist-c/genius-invokation-simulator-backend/model/message"
+	"time"
 )
 
 // Card 被持久化模块托管的Card工厂
@@ -52,4 +54,16 @@ type CardDeck struct {
 type Token struct {
 	UID uint
 	ID  string
+}
+
+// RoomInfo 被持久化模块托管的RoomInfo缓存
+type RoomInfo struct {
+	RoomID           uint
+	CreatedAt        time.Time
+	CreatorID        uint
+	Token            string
+	Players          []uint
+	Viewers          uint
+	RequiredPackages []string
+	GameOptions      message.GameOptions
 }

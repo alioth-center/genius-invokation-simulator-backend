@@ -1,15 +1,11 @@
 package service
 
 import (
-	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
+	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/config"
 )
 
-var (
-	cfg middleware.Config
-)
-
-func InitServices(conf middleware.Config) {
-	cfg = conf
+func InitServices(conf config.EngineConfig) {
+	SetConfig(conf)
 	initPlayerService()
 	initLocalizeService()
 	initCardDeckService()

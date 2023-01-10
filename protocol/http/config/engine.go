@@ -1,10 +1,8 @@
-package http
-
-import "github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
+package config
 
 var (
-	config = &Config{
-		Middleware: middleware.Config{
+	config = &EngineConfig{
+		Middleware: MiddlewareConfig{
 			UUIDKey:                 "uuid",
 			IPTranceKey:             "ip",
 			InterdictorTraceKey:     "interdicted",
@@ -17,25 +15,21 @@ var (
 			TokenRemainingTime:      1800,
 			CookieDomain:            "localhost",
 		},
-		Backend: BackendConfig{
-			ListenPort: 8086,
+		Service: ServiceConfig{
+			MaxRooms: 100,
 		},
 	}
 )
 
-type Config struct {
-	Middleware middleware.Config `json:"middleware"`
-	Backend    BackendConfig     `json:"backend"`
+type EngineConfig struct {
+	Middleware MiddlewareConfig `json:"middleware"`
+	Service    ServiceConfig    `json:"service"`
 }
 
-func SetConfig(conf Config) {
+func SetConfig(conf EngineConfig) {
 	config = &conf
 }
 
-func GetConfig() Config {
+func GetConfig() EngineConfig {
 	return *config
-}
-
-type BackendConfig struct {
-	ListenPort uint `json:"listen_port"`
 }

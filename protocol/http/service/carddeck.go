@@ -18,8 +18,8 @@ func initCardDeckService() {
 	deckRouter.Use(
 		append(
 			http.EngineMiddlewares,
-			middleware.NewQPSLimiter(cfg),
-			middleware.NewAuthenticator(cfg),
+			middleware.NewQPSLimiter(middlewareConfig),
+			middleware.NewAuthenticator(middlewareConfig),
 		)...,
 	)
 
@@ -81,7 +81,7 @@ func uploadDeckServiceHandler() func(ctx *gin.Context) {
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if exist, tokenValue := middleware.GetToken(ctx, cfg); !exist {
+		} else if exist, tokenValue := middleware.GetToken(ctx, middlewareConfig); !exist {
 			// 服务器找不到token，Forbidden
 			ctx.AbortWithStatus(403)
 		} else if tokenValue.UID != request.Owner {
@@ -124,7 +124,7 @@ func deleteDeckServiceHandler() func(ctx *gin.Context) {
 		if gotten, id := util.QueryPathInt(ctx, ":card_deck_id"); !gotten {
 			// 找不到必要的URL路径参数，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if exist, tokenValue := middleware.GetToken(ctx, cfg); !exist {
+		} else if exist, tokenValue := middleware.GetToken(ctx, middlewareConfig); !exist {
 			// 服务器找不到token，Forbidden
 			ctx.AbortWithStatus(403)
 		} else if has, entity := persistence.CardDeckPersistence.QueryByID(uint(id)); !has {
@@ -178,7 +178,7 @@ func updateDeckServiceHandler() func(ctx *gin.Context) {
 		} else if gotten, id := util.QueryPathInt(ctx, ":card_deck_id"); !gotten {
 			// 找不到必要的URL路径参数，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if exist, tokenValue := middleware.GetToken(ctx, cfg); !exist {
+		} else if exist, tokenValue := middleware.GetToken(ctx, middlewareConfig); !exist {
 			// 服务器里找不到token，Forbidden
 			ctx.AbortWithStatus(403)
 		} else if tokenValue.UID != request.Owner {

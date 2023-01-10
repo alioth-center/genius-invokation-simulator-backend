@@ -14,8 +14,8 @@ var (
 
 var (
 	EngineMiddlewares = []gin.HandlerFunc{
-		middleware.NewIPTracer(config.Middleware.UUIDKey),   // IP追踪器
-		middleware.NewUUIDTagger(config.Middleware.UUIDKey), // UUID标记器
+		middleware.NewIPTracer(config.Middleware.IPTranceKey), // IP追踪器
+		middleware.NewUUIDTagger(config.Middleware.UUIDKey),   // UUID标记器
 	}
 )
 

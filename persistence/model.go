@@ -41,11 +41,11 @@ type Player struct {
 
 // CardDeck 被持久化模块托管的CardDeck信息
 type CardDeck struct {
-	ID               uint     `xorm:"pk autoincr notnull unique index"` // ID CardDeck的记录ID，主键
-	OwnerUID         uint     `xorm:"notnull index"`                    // OwnerUID CardDeck的持有者
-	RequiredPackages []string `xorm:"notnull json"`                     // RequiredPackages CardDeck需要的包
-	Cards            []uint   `xorm:"notnull json"`                     // Cards CardDeck包含的卡组
-	Characters       []uint   `xorm:"notnull json"`                     // Characters CardDeck包含的角色
+	ID               uint     `xorm:"pk autoincr notnull unique index" json:"id"` // ID CardDeck的记录ID，主键
+	OwnerUID         uint     `xorm:"notnull index" json:"owner_uid"`             // OwnerUID CardDeck的持有者
+	RequiredPackages []string `xorm:"notnull json" json:"required_packages"`      // RequiredPackages CardDeck需要的包
+	Cards            []uint   `xorm:"notnull json" json:"cards"`                  // Cards CardDeck包含的卡组
+	Characters       []uint   `xorm:"notnull json" json:"characters"`             // Characters CardDeck包含的角色
 }
 
 // Token 被持久化模块托管的Token缓存

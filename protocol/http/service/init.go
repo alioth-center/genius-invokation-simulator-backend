@@ -8,6 +8,7 @@ var (
 
 func InitServices(conf http.MiddlewareConfig) {
 	cfg = conf
-	initializePlayerService()
+	initPlayerService()
 	initLocalizeService()
+	initCardDeckService()
 }

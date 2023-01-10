@@ -14,7 +14,7 @@ var (
 	playerRouter *gin.RouterGroup
 )
 
-func initializePlayerService() {
+func initPlayerService() {
 	playerRouter = http.RegisterServices("/player")
 	playerRouter.Use(http.EngineMiddlewares...)
 	playerRouter.GET("/login/:player_id",
@@ -146,29 +146,29 @@ func registerServiceHandler() func(ctx *gin.Context) {
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if success, id := persistence.PlayerPersistence.InsertOne(
-			persistence.Player{
+		} else if success, result := persistence.PlayerPersistence.InsertOne(
+			&persistence.Player{
 				NickName: request.NickName,
 			}); !success {
 			// 创建Player失败，InternalError
 			ctx.AbortWithStatus(500)
-		} else if encoded, encodedPassword := util2.EncodePassword([]byte(request.Password), id); !encoded {
+		} else if encoded, encodedPassword := util2.EncodePassword([]byte(request.Password), result.UID); !encoded {
 			// 编码密码失败，回滚，InternalError
-			persistence.PlayerPersistence.DeleteOne(id)
+			persistence.PlayerPersistence.DeleteOne(result.UID)
 			ctx.AbortWithStatus(500)
-		} else if updated := persistence.PlayerPersistence.UpdateByID(id,
+		} else if updated := persistence.PlayerPersistence.UpdateByID(result.UID,
 			persistence.Player{
-				UID:      id,
+				UID:      result.UID,
 				NickName: request.NickName,
 				Password: string(encodedPassword),
 			}); !updated {
 			// 更新密码失败，回滚，InternalError
-			persistence.PlayerPersistence.DeleteOne(id)
+			persistence.PlayerPersistence.DeleteOne(result.UID)
 			ctx.AbortWithStatus(500)
 		} else {
 			// 注册Player成功，返回Player信息
 			ctx.JSON(200, RegisterResponse{
-				PlayerUID:      id,
+				PlayerUID:      result.UID,
 				PlayerNickName: request.NickName,
 			})
 		}

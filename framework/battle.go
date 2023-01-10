@@ -175,7 +175,7 @@ func (b *Battle) handle(msg message.ActionMessage) {
 			b.core.ExecuteConcede(realMessage.Sender)
 		}
 	default:
-		b.err <- fmt.Errorf("unknwon message %v", msg)
+		b.err <- fmt.Errorf("unknown message %v", msg)
 	}
 }
 

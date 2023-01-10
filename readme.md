@@ -1,117 +1,60 @@
 # Genius Invokation Simulator Backend
 
-----
+## 1. 综述
 
-## Badges
+### 1.1 概况
+
+这里是原神(Genshin Impact)的《七圣召唤》模拟器，是参考原神3.3版本的「七圣召唤」玩法重新实现的后端(服务端)，包括所有的原神内的游戏内容，并拓展一些米哈游没有做的内容。
+
+**本自述文件供开发者参考，若您只是使用本项目，您可以转到我们的[文档(未准备完成)]()**
+
+[English Version(not complete yet)]()
+
+### 1.2 声明
+
+本项目的交流群(QQ)为`530924402`，欢迎讨论与PR
+
+本模拟器侧重于提供自定义的七圣召唤对局，比如每次投十二个骰子/每回合摸四张牌/加入自定义角色、卡牌等功能，~~短期内没有~~ 项目稳定后尽快针对ai训练进行优化、适配。
+考虑设计接口时兼容RLcard
+
+相关的[genius-invokation-gym](https://github.com/paladin1013/genius-invokation-gym)项目侧重于提供ai相关接口，请根据需求选择
+
+**本模拟器接口尽量和[genius-invokation-gym](https://github.com/paladin1013/genius-invokation-gym)保持一致，其项目完善后本项目也尽量拓展相应的ai接口**
+
+同时感谢[@Leng Yue](https://github.com/leng-yue)实现的前端项目[genius-invokation-webui](https://github.com/leng-yue/genius-invokation-webui)
+
+**本项目不含任何原神(Genshin Impact)的美术素材，原神(Genshin Impact)的相关版权归米哈游(miHoYo)所有**
+
+## 2. 徽章
+
+### 2.1 构建情况
 
 | Branch | master | dev | release |
 | :--: | :--: | :--: | :--: |
 | drone-ci | [![Build Status](https://drone.sunist.cn/api/badges/sunist-c/genius-invokation-simulator-backend/status.svg?ref=refs/heads/master)](https://drone.sunist.cn/sunist-c/genius-invokation-simulator-backend) | [![Build Status](https://drone.sunist.cn/api/badges/sunist-c/genius-invokation-simulator-backend/status.svg?ref=refs/heads/dev)](https://drone.sunist.cn/sunist-c/genius-invokation-simulator-backend) | nil |
 | github-action | [![gisb-test](https://github.com/sunist-c/genius-invokation-simulator-backend/actions/workflows/go.yml/badge.svg?branch=master)](https://github.com/sunist-c/genius-invokation-simulator-backend/actions/workflows/go.yml) | [![gisb-test](https://github.com/sunist-c/genius-invokation-simulator-backend/actions/workflows/go.yml/badge.svg?branch=dev)](https://github.com/sunist-c/genius-invokation-simulator-backend/actions/workflows/go.yml) | nil |
 
-## Summary
+### 2.2 代码质量
 
-这里是原神(Genshin Impact)的《七圣召唤》模拟器，是参考原神3.3版本的「七圣召唤」玩法重新实现的后端(服务端)，包括所有的原神内的游戏内容，并拓展一些米哈游没有做的内容。
+[![Go Report Card](https://goreportcard.com/badge/github.com/sunist-c/genius-invokation-simulator-backend)](https://goreportcard.com/report/github.com/sunist-c/genius-invokation-simulator-backend)
 
-**具体游戏内容的实现(卡牌、角色、技能等)将会以sub-module的形式发布，本项目仅为后端框架**
-
-## How to use
-
-**本环节(How to use)暂时不可用，只是先更新文档占个坑**
-
-### From source
-
-1. 确保您的设备上正常安装了`go 1.19`或以上版本，您可以通过在命令行执行下面的语句查看您的go版本与安装情况：
-
-  ```shell
-  go version
-  ```
-
-2. 选择一个存放代码的地方，Clone本仓库，选择一个源即可：
-
-  ```shell
-  git clone https://github.com/sunist-c/genius-invokation-simulator-backend.git # GitHub源
-  git clone https://code.sunist.cn/sunist-c/genius-invokation-simulator-backend.git # 作者私有源
-  ```
-
-3. 进入本项目的目录，然后构建本项目，请根据操作系统情况与实际情况替换掉`${output_name}`：
-
-  ```shell
-  go mod tidy # 同步依赖关系
-  go build -o ${output_name} # 构建可执行文件
-  ```
-
-4. 您可以在当前目录下发现新增了一个名为`${output_name}`的可执行文件，执行这个可执行文件：
-
-  ```shell
-  ./${output_name} -mode cli # 以命令行模式启动模拟器
-  ```
-
-5. 您可以使用`-h`参数来获取更多执行帮助：
-
-  ```shell
-  $ ./${output_name} -h
-  > Usage of ${output_name}:
-  >   -conf string
-  >         setup the backend configuration file, highest priority
-  >   -mode string
-  >         setup the startup mode, available [backend, cli, ai] (default "backend")
-  >   -port uint
-  >         setup the http service port (default 8086)
-  ```
-
-### From binary
-
-1. 转到本项目的[release]()页面，根据您的设备、平台与操作系统，下载对应的二进制可执行文件，这个文件等价于 `From source` 环节中 3. 步骤产生的可执行文件
-2. 参考 `From source` 环节的 4. 和 5. 步骤进行下一步操作
-
-### From docker
-
-// todo
-
-## How to modify
-
-**本环节(How to modify)暂时不可用，只是先更新文档占个坑**
-
-1. 进入 `data` 目录，这是模拟器自动扫描的目录
-2. 找到一个您中意的mod，然后将其下载至 `data` 目录下
-3. 修改**项目根目录**下的 `main.go` 文件，在imports区块内，将您获取的mod匿名引入
-4. 启动模拟器，模拟器将自动加载mod
-
-----
-
-以下的内容供开发者参考
-
-## Branch
+## 3. 分支说明
 
 - master 主要的分支，将在发生重要功能修改时与dev分支进行同步
 - dev 开发中的分支，将频繁地进行更改与新功能测试
 - release 稳定的分支，仅会在重大版本更新时进行功能合并
 
-## Progress
+## 4. 开发进度
 
 请转到[gisb's feature development](https://github.com/users/sunist-c/projects/2)查看项目进度
 
-## Document
+## 5. 开发文档
 
 + 战斗框架： [Battle Framework of GISB](https://github.com/sunist-c/genius-invokation-simulator-backend/wiki/Battle-Framework)
 + 事件框架： Mkdir...
 + MOD制作： Mkdir...
 
-## Announce
-
-本模拟器侧重于提供自定义的七圣召唤对局，比如每次投十二个骰子/每回合摸四张牌/加入自定义角色、卡牌等功能，~~短期内没有~~ 项目稳定后尽快针对ai训练进行优化、适配。
-考虑设计接口时兼容RLcard。
-
-相关的[genius-invokation-gym](https://github.com/paladin1013/genius-invokation-gym)项目侧重于提供ai相关接口，请根据需求选择。
-
-**本模拟器接口尽量和[genius-invokation-gym](https://github.com/paladin1013/genius-invokation-gym)保持一致，其项目完善后本项目也尽量拓展相应的ai接口。**
-
-同时感谢[@Leng Yue](https://github.com/leng-yue)实现的前端项目[genius-invokation-webui](https://github.com/leng-yue/genius-invokation-webui)。
-
-本项目的交流群(QQ)为`530924402`，欢迎讨论与PR！
-
-## Contribute
+## 6. 参与项目
 
 如果您想增加一个功能或想法：
 
@@ -123,7 +66,7 @@
 
 本项目有意向从Jetbrains申请开源项目的All Products License，将会提供给Code Contributors
 
-## Features
+## 7. 功能特性
 
 - [x] 游戏基本玩法
   - [ ] 元素反应
@@ -158,8 +101,6 @@
   - [ ] IP追踪/封禁
   - [ ] QPS/TPS限制器
 
-## License
+## 8. 开源许可
 
-MIT License
-
-**本项目不含任何原神(Genshin Impact)的美术素材，原神(Genshin Impact)的相关版权归米哈游(miHoYo)所有**
+[MIT License](License)

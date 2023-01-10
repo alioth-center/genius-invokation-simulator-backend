@@ -30,11 +30,11 @@ func initPlayerService() {
 	playerRouter.POST("",
 		registerServiceHandler(),
 	)
-	playerRouter.PUT(":player_id/password",
+	playerRouter.PATCH(":player_id/password",
 		middleware.NewInterdictor(cfg),
 		updatePasswordServiceHandler(),
 	)
-	playerRouter.PUT(":player_id/nickname",
+	playerRouter.PATCH(":player_id/nickname",
 		middleware.NewInterdictor(cfg),
 		updateNickNameServiceHandler(),
 	)
@@ -103,6 +103,9 @@ func loginServiceHandler() func(ctx *gin.Context) {
 			// 密码校验失败，Forbidden，登陆失败
 			middleware.Interdict(ctx, cfg)
 			ctx.JSON(403, LoginResponse{Success: false})
+		} else if !middleware.AttachToken(ctx, cfg, uint(id)) {
+			// 生成token失败，InternalError
+			ctx.JSON(500, LoginResponse{Success: false})
 		} else {
 			// 登录成功，获取玩家卡组信息后返回登录成功响应
 			response := LoginResponse{

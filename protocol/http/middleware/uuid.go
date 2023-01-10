@@ -6,10 +6,10 @@ import (
 )
 
 // GetUUID 获取context中携带的uuid信息，若没有则生成并写入一个uuid
-func GetUUID(ctx *gin.Context, uuidKey string) (uuid string) {
-	if result, gotten := ctx.Get(uuidKey); !gotten {
+func GetUUID(ctx *gin.Context, conf Config) (uuid string) {
+	if result, gotten := ctx.Get(conf.UUIDKey); !gotten {
 		uuid = util.GenerateUUID()
-		ctx.Set(uuidKey, uuid)
+		ctx.Set(conf.UUIDKey, uuid)
 		return uuid
 	} else {
 		return result.(string)
@@ -17,8 +17,8 @@ func GetUUID(ctx *gin.Context, uuidKey string) (uuid string) {
 }
 
 // NewUUIDTagger 创建一个UUID标记器，将会往context中写入uuid
-func NewUUIDTagger(uuidKey string) func(ctx *gin.Context) {
+func NewUUIDTagger(conf Config) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		ctx.Set(uuidKey, util.GenerateUUID())
+		ctx.Set(conf.UUIDKey, util.GenerateUUID())
 	}
 }

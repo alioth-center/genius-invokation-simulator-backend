@@ -8,7 +8,6 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/util"
-	"time"
 )
 
 var (
@@ -21,7 +20,7 @@ func initLocalizeService() {
 	localizationRouter.Use(
 		append(
 			http.EngineMiddlewares,
-			middleware.NewQPSLimiter(time.Second, cfg.IPTranceKey),
+			middleware.NewQPSLimiter(cfg),
 		)...,
 	)
 	localizationRouter.GET(

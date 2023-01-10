@@ -1,12 +1,14 @@
 package service
 
-import "github.com/sunist-c/genius-invokation-simulator-backend/protocol/http"
-
-var (
-	cfg http.MiddlewareConfig
+import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
 )
 
-func InitServices(conf http.MiddlewareConfig) {
+var (
+	cfg middleware.Config
+)
+
+func InitServices(conf middleware.Config) {
 	cfg = conf
 	initPlayerService()
 	initLocalizeService()

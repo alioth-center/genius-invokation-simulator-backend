@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-func GetIPTrace(ctx *gin.Context, traceKey string) (has bool, ip uint) {
-	if result, gotten := ctx.Get(traceKey); !gotten {
+func GetIPTrace(ctx *gin.Context, conf Config) (has bool, ip uint) {
+	if result, gotten := ctx.Get(conf.IPTranceKey); !gotten {
 		return false, 0
 	} else if ipResult, ok := result.(uint); !ok {
 		return false, 0
@@ -45,13 +45,13 @@ func ConvertUintToIP(ip uint) (result string) {
 	return fmt.Sprintf("%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3])
 }
 
-func NewIPTracer(traceKey string) func(ctx *gin.Context) {
+func NewIPTracer(conf Config) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
 		if success, ip := ConvertIPToUint(util.GetClientIP(ctx)); !success {
 			// 无法成功获取客户端IP，返回BadRequest
 			ctx.AbortWithStatus(400)
 		} else {
-			ctx.Set(traceKey, ip)
+			ctx.Set(conf.IPTranceKey, ip)
 		}
 	}
 }

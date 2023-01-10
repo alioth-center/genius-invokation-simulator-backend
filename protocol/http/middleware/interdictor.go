@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-func Interdict(ctx *gin.Context, failedKey string) {
-	ctx.Set(failedKey, true)
+func Interdict(ctx *gin.Context, conf Config) {
+	ctx.Set(conf.InterdictorTraceKey, true)
 }
 
-func NewInterdictor(failedTimes uint, failedKey string, lockedTime time.Duration, traceIPKey string) func(ctx *gin.Context) {
+func NewInterdictor(conf Config) func(ctx *gin.Context) {
 	limiter := kv.NewSyncMap[kv.Pair[uint, time.Time]]()
 	return func(ctx *gin.Context) {
-		success, ip := GetIPTrace(ctx, traceIPKey)
+		success, ip := GetIPTrace(ctx, conf)
 		if !success {
 			// 无法成功获取客户端IP，返回BadRequest
 			ctx.AbortWithStatus(400)
@@ -21,8 +21,8 @@ func NewInterdictor(failedTimes uint, failedKey string, lockedTime time.Duration
 		}
 
 		if limiter.Exists(ip) {
-			if pair := limiter.Get(ip); pair.Key() > failedTimes {
-				if blockedTime := pair.Value(); !blockedTime.IsZero() && blockedTime.Add(lockedTime).After(time.Now()) {
+			if pair := limiter.Get(ip); pair.Key() > conf.InterdictorTriggerCount {
+				if blockedTime := pair.Value(); !blockedTime.IsZero() && blockedTime.Add(time.Second*time.Duration(conf.InterdictorBlockedTime)).After(time.Now()) {
 					// 失败次数过多且未到解封时间，返回PreconditionFailed
 					ctx.AbortWithStatus(412)
 					return
@@ -35,14 +35,14 @@ func NewInterdictor(failedTimes uint, failedKey string, lockedTime time.Duration
 
 		ctx.Next()
 
-		if f, exist := ctx.Get(failedKey); exist {
+		if f, exist := ctx.Get(conf.InterdictorTraceKey); exist {
 			if result, ok := f.(bool); ok && result {
 				if limiter.Exists(ip) {
 					// 存在标记且被封禁器记录了
 					pair := limiter.Get(ip)
 					pair.SetKey(pair.Key() + 1)
 
-					if pair.Key() >= failedTimes {
+					if pair.Key() >= conf.InterdictorTriggerCount {
 						// 达到封禁标准，封禁
 						pair.SetValue(time.Now())
 					}

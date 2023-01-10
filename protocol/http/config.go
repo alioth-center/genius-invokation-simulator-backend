@@ -1,8 +1,10 @@
 package http
 
+import "github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
+
 var (
 	config = &Config{
-		Middleware: MiddlewareConfig{
+		Middleware: middleware.Config{
 			UUIDKey:                 "uuid",
 			IPTranceKey:             "ip",
 			InterdictorTraceKey:     "interdicted",
@@ -17,8 +19,8 @@ var (
 )
 
 type Config struct {
-	Middleware MiddlewareConfig `json:"middleware"`
-	Backend    BackendConfig    `json:"backend"`
+	Middleware middleware.Config `json:"middleware"`
+	Backend    BackendConfig     `json:"backend"`
 }
 
 func SetConfig(conf Config) {
@@ -27,15 +29,6 @@ func SetConfig(conf Config) {
 
 func GetConfig() Config {
 	return *config
-}
-
-type MiddlewareConfig struct {
-	UUIDKey                 string `json:"uuid_key"`
-	IPTranceKey             string `json:"ip_trace_key"`
-	InterdictorTraceKey     string `json:"interdictor_trace_key"`
-	InterdictorBlockedTime  uint   `json:"interdictor_blocked_time"`
-	InterdictorTriggerCount uint   `json:"interdictor_trigger_count"`
-	QPSLimitTime            uint   `json:"qps_limit_time"`
 }
 
 type BackendConfig struct {

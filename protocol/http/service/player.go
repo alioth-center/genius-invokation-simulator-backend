@@ -7,7 +7,6 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/util"
 	util2 "github.com/sunist-c/genius-invokation-simulator-backend/util"
-	"time"
 )
 
 var (
@@ -16,49 +15,31 @@ var (
 
 func initPlayerService() {
 	playerRouter = http.RegisterServices("/player")
-	playerRouter.Use(http.EngineMiddlewares...)
+
+	playerRouter.Use(
+		append(
+			http.EngineMiddlewares,
+			middleware.NewQPSLimiter(cfg),
+		)...,
+	)
+
 	playerRouter.GET("/login/:player_id",
-		middleware.NewQPSLimiter(time.Duration(cfg.QPSLimitTime)*time.Second, cfg.IPTranceKey),
-		middleware.NewInterdictor(
-			cfg.InterdictorTriggerCount,
-			cfg.InterdictorTraceKey,
-			time.Duration(cfg.InterdictorBlockedTime)*time.Second,
-			cfg.IPTranceKey,
-		),
+		middleware.NewInterdictor(cfg),
 		loginServiceHandler(),
 	)
 	playerRouter.POST("",
-		middleware.NewQPSLimiter(time.Duration(cfg.QPSLimitTime)*time.Second, cfg.IPTranceKey),
 		registerServiceHandler(),
 	)
 	playerRouter.PUT(":player_id/password",
-		middleware.NewQPSLimiter(time.Duration(cfg.QPSLimitTime)*time.Second, cfg.IPTranceKey),
-		middleware.NewInterdictor(
-			cfg.InterdictorTriggerCount,
-			cfg.InterdictorTraceKey,
-			time.Duration(cfg.InterdictorBlockedTime)*time.Second,
-			cfg.IPTranceKey,
-		),
+		middleware.NewInterdictor(cfg),
 		updatePasswordServiceHandler(),
 	)
 	playerRouter.PUT(":player_id/nickname",
-		middleware.NewQPSLimiter(time.Duration(cfg.QPSLimitTime)*time.Second, cfg.IPTranceKey),
-		middleware.NewInterdictor(
-			cfg.InterdictorTriggerCount,
-			cfg.InterdictorTraceKey,
-			time.Duration(cfg.InterdictorBlockedTime)*time.Second,
-			cfg.IPTranceKey,
-		),
+		middleware.NewInterdictor(cfg),
 		updateNickNameServiceHandler(),
 	)
 	playerRouter.DELETE(":player_id",
-		middleware.NewQPSLimiter(time.Duration(cfg.QPSLimitTime)*time.Second, cfg.IPTranceKey),
-		middleware.NewInterdictor(
-			cfg.InterdictorTriggerCount,
-			cfg.InterdictorTraceKey,
-			time.Duration(cfg.InterdictorBlockedTime)*time.Second,
-			cfg.IPTranceKey,
-		),
+		middleware.NewInterdictor(cfg),
 		destroyServiceHandler(),
 	)
 }
@@ -120,7 +101,7 @@ func loginServiceHandler() func(ctx *gin.Context) {
 			ctx.JSON(500, LoginResponse{Success: false})
 		} else if string(encodeResult) != (player.Password) {
 			// 密码校验失败，Forbidden，登陆失败
-			middleware.Interdict(ctx, cfg.InterdictorTraceKey)
+			middleware.Interdict(ctx, cfg)
 			ctx.JSON(403, LoginResponse{Success: false})
 		} else {
 			// 登录成功，获取玩家卡组信息后返回登录成功响应
@@ -192,7 +173,7 @@ func updatePasswordServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(500)
 		} else if string(encodedPassword) != player.Password {
 			// 提供的原密码密码不匹配，失败，Forbidden
-			middleware.Interdict(ctx, cfg.InterdictorTraceKey)
+			middleware.Interdict(ctx, cfg)
 			ctx.AbortWithStatus(403)
 		} else if encodedNew, encodedNewPassword := util2.EncodePassword([]byte(request.NewPassword), id); !encodedNew {
 			// 编码新密码失败，InternalError
@@ -231,7 +212,7 @@ func updateNickNameServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(500)
 		} else if string(encodedPassword) != player.Password {
 			// 提供的原密码密码不匹配，失败，Forbidden
-			middleware.Interdict(ctx, cfg.InterdictorTraceKey)
+			middleware.Interdict(ctx, cfg)
 			ctx.AbortWithStatus(403)
 		} else if updated := persistence.PlayerPersistence.UpdateByID(uint(id),
 			persistence.Player{
@@ -272,7 +253,7 @@ func destroyServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(500)
 		} else if string(encodedPassword) != player.Password {
 			// 提供的原密码密码不匹配，失败，Forbidden
-			middleware.Interdict(ctx, cfg.InterdictorTraceKey)
+			middleware.Interdict(ctx, cfg)
 			ctx.AbortWithStatus(403)
 		} else if destroyed := persistence.PlayerPersistence.DeleteOne(uint(id)); !destroyed {
 			// 删除失败，InternalError

@@ -11,8 +11,6 @@ import (
 	"path"
 	"syscall"
 	"time"
-
-	_ "github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/service"
 )
 
 const (
@@ -69,7 +67,7 @@ func callQuit() {
 	}
 
 	fmt.Printf("[main.log] main.callQuit(): wait 10 seconds for quit task\n")
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 1)
 	os.Exit(114)
 }
 

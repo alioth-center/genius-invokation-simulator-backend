@@ -7,15 +7,15 @@ import (
 )
 
 // NewQPSLimiter 生成一个QPS限制器，以IP来源为基础
-func NewQPSLimiter(limit time.Duration, ipKey string) func(ctx *gin.Context) {
+func NewQPSLimiter(conf Config) func(ctx *gin.Context) {
 	var limiter = kv.NewSyncMap[time.Time]()
 	return func(ctx *gin.Context) {
-		if success, ip := GetIPTrace(ctx, ipKey); !success {
+		if success, ip := GetIPTrace(ctx, conf); !success {
 			// 无法成功获取客户端IP，返回BadRequest
 			ctx.AbortWithStatus(400)
 		} else {
 			if limiter.Exists(ip) {
-				if t := limiter.Get(ip); !t.Add(limit).Before(time.Now()) {
+				if t := limiter.Get(ip); !t.Add(time.Duration(conf.QPSLimitTime) * time.Second).Before(time.Now()) {
 					// 请求过快，返回PreconditionFailed
 					ctx.AbortWithStatus(412)
 				} else {

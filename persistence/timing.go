@@ -22,7 +22,7 @@ func (t *timingMemoryCache[PK, T]) get(id PK) (exist bool, record *timingCacheRe
 	t.mutex.RUnlock()
 	if !has {
 		return false, record
-	} else if !record.timeoutAt.IsZero() && record.timeoutAt.Before(time.Now()) {
+	} else if !r.timeoutAt.IsZero() && r.timeoutAt.Before(time.Now()) {
 		t.mutex.Lock()
 		delete(t.cache, id)
 		t.mutex.Unlock()
@@ -91,7 +91,7 @@ func (t *timingMemoryCache[PK, T]) DeleteByID(id PK) (success bool) {
 	}
 }
 
-func NewTimingMemoryCache[PK comparable, T any]() TimingMemoryCache[PK, T] {
+func newTimingMemoryCache[PK comparable, T any]() TimingMemoryCache[PK, T] {
 	return &timingMemoryCache[PK, T]{
 		mutex: sync.RWMutex{},
 		cache: map[PK]*timingCacheRecord[T]{},

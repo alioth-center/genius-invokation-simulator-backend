@@ -3,11 +3,12 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
+	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/config"
 	"time"
 )
 
 // NewQPSLimiter 生成一个QPS限制器，以IP来源为基础
-func NewQPSLimiter(conf Config) func(ctx *gin.Context) {
+func NewQPSLimiter(conf config.MiddlewareConfig) func(ctx *gin.Context) {
 	var limiter = kv.NewSyncMap[time.Time]()
 	return func(ctx *gin.Context) {
 		if success, ip := GetIPTrace(ctx, conf); !success {

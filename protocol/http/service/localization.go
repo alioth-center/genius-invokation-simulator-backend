@@ -20,7 +20,7 @@ func initLocalizeService() {
 	localizationRouter.Use(
 		append(
 			http.EngineMiddlewares,
-			middleware.NewQPSLimiter(cfg),
+			middleware.NewQPSLimiter(middlewareConfig),
 		)...,
 	)
 	localizationRouter.GET(

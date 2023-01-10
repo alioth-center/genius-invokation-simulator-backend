@@ -41,3 +41,12 @@ type MemoryCache[PK comparable, T any] interface {
 	InsertOne(id PK, entity T) (success bool)
 	DeleteOne(id PK) (success bool)
 }
+
+// TimingMemoryCache 带超时系统的内存缓存，不进行持久化，类redis
+type TimingMemoryCache[PK comparable, T any] interface {
+	QueryByID(id PK) (has bool, result T, timeoutAt time.Time)
+	UpdateByID(id PK, entity T) (success bool, timeoutAt time.Time)
+	RefreshByID(id PK, timeout time.Duration) (success bool, timeoutAt time.Time)
+	InsertOne(id PK, entity T, timeout time.Duration) (success bool, timeoutAt time.Time)
+	DeleteByID(id PK) (success bool)
+}

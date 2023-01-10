@@ -28,7 +28,7 @@ func (s *sqliteTable[PK, T]) UpdateByID(id PK, newEntity T) (success bool) {
 	if _, err := s.session.ID(id).Get(&condition); err != nil {
 		s.errChan <- err
 		return false
-	} else if _, err = s.session.Update(condition, newEntity); err != nil {
+	} else if _, err = s.session.ID(id).Update(newEntity); err != nil {
 		s.errChan <- err
 		return false
 	} else {
@@ -36,12 +36,12 @@ func (s *sqliteTable[PK, T]) UpdateByID(id PK, newEntity T) (success bool) {
 	}
 }
 
-func (s *sqliteTable[PK, T]) InsertOne(entity T) (success bool, id PK) {
-	if pk, err := s.session.InsertOne(entity); err != nil {
+func (s *sqliteTable[PK, T]) InsertOne(entity *T) (success bool, result *T) {
+	if affected, err := s.session.InsertOne(entity); err != nil || affected != 1 {
 		s.errChan <- err
-		return false, id
+		return false, nil
 	} else {
-		return true, PK(pk)
+		return true, entity
 	}
 }
 
@@ -50,7 +50,7 @@ func (s *sqliteTable[PK, T]) DeleteOne(id PK) (success bool) {
 	if _, err := s.session.ID(id).Get(&condition); err != nil {
 		s.errChan <- err
 		return false
-	} else if _, err = s.session.Delete(condition); err != nil {
+	} else if _, err = s.session.ID(id).Delete(nil); err != nil {
 		s.errChan <- err
 		return false
 	} else {
@@ -85,10 +85,10 @@ func newDatabasePersistence[PK Increasable, T any](errChan chan error) (success 
 		errChan <- err
 		return false, persistence
 	} else {
-		persistence = &sqliteTable[PK, T]{
+		table := &sqliteTable[PK, T]{
 			session: sqlite3DB.Table(entity),
 			errChan: errChan,
 		}
-		return true, persistence
+		return true, table
 	}
 }

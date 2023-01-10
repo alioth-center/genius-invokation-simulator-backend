@@ -28,7 +28,7 @@ type Increasable interface {
 type DatabasePersistence[PK Increasable, T any] interface {
 	QueryByID(id PK) (has bool, result T)
 	UpdateByID(id PK, newEntity T) (success bool)
-	InsertOne(entity T) (success bool, id PK)
+	InsertOne(entity *T) (success bool, result *T)
 	DeleteOne(id PK) (success bool)
 	FindOne(condition T) (has bool, result T)
 	Find(condition T) (results []T)

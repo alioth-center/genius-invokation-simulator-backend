@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func BenchmarkTestPerformanceMapQueryByID(b *testing.B) {
@@ -122,5 +123,89 @@ func BenchmarkTestMemoryCacheDeleteOne(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		memoryCache.DeleteOne(uint(i))
+	}
+}
+
+func BenchmarkTestTimingMemoryCacheQueryByID(b *testing.B) {
+	memoryCache := newTimingMemoryCache[int, struct{}]()
+	for i := 0; i < 114514; i++ {
+		memoryCache.InsertOne(i, struct{}{}, time.Millisecond*500)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		memoryCache.QueryByID(i)
+	}
+}
+
+func BenchmarkTestTimingMemoryCacheInsertOne(b *testing.B) {
+	memoryCache := newTimingMemoryCache[int, struct{}]()
+	for i := 0; i < 114514; i++ {
+		memoryCache.InsertOne(i, struct{}{}, time.Millisecond*500)
+	}
+
+	b.ResetTimer()
+	for i := b.N; i > 0; i-- {
+		memoryCache.InsertOne(i, struct{}{}, time.Millisecond*500)
+	}
+}
+
+func BenchmarkTestTimingMemoryCacheRefreshByID(b *testing.B) {
+	memoryCache := newTimingMemoryCache[int, struct{}]()
+	for i := 0; i < 114514; i++ {
+		memoryCache.InsertOne(i, struct{}{}, time.Millisecond*500)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		memoryCache.RefreshByID(i, time.Millisecond*500)
+	}
+}
+
+func BenchmarkTestTimingMemoryCacheDeleteByID(b *testing.B) {
+	memoryCache := newTimingMemoryCache[int, struct{}]()
+	for i := 0; i < 114514; i++ {
+		memoryCache.InsertOne(i, struct{}{}, time.Millisecond*500)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		memoryCache.DeleteByID(i)
+	}
+}
+
+func BenchmarkTestTimingMemoryCacheUpdateByID(b *testing.B) {
+	memoryCache := newTimingMemoryCache[int, struct{}]()
+	for i := 0; i < 114514; i++ {
+		memoryCache.InsertOne(i, struct{}{}, time.Millisecond*500)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		memoryCache.UpdateByID(i, struct{}{})
+	}
+}
+
+func BenchmarkTestTimingMemoryCacheGenerationUsage(b *testing.B) {
+	memoryCache := newTimingMemoryCache[int, struct{}]()
+	for i := 0; i < 114514; i++ {
+		memoryCache.InsertOne(i, struct{}{}, time.Millisecond*500)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		switch i % 4 {
+		case 0:
+			memoryCache.UpdateByID(i, struct{}{})
+		case 1:
+			memoryCache.InsertOne(i, struct{}{}, time.Millisecond*500)
+		case 2:
+			memoryCache.DeleteByID(i)
+		case 3:
+			memoryCache.RefreshByID(i, time.Millisecond*500)
+		case 4:
+			memoryCache.QueryByID(i)
+		}
+
 	}
 }

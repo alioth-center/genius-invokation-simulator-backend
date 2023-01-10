@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"testing"
+	"time"
 )
 
 type testProductInterface interface {
@@ -141,4 +142,74 @@ func TestPerformanceMap(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTimingMemoryCache(t *testing.T) {
+	t.Run("TestTimingMemoryCache", func(t *testing.T) {
+		m := newTimingMemoryCache[int, int]()
+
+		// 测试TimingMap的插入
+		for i := 0; i < 114514; i++ {
+			result, timeoutAt := m.InsertOne(i, i, 0)
+			if !result || !timeoutAt.IsZero() {
+				t.Errorf("error occurred while inserting")
+			}
+		}
+
+		// 测试TimingMap的更新
+		for i := 0; i < 114514; i++ {
+			result, timeoutAt := m.UpdateByID(i, 2*i)
+			if !result || !timeoutAt.IsZero() {
+				t.Errorf("error occurred while querying")
+			}
+		}
+
+		// 测试TimingMap的查找
+		for i := 0; i < 114514; i++ {
+			result, value, timeoutAt := m.QueryByID(i)
+			if !result || !timeoutAt.IsZero() || value != 2*i {
+				t.Errorf("error occurred while querying")
+			}
+		}
+
+		// 测试TimingMap的删除
+		for i := 0; i < 114514; i++ {
+			result := m.DeleteByID(i)
+			if !result {
+				t.Errorf("error occured while deleting")
+			}
+		}
+
+		// 测试TimingMap的删除结果
+		for i := 0; i < 114514; i++ {
+			result, value, timeoutAt := m.QueryByID(i)
+			if result || !timeoutAt.IsZero() || value != 0 {
+				t.Errorf("error occurred while querying deleted")
+			}
+		}
+
+		// 测试TimingMap的超时
+		m.InsertOne(114514, 114514, time.Millisecond*10)
+		if result, value, timeoutAt := m.QueryByID(114514); !result || value != 114514 || timeoutAt.IsZero() {
+			t.Errorf("error occurred while intime querying")
+		}
+		time.Sleep(time.Millisecond * 10)
+		if result, value, timeoutAt := m.QueryByID(114514); result || !timeoutAt.IsZero() || value != 0 {
+			t.Errorf("error occurred while timeout querying")
+		}
+
+		// 测试TimingMap的刷新
+		m.InsertOne(1919810, 1919810, time.Millisecond)
+		if result, timeoutAt := m.RefreshByID(1919810, time.Millisecond*10); !result || timeoutAt.IsZero() {
+			t.Errorf("error occurred while refreshing")
+		}
+		time.Sleep(time.Millisecond * 5)
+		if result, value, timeoutAt := m.QueryByID(1919810); !result || value != 1919810 || timeoutAt.IsZero() {
+			t.Errorf("error occurred while query refreshing")
+		}
+		time.Sleep(time.Millisecond * 10)
+		if result, value, timeoutAt := m.QueryByID(1919810); result || !timeoutAt.IsZero() || value != 0 {
+			t.Errorf("error occurred while timeout refresh querying")
+		}
+	})
 }

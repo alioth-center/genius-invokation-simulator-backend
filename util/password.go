@@ -16,7 +16,7 @@ func EncodeRandomSalt[PK any](key PK) []byte {
 
 // EncodePassword 使用crypto/scrypt密钥库对密码进行单向加密
 func EncodePassword[PK any](original []byte, key PK) (success bool, result []byte) {
-	if encrypted, err := scrypt.Key(original, EncodeRandomSalt(key), 11451, 8, 1, 64); err != nil {
+	if encrypted, err := scrypt.Key(original, EncodeRandomSalt(key), 32768, 8, 1, 64); err != nil {
 		return false, []byte{}
 	} else {
 		return true, encrypted

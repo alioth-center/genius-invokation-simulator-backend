@@ -40,9 +40,11 @@ func convertToStruct[T any](source string) (success bool, result T) {
 }
 
 // BindJson 将请求体中的数据绑定到给定的entity中，entity需要可寻址，失败直接返回BadRequest
-func BindJson[T any](ctx *gin.Context, entity T) {
+func BindJson[T any](ctx *gin.Context, entity T) (success bool) {
 	if err := ctx.ShouldBindJSON(entity); err != nil {
-		ctx.AbortWithStatus(400)
+		return false
+	} else {
+		return true
 	}
 }
 

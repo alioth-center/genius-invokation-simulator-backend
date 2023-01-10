@@ -155,3 +155,6 @@ Temporary Items
 
 # Full idea configuration
 .idea
+
+# go.sum
+go.sum

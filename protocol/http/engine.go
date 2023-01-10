@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
 )
 
 var nullHttpEngine *gin.Engine = nil
@@ -11,13 +12,22 @@ var (
 	httpEngine *gin.Engine
 )
 
+var (
+	EngineMiddlewares = []gin.HandlerFunc{
+		middleware.NewIPTracer(config.Middleware),   // IP追踪器
+		middleware.NewUUIDTagger(config.Middleware), // UUID标记器
+	}
+)
+
 func init() {
 	httpEngine = gin.Default()
 }
 
-func registerServices() {
+func RegisterServices(subPath string) *gin.RouterGroup {
 	if httpEngine == nullHttpEngine {
-		panic(nil)
+		panic("nil http engine")
+	} else {
+		return httpEngine.Group(subPath)
 	}
 }
 

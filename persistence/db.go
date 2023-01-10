@@ -31,6 +31,7 @@ var (
 	SkillPersistence     = newFactoryPersistence[Skill]()
 
 	LocalizationPersistence = newMemoryCache[string, localization.LanguagePack]()
+	RoomInfoPersistence     = newMemoryCache[uint, RoomInfo]()
 	TokenPersistence        = newTimingMemoryCache[string, Token]()
 
 	CardDeckPersistence DatabasePersistence[uint, CardDeck]

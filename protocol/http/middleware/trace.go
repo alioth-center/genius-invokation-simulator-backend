@@ -3,13 +3,12 @@ package middleware
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/config"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/util"
 	"strconv"
 	"strings"
 )
 
-func GetIPTrace(ctx *gin.Context, conf config.MiddlewareConfig) (has bool, ip uint) {
+func GetIPTrace(ctx *gin.Context, conf Config) (has bool, ip uint) {
 	if result, gotten := ctx.Get(conf.IPTranceKey); !gotten {
 		return false, 0
 	} else if ipResult, ok := result.(uint); !ok {
@@ -46,7 +45,7 @@ func ConvertUintToIP(ip uint) (result string) {
 	return fmt.Sprintf("%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3])
 }
 
-func NewIPTracer(conf config.MiddlewareConfig) func(ctx *gin.Context) {
+func NewIPTracer(conf Config) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
 		if success, ip := ConvertIPToUint(util.GetClientIP(ctx)); !success {
 			// 无法成功获取客户端IP，返回BadRequest

@@ -18,8 +18,8 @@ func initCardDeckService() {
 	deckRouter.Use(
 		append(
 			http.EngineMiddlewares,
-			middleware.NewQPSLimiter(middlewareConfig),
-			middleware.NewAuthenticator(middlewareConfig),
+			middleware.NewQPSLimiter(cfg),
+			middleware.NewAuthenticator(cfg),
 		)...,
 	)
 
@@ -81,40 +81,29 @@ func uploadDeckServiceHandler() func(ctx *gin.Context) {
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if exist, tokenValue := middleware.GetToken(ctx, middlewareConfig); !exist {
+		} else if exist, tokenValue := middleware.GetToken(ctx, cfg); !exist {
 			// 服务器找不到token，Forbidden
 			ctx.AbortWithStatus(403)
 		} else if tokenValue.UID != request.Owner {
 			// 上传者和拥有者不同，Forbidden
 			ctx.AbortWithStatus(403)
-		} else if existPlayer, player := persistence.PlayerPersistence.QueryByID(tokenValue.UID); !existPlayer {
-			// 没有上传者的玩家记录，理论上不存在这种可能，PreconditionFailed
-			ctx.AbortWithStatus(412)
-		} else if insertDeckSuccess, cardDeck := persistence.CardDeckPersistence.InsertOne(&persistence.CardDeck{
+		} else if success, entity := persistence.CardDeckPersistence.InsertOne(&persistence.CardDeck{
 			OwnerUID:         request.Owner,
 			RequiredPackages: request.RequiredPackage,
 			Cards:            request.Cards,
 			Characters:       request.Characters,
-		}); !insertDeckSuccess {
-			// 插入记录失败，InternalError
+		}); !success {
+			// 插入失败，InternalError
 			ctx.AbortWithStatus(500)
 		} else {
-			// 将新记录添加进玩家信息中
-			player.CardDecks = append(player.CardDecks, cardDeck.ID)
-			if updatePlayerSuccess := persistence.PlayerPersistence.UpdateByID(request.Owner, player); !updatePlayerSuccess {
-				// 更新失败，回滚，InternalError
-				persistence.CardDeckPersistence.DeleteOne(cardDeck.ID)
-				ctx.AbortWithStatus(500)
-			} else {
-				// 更新成功，Success
-				ctx.JSON(200, UploadCardDeckResponse{
-					ID:              cardDeck.ID,
-					Owner:           cardDeck.OwnerUID,
-					RequiredPackage: cardDeck.RequiredPackages,
-					Cards:           cardDeck.Cards,
-					Characters:      cardDeck.Characters,
-				})
-			}
+			// 插入成功，Success
+			ctx.JSON(200, UploadCardDeckResponse{
+				ID:              entity.ID,
+				Owner:           entity.OwnerUID,
+				RequiredPackage: entity.RequiredPackages,
+				Cards:           entity.Cards,
+				Characters:      entity.Characters,
+			})
 		}
 	}
 }
@@ -124,7 +113,7 @@ func deleteDeckServiceHandler() func(ctx *gin.Context) {
 		if gotten, id := util.QueryPathInt(ctx, ":card_deck_id"); !gotten {
 			// 找不到必要的URL路径参数，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if exist, tokenValue := middleware.GetToken(ctx, middlewareConfig); !exist {
+		} else if exist, tokenValue := middleware.GetToken(ctx, cfg); !exist {
 			// 服务器找不到token，Forbidden
 			ctx.AbortWithStatus(403)
 		} else if has, entity := persistence.CardDeckPersistence.QueryByID(uint(id)); !has {
@@ -133,38 +122,12 @@ func deleteDeckServiceHandler() func(ctx *gin.Context) {
 		} else if tokenValue.UID != entity.OwnerUID {
 			// 删除者和拥有者不同，Forbidden
 			ctx.AbortWithStatus(403)
-		} else if existPlayer, player := persistence.PlayerPersistence.QueryByID(tokenValue.UID); !existPlayer {
-			// 不存在要删除的玩家，理论上不存在这种可能，PreconditionFailed
-			ctx.AbortWithStatus(412)
+		} else if success := persistence.CardDeckPersistence.DeleteOne(uint(id)); !success {
+			// 删除失败，InternalError
+			ctx.AbortWithStatus(500)
 		} else {
-			// 寻找要删除的卡组，并将其移除出玩家持有卡组
-			var updatedCardDeck []uint
-			for index, cardID := range player.CardDecks {
-				if cardID == uint(id) {
-					updatedCardDeck = append(player.CardDecks[:index], player.CardDecks[index+1:]...)
-					break
-				}
-			}
-
-			if len(updatedCardDeck) != len(player.CardDecks)-1 {
-				// 在玩家的卡组中没有找到要删除的卡组，理论上不存在这种可能，PreconditionFailed
-				ctx.AbortWithStatus(412)
-			} else if updatePlayerSuccess := persistence.PlayerPersistence.UpdateByID(player.UID, persistence.Player{
-				UID:       player.UID,
-				NickName:  player.NickName,
-				CardDecks: updatedCardDeck,
-				Password:  player.Password,
-			}); !updatePlayerSuccess {
-				// 更新玩家持有卡组失败，InternalError
-				ctx.AbortWithStatus(500)
-			} else if deleted := persistence.CardDeckPersistence.DeleteOne(uint(id)); !deleted {
-				// 删除卡组失败，回滚，InternalError
-				persistence.PlayerPersistence.UpdateByID(player.UID, player)
-				ctx.AbortWithStatus(500)
-			} else {
-				// 删除成功，Success
-				ctx.Status(200)
-			}
+			// 删除成功，Success
+			ctx.Status(200)
 		}
 	}
 }
@@ -178,7 +141,7 @@ func updateDeckServiceHandler() func(ctx *gin.Context) {
 		} else if gotten, id := util.QueryPathInt(ctx, ":card_deck_id"); !gotten {
 			// 找不到必要的URL路径参数，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if exist, tokenValue := middleware.GetToken(ctx, middlewareConfig); !exist {
+		} else if exist, tokenValue := middleware.GetToken(ctx, cfg); !exist {
 			// 服务器里找不到token，Forbidden
 			ctx.AbortWithStatus(403)
 		} else if tokenValue.UID != request.Owner {

@@ -3,15 +3,14 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
-	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/config"
 	"time"
 )
 
-func Interdict(ctx *gin.Context, conf config.MiddlewareConfig) {
+func Interdict(ctx *gin.Context, conf Config) {
 	ctx.Set(conf.InterdictorTraceKey, true)
 }
 
-func NewInterdictor(conf config.MiddlewareConfig) func(ctx *gin.Context) {
+func NewInterdictor(conf Config) func(ctx *gin.Context) {
 	limiter := kv.NewSyncMap[kv.Pair[uint, time.Time]]()
 	return func(ctx *gin.Context) {
 		success, ip := GetIPTrace(ctx, conf)

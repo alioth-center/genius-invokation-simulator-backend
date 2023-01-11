@@ -1,6 +1,6 @@
-package config
+package middleware
 
-type MiddlewareConfig struct {
+type Config struct {
 	UUIDKey                 string `json:"uuid_key"`
 	IPTranceKey             string `json:"ip_trace_key"`
 	InterdictorTraceKey     string `json:"interdictor_trace_key"`

@@ -19,27 +19,27 @@ func initPlayerService() {
 	playerRouter.Use(
 		append(
 			http.EngineMiddlewares,
-			middleware.NewQPSLimiter(cfg),
+			middleware.NewQPSLimiter(middlewareConfig),
 		)...,
 	)
 
 	playerRouter.GET("/login/:player_id",
-		middleware.NewInterdictor(cfg),
+		middleware.NewInterdictor(middlewareConfig),
 		loginServiceHandler(),
 	)
 	playerRouter.POST("",
 		registerServiceHandler(),
 	)
 	playerRouter.PATCH(":player_id/password",
-		middleware.NewInterdictor(cfg),
+		middleware.NewInterdictor(middlewareConfig),
 		updatePasswordServiceHandler(),
 	)
 	playerRouter.PATCH(":player_id/nickname",
-		middleware.NewInterdictor(cfg),
+		middleware.NewInterdictor(middlewareConfig),
 		updateNickNameServiceHandler(),
 	)
 	playerRouter.DELETE(":player_id",
-		middleware.NewInterdictor(cfg),
+		middleware.NewInterdictor(middlewareConfig),
 		destroyServiceHandler(),
 	)
 }
@@ -101,9 +101,9 @@ func loginServiceHandler() func(ctx *gin.Context) {
 			ctx.JSON(500, LoginResponse{Success: false})
 		} else if string(encodeResult) != (player.Password) {
 			// 密码校验失败，Forbidden，登陆失败
-			middleware.Interdict(ctx, cfg)
+			middleware.Interdict(ctx, middlewareConfig)
 			ctx.JSON(403, LoginResponse{Success: false})
-		} else if !middleware.AttachToken(ctx, cfg, uint(id)) {
+		} else if !middleware.AttachToken(ctx, middlewareConfig, uint(id)) {
 			// 生成token失败，InternalError
 			ctx.JSON(500, LoginResponse{Success: false})
 		} else {
@@ -176,7 +176,7 @@ func updatePasswordServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(500)
 		} else if string(encodedPassword) != player.Password {
 			// 提供的原密码密码不匹配，失败，Forbidden
-			middleware.Interdict(ctx, cfg)
+			middleware.Interdict(ctx, middlewareConfig)
 			ctx.AbortWithStatus(403)
 		} else if encodedNew, encodedNewPassword := util2.EncodePassword([]byte(request.NewPassword), id); !encodedNew {
 			// 编码新密码失败，InternalError
@@ -215,7 +215,7 @@ func updateNickNameServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(500)
 		} else if string(encodedPassword) != player.Password {
 			// 提供的原密码密码不匹配，失败，Forbidden
-			middleware.Interdict(ctx, cfg)
+			middleware.Interdict(ctx, middlewareConfig)
 			ctx.AbortWithStatus(403)
 		} else if updated := persistence.PlayerPersistence.UpdateByID(uint(id),
 			persistence.Player{
@@ -256,7 +256,7 @@ func destroyServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(500)
 		} else if string(encodedPassword) != player.Password {
 			// 提供的原密码密码不匹配，失败，Forbidden
-			middleware.Interdict(ctx, cfg)
+			middleware.Interdict(ctx, middlewareConfig)
 			ctx.AbortWithStatus(403)
 		} else if destroyed := persistence.PlayerPersistence.DeleteOne(uint(id)); !destroyed {
 			// 删除失败，InternalError

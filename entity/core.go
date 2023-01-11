@@ -194,8 +194,13 @@ func (c *Core) ExecuteAttack(sender uint, target uint, skill uint) {
 
 			// 如果此次攻击导致对方角色被击败，阻塞执行过程并等待对方切换角色
 			if _, activeCharacter := targetPlayer.GetActiveCharacter(); activeCharacter.Status() == enum.CharacterStatusDefeated {
+				targetPlayer.SetStatus(enum.PlayerStatusCharacterDefeated)
+				backup := senderPlayer.Status()
+				senderPlayer.SetStatus(enum.PlayerStatusWaiting)
 				c.defeatedChan <- SyncDefeatedCharacterMessage{WaitingPlayerUID: target}
 				<-c.waitChan
+				targetPlayer.SetStatus(enum.PlayerStatusWaiting)
+				senderPlayer.SetStatus(backup)
 			}
 
 			// 执行回调流程

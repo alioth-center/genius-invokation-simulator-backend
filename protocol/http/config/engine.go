@@ -22,8 +22,8 @@ var (
 )
 
 type EngineConfig struct {
-	Middleware MiddlewareConfig `json:"middleware"`
-	Service    ServiceConfig    `json:"service"`
+	Middleware MiddlewareConfig `json:"middleware" yaml:"middleware" xml:"middleware"`
+	Service    ServiceConfig    `json:"service" yaml:"service" xml:"service"`
 }
 
 func SetConfig(conf EngineConfig) {

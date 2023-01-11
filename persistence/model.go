@@ -52,18 +52,18 @@ type CardDeck struct {
 
 // Token 被持久化模块托管的Token缓存
 type Token struct {
-	UID uint
-	ID  string
+	UID uint   // UID Token持有者的UID
+	ID  string // ID Token的ID
 }
 
 // RoomInfo 被持久化模块托管的RoomInfo缓存
 type RoomInfo struct {
-	RoomID           uint
-	CreatedAt        time.Time
-	CreatorID        uint
-	Token            string
-	Players          []uint
-	Viewers          uint
-	RequiredPackages []string
-	GameOptions      message.GameOptions
+	RoomID           uint                `json:"room_id"`
+	CreatedAt        time.Time           `json:"created_at"`
+	CreatorID        uint                `json:"creator_id"`
+	Token            string              `json:"token"`
+	Players          []uint              `json:"players"`
+	Viewers          uint                `json:"viewers"`
+	RequiredPackages []string            `json:"required_packages"`
+	GameOptions      message.GameOptions `json:"game_options"`
 }

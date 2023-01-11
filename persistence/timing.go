@@ -12,8 +12,54 @@ type timingCacheRecord[T any] struct {
 
 // timingMemoryCache 带超时系统的的内存缓存Map，实现同kv.syncMap
 type timingMemoryCache[PK comparable, T any] struct {
-	mutex sync.RWMutex
-	cache map[PK]*timingCacheRecord[T]
+	mutex  sync.RWMutex
+	cache  map[PK]*timingCacheRecord[T]
+	size   uint
+	exit   chan struct{}
+	served bool
+}
+
+func (t *timingMemoryCache[PK, T]) proactivelyClean(index float64) {
+	if index < 0 || index > 1 {
+		index = 1
+	}
+
+	need, executeCount := uint(float64(t.size)/index), uint(0)
+	executeList := make([]PK, need)
+
+	// 统计需要删除的超时记录
+	t.mutex.RLock()
+	for pk, entity := range t.cache {
+		if !entity.timeoutAt.IsZero() && entity.timeoutAt.Before(time.Now()) {
+			executeList[executeCount] = pk
+			executeCount++
+		}
+
+		if need = need - 1; need == 0 {
+			break
+		}
+	}
+	t.mutex.RUnlock()
+
+	// 执行删除操作，频繁加锁性能较差，此处不采用分段锁
+	t.mutex.Lock()
+	for i := uint(0); i < executeCount; i++ {
+		delete(t.cache, executeList[i])
+		t.size -= 1
+	}
+	t.mutex.Unlock()
+}
+
+func (t *timingMemoryCache[PK, T]) serve(proactivelyCleanTime time.Duration, proactivelyCleanIndex float64) {
+	for {
+		select {
+		case <-t.exit:
+			return
+		default:
+			t.proactivelyClean(proactivelyCleanIndex)
+			time.Sleep(proactivelyCleanTime)
+		}
+	}
 }
 
 func (t *timingMemoryCache[PK, T]) get(id PK) (exist bool, record *timingCacheRecord[T]) {
@@ -25,6 +71,7 @@ func (t *timingMemoryCache[PK, T]) get(id PK) (exist bool, record *timingCacheRe
 	} else if !r.timeoutAt.IsZero() && r.timeoutAt.Before(time.Now()) {
 		t.mutex.Lock()
 		delete(t.cache, id)
+		t.size -= 1
 		t.mutex.Unlock()
 		return false, record
 	} else {
@@ -68,12 +115,14 @@ func (t *timingMemoryCache[PK, T]) InsertOne(id PK, entity T, timeout time.Durat
 		if timeout == 0 {
 			t.mutex.Lock()
 			t.cache[id] = &timingCacheRecord[T]{data: entity, timeoutAt: time.Time{}}
+			t.size += 1
 			t.mutex.Unlock()
 			return true, time.Time{}
 		} else {
 			timeoutAt = time.Now().Add(timeout)
 			t.mutex.Lock()
 			t.cache[id] = &timingCacheRecord[T]{data: entity, timeoutAt: timeoutAt}
+			t.size += 1
 			t.mutex.Unlock()
 			return true, timeoutAt
 		}
@@ -84,6 +133,7 @@ func (t *timingMemoryCache[PK, T]) DeleteByID(id PK) (success bool) {
 	if exist, _ := t.get(id); exist {
 		t.mutex.Lock()
 		delete(t.cache, id)
+		t.size -= 1
 		t.mutex.Unlock()
 		return true
 	} else {
@@ -91,9 +141,27 @@ func (t *timingMemoryCache[PK, T]) DeleteByID(id PK) (success bool) {
 	}
 }
 
+func (t *timingMemoryCache[PK, T]) Serve(proactivelyCleanTime time.Duration, proactivelyCleanIndex float64) {
+	if proactivelyCleanTime > 0 {
+		go t.serve(proactivelyCleanTime, proactivelyCleanIndex)
+		t.served = true
+	} else {
+		t.served = false
+	}
+}
+
+func (t *timingMemoryCache[PK, T]) Exit() {
+	if t.served {
+		t.exit <- struct{}{}
+	}
+}
+
 func newTimingMemoryCache[PK comparable, T any]() TimingMemoryCache[PK, T] {
 	return &timingMemoryCache[PK, T]{
-		mutex: sync.RWMutex{},
-		cache: map[PK]*timingCacheRecord[T]{},
+		mutex:  sync.RWMutex{},
+		cache:  map[PK]*timingCacheRecord[T]{},
+		size:   0,
+		exit:   make(chan struct{}, 1),
+		served: false,
 	}
 }

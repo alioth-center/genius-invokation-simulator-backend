@@ -49,4 +49,6 @@ type TimingMemoryCache[PK comparable, T any] interface {
 	RefreshByID(id PK, timeout time.Duration) (success bool, timeoutAt time.Time)
 	InsertOne(id PK, entity T, timeout time.Duration) (success bool, timeoutAt time.Time)
 	DeleteByID(id PK) (success bool)
+	Serve(proactivelyCleanTime time.Duration, proactivelyCleanIndex float64)
+	Exit()
 }

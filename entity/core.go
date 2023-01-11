@@ -62,12 +62,21 @@ func newPlayerChain() *playerChain {
 	}
 }
 
+type SyncDefeatedCharacterMessage struct {
+	WaitingPlayerUID uint
+}
+
+type SyncChangeCharacterMessage struct{}
+
 type Core struct {
-	Players     kv.Map[uint, Player]
-	RoundCount  uint
-	ruleSet     RuleSet
-	activeChain *playerChain
-	nextChain   *playerChain
+	Players      kv.Map[uint, Player]
+	Entities     kv.Map[uint, uint]
+	RoundCount   uint
+	ruleSet      RuleSet
+	activeChain  *playerChain
+	nextChain    *playerChain
+	defeatedChan chan SyncDefeatedCharacterMessage
+	waitChan     chan SyncChangeCharacterMessage
 }
 
 // RoundEnd 回合结束时的结算逻辑
@@ -121,7 +130,6 @@ func (c *Core) RoundRoll() {
 			holdingCost.Add(*randomCost)
 
 			targetPlayer.SetHoldingCost(holdingCost)
-
 		} else {
 			// 如果固定骰子多余可获得骰子，舍弃多出的固定元素骰子
 			have, finalCount := uint(0), c.ruleSet.GameOptions.RollAmount
@@ -180,7 +188,14 @@ func (c *Core) ExecuteAttack(sender uint, target uint, skill uint) {
 			senderPlayer.ExecuteFinalAttackModifiers(ctx)
 			targetPlayer.ExecuteDefence(ctx)
 			if event := c.ruleSet.ReactionCalculator.EffectCalculate(ctx.GetTargetCharacterReaction(), targetPlayer); event != nil {
+				// 触发反应，可能导致目标玩家前台角色改变
 				targetPlayer.ExecuteCallbackModify(event)
+			}
+
+			// 如果此次攻击导致对方角色被击败，阻塞执行过程并等待对方切换角色
+			if _, activeCharacter := targetPlayer.GetActiveCharacter(); activeCharacter.Status() == enum.CharacterStatusDefeated {
+				c.defeatedChan <- SyncDefeatedCharacterMessage{WaitingPlayerUID: target}
+				<-c.waitChan
 			}
 
 			// 执行回调流程
@@ -227,13 +242,23 @@ func (c *Core) ExecuteUseCard(sender uint, card uint) {
 	}
 }
 
-func NewCore(rule RuleSet, players []Player) *Core {
+func (c *Core) GetPlayerStatus(player uint) (has bool, status enum.PlayerStatus) {
+	if c.Players.Exists(player) {
+		return true, c.Players.Get(player).Status()
+	} else {
+		return false, enum.PlayerStatusDefeated
+	}
+}
+
+func NewCore(rule RuleSet, players []Player, defeatedChan chan SyncDefeatedCharacterMessage, waitChan chan SyncChangeCharacterMessage) *Core {
 	core := &Core{
-		RoundCount:  0,
-		ruleSet:     rule,
-		Players:     kv.NewSimpleMap[Player](),
-		activeChain: newPlayerChain(),
-		nextChain:   newPlayerChain(),
+		RoundCount:   0,
+		ruleSet:      rule,
+		Players:      kv.NewSimpleMap[Player](),
+		activeChain:  newPlayerChain(),
+		nextChain:    newPlayerChain(),
+		defeatedChan: defeatedChan,
+		waitChan:     waitChan,
 	}
 
 	for _, player := range players {

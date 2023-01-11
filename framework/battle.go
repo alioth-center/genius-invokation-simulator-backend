@@ -85,6 +85,18 @@ var (
 			enum.ActionSkipRound:      false,
 			enum.ActionConcede:        false,
 		},
+		enum.PlayerStatusCharacterDefeated: {
+			enum.ActionNone:           false,
+			enum.ActionNormalAttack:   false,
+			enum.ActionElementalSkill: false,
+			enum.ActionElementalBurst: false,
+			enum.ActionSwitch:         true,
+			enum.ActionBurnCard:       false,
+			enum.ActionUseCard:        false,
+			enum.ActionReRoll:         false,
+			enum.ActionSkipRound:      false,
+			enum.ActionConcede:        true,
+		},
 	}
 )
 
@@ -99,6 +111,10 @@ type Battle struct {
 	out    chan message.SyncMessage
 	err    chan error
 	exit   chan struct{}
+
+	defeat chan entity.SyncDefeatedCharacterMessage
+	change chan entity.SyncChangeCharacterMessage
+	synced chan struct{}
 }
 
 func (b *Battle) update() {
@@ -117,7 +133,26 @@ func (b *Battle) limit(msg message.ActionMessage) bool {
 	}
 }
 
-func (b *Battle) handle(msg message.ActionMessage) {
+func (b *Battle) block() {
+	for {
+		select {
+		case defeated := <-b.defeat:
+			b.update()
+			b.sendMessage(defeated.WaitingPlayerUID, b.encodeMessage(defeated.WaitingPlayerUID))
+		case <-b.synced:
+			b.change <- entity.SyncChangeCharacterMessage{}
+		}
+	}
+}
+
+func (b *Battle) encodeMessage(target uint) (msg message.SyncMessage) {
+	// todo: implement message encoding logic
+	return message.SyncMessage{}
+}
+
+func (b *Battle) sendMessage(target uint, msg message.SyncMessage) {}
+
+func (b *Battle) handleMessage(msg message.ActionMessage) {
 	// todo: implement cost payment logic
 	switch msg.Type {
 	case enum.ActionNormalAttack:
@@ -143,6 +178,11 @@ func (b *Battle) handle(msg message.ActionMessage) {
 			b.err <- fmt.Errorf("convert message %v failed", msg)
 		} else {
 			b.core.ExecuteSwitchCharacter(realMessage.Sender, realMessage.Target)
+
+			// 若是前台角色被击败玩家发来的切换消息，需要通知阻塞协程已切换完毕
+			if has, status := b.core.GetPlayerStatus(realMessage.Sender); has && status == enum.PlayerStatusCharacterDefeated {
+				b.synced <- struct{}{}
+			}
 		}
 	case enum.ActionBurnCard:
 		if success, realMessage := msg.ToBurnCardMessage(); !success {
@@ -183,7 +223,7 @@ func (b *Battle) serve() {
 	select {
 	case msg := <-b.in:
 		if !b.limit(msg) {
-			b.handle(msg)
+			go b.handleMessage(msg)
 		}
 	case <-b.exit:
 		defer close(b.in)
@@ -286,7 +326,7 @@ func NewBattle(initialize message.InitializeMessage) (success bool, framework *B
 	}
 
 	// 生成战斗核心
-	framework.core = entity.NewCore(ruleSet, playerList)
+	framework.core = entity.NewCore(ruleSet, playerList, framework.defeat, framework.change)
 	framework.update()
 
 	return true, framework

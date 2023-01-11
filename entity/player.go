@@ -53,6 +53,7 @@ type Player interface {
 	PreviewElementCost(basic Cost) (result Cost)
 
 	ResetOperated()
+	SetStatus(status enum.PlayerStatus)
 	SetHoldingCost(cost Cost)
 
 	GetActiveCharacter() (has bool, character Character)
@@ -443,6 +444,10 @@ func (p *player) ExecuteConcede() {
 func (p *player) ResetOperated() {
 	p.status = enum.PlayerStatusActing
 	p.operated = false
+}
+
+func (p *player) SetStatus(status enum.PlayerStatus) {
+	p.status = status
 }
 
 func (p *player) ExecuteSummonSkills() {}

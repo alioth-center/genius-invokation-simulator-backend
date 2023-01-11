@@ -3,10 +3,10 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/localization"
 	"github.com/sunist-c/genius-invokation-simulator-backend/persistence"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
+	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/util"
 )
 
@@ -33,18 +33,6 @@ func initLocalizeService() {
 	)
 }
 
-type LocalizationQueryResponse struct {
-	LanguagePack localization.MultipleLanguagePack `json:"language_pack"`
-}
-
-type TranslationRequest struct {
-	Words []string `json:"words"`
-}
-
-type TranslationResponse struct {
-	Translation map[string]string `json:"translation"`
-}
-
 func queryLanguagePackServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
 		if exist, result := util.QueryPath(ctx, ":id"); !exist {
@@ -52,7 +40,7 @@ func queryLanguagePackServiceHandler() func(ctx *gin.Context) {
 		} else if has, record := persistence.LocalizationPersistence.QueryByID(result); !has {
 			ctx.AbortWithStatus(404)
 		} else {
-			response := LocalizationQueryResponse{LanguagePack: record.Pack()}
+			response := model.LocalizationQueryResponse{LanguagePack: record.Pack()}
 			ctx.JSON(200, response)
 		}
 	}
@@ -64,7 +52,7 @@ func translateServiceServiceHandler() func(ctx *gin.Context) {
 			exist        bool
 			languagePack string
 			destLanguage int
-			request      TranslationRequest
+			request      model.TranslationRequest
 		)
 		if exist, languagePack = util.QueryPath(ctx, "language_package"); !exist {
 			ctx.AbortWithStatus(400)
@@ -76,7 +64,7 @@ func translateServiceServiceHandler() func(ctx *gin.Context) {
 			if has, dictionary := persistence.LocalizationPersistence.QueryByID(languagePack); !has {
 				ctx.AbortWithStatus(404)
 			} else {
-				response := TranslationResponse{Translation: map[string]string{}}
+				response := model.TranslationResponse{Translation: map[string]string{}}
 				language := enum.Language(destLanguage)
 				for _, word := range request.Words {
 					if ok, result := dictionary.Translate(word, language); ok {

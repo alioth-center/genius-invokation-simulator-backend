@@ -5,6 +5,7 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/persistence"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
+	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/util"
 	util2 "github.com/sunist-c/genius-invokation-simulator-backend/util"
 )
@@ -44,49 +45,9 @@ func initPlayerService() {
 	)
 }
 
-type LoginResponse struct {
-	PlayerUID       uint                   `json:"player_uid"`
-	Success         bool                   `json:"success"`
-	PlayerNickName  string                 `json:"player_nick_name"`
-	PlayerCardDecks []persistence.CardDeck `json:"player_card_decks"`
-}
-
-type LoginRequest struct {
-	Password string `json:"password"`
-}
-
-type RegisterRequest struct {
-	NickName string `json:"nick_name"`
-	Password string `json:"password"`
-}
-
-type RegisterResponse struct {
-	PlayerUID      uint   `json:"player_uid"`
-	PlayerNickName string `json:"player_nick_name"`
-}
-
-type UpdatePasswordRequest struct {
-	OriginalPassword string `json:"original_password"`
-	NewPassword      string `json:"new_password"`
-}
-
-type UpdateNickNameRequest struct {
-	Password    string `json:"password"`
-	NewNickName string `json:"new_nick_name"`
-}
-
-type DestroyPlayerRequest struct {
-	Password string `json:"password"`
-	Confirm  bool   `json:"confirm"`
-}
-
-type DestroyPlayerResponse struct {
-	Success bool `json:"success"`
-}
-
 func loginServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		request := LoginRequest{}
+		request := model.LoginRequest{}
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
@@ -95,20 +56,20 @@ func loginServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(400)
 		} else if has, player := persistence.PlayerPersistence.QueryByID(uint(id)); !has {
 			// 没找到请求玩家，NotFound，登陆失败
-			ctx.JSON(404, LoginResponse{Success: false})
+			ctx.JSON(404, model.LoginResponse{Success: false})
 		} else if success, encodeResult := util2.EncodePassword([]byte(request.Password), uint(id)); !success {
 			// 编码密码失败，InternalError，登陆失败
-			ctx.JSON(500, LoginResponse{Success: false})
+			ctx.JSON(500, model.LoginResponse{Success: false})
 		} else if string(encodeResult) != (player.Password) {
 			// 密码校验失败，Forbidden，登陆失败
 			middleware.Interdict(ctx, middlewareConfig)
-			ctx.JSON(403, LoginResponse{Success: false})
+			ctx.JSON(403, model.LoginResponse{Success: false})
 		} else if !middleware.AttachToken(ctx, middlewareConfig, uint(id)) {
 			// 生成token失败，InternalError
-			ctx.JSON(500, LoginResponse{Success: false})
+			ctx.JSON(500, model.LoginResponse{Success: false})
 		} else {
 			// 登录成功，获取玩家卡组信息后返回登录成功响应
-			response := LoginResponse{
+			response := model.LoginResponse{
 				PlayerUID:       player.UID,
 				Success:         true,
 				PlayerNickName:  player.NickName,
@@ -126,7 +87,7 @@ func loginServiceHandler() func(ctx *gin.Context) {
 
 func registerServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		request := RegisterRequest{}
+		request := model.RegisterRequest{}
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
@@ -151,7 +112,7 @@ func registerServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(500)
 		} else {
 			// 注册Player成功，返回Player信息
-			ctx.JSON(200, RegisterResponse{
+			ctx.JSON(200, model.RegisterResponse{
 				PlayerUID:      result.UID,
 				PlayerNickName: request.NickName,
 			})
@@ -161,7 +122,7 @@ func registerServiceHandler() func(ctx *gin.Context) {
 
 func updatePasswordServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		request := UpdatePasswordRequest{}
+		request := model.UpdatePasswordRequest{}
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
@@ -200,7 +161,7 @@ func updatePasswordServiceHandler() func(ctx *gin.Context) {
 
 func updateNickNameServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		request := UpdateNickNameRequest{}
+		request := model.UpdateNickNameRequest{}
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
@@ -236,7 +197,7 @@ func updateNickNameServiceHandler() func(ctx *gin.Context) {
 
 func destroyServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		request := DestroyPlayerRequest{}
+		request := model.DestroyPlayerRequest{}
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
@@ -245,7 +206,7 @@ func destroyServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(400)
 		} else if !request.Confirm {
 			// 确认失败，Success
-			ctx.JSON(200, DestroyPlayerResponse{
+			ctx.JSON(200, model.DestroyPlayerResponse{
 				Success: false,
 			})
 		} else if success, player := persistence.PlayerPersistence.QueryByID(uint(id)); !success {
@@ -263,7 +224,7 @@ func destroyServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(500)
 		} else {
 			// 删除成功，Success
-			ctx.JSON(200, DestroyPlayerResponse{
+			ctx.JSON(200, model.DestroyPlayerResponse{
 				Success: true,
 			})
 		}

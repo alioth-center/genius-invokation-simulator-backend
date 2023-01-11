@@ -5,6 +5,7 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/persistence"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
+	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/util"
 )
 
@@ -37,47 +38,9 @@ func initCardDeckService() {
 	)
 }
 
-type UploadCardDeckRequest struct {
-	Owner           uint     `json:"owner"`
-	RequiredPackage []string `json:"required_package"`
-	Cards           []uint   `json:"cards"`
-	Characters      []uint   `json:"characters"`
-}
-
-type UploadCardDeckResponse struct {
-	ID              uint     `json:"id"`
-	Owner           uint     `json:"owner"`
-	RequiredPackage []string `json:"required_package"`
-	Cards           []uint   `json:"cards"`
-	Characters      []uint   `json:"characters"`
-}
-
-type UpdateCardDeckRequest struct {
-	Owner           uint     `json:"owner"`
-	RequiredPackage []string `json:"required_package"`
-	Cards           []uint   `json:"cards"`
-	Characters      []uint   `json:"characters"`
-}
-
-type UpdateCardDeckResponse struct {
-	ID              uint     `json:"id"`
-	Owner           uint     `json:"owner"`
-	RequiredPackage []string `json:"required_package"`
-	Cards           []uint   `json:"cards"`
-	Characters      []uint   `json:"characters"`
-}
-
-type QueryCardDeckResponse struct {
-	ID              uint     `json:"id"`
-	Owner           uint     `json:"owner"`
-	RequiredPackage []string `json:"required_package"`
-	Cards           []uint   `json:"cards"`
-	Characters      []uint   `json:"characters"`
-}
-
 func uploadDeckServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		request := UploadCardDeckRequest{}
+		request := model.UploadCardDeckRequest{}
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
@@ -107,7 +70,7 @@ func uploadDeckServiceHandler() func(ctx *gin.Context) {
 				ctx.AbortWithStatus(500)
 			} else {
 				// 更新成功，Success
-				ctx.JSON(200, UploadCardDeckResponse{
+				ctx.JSON(200, model.UploadCardDeckResponse{
 					ID:              cardDeck.ID,
 					Owner:           cardDeck.OwnerUID,
 					RequiredPackage: cardDeck.RequiredPackages,
@@ -171,7 +134,7 @@ func deleteDeckServiceHandler() func(ctx *gin.Context) {
 
 func updateDeckServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		request := UpdateCardDeckRequest{}
+		request := model.UpdateCardDeckRequest{}
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
@@ -198,7 +161,7 @@ func updateDeckServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(500)
 		} else {
 			// 更新成功，Success
-			ctx.JSON(200, UpdateCardDeckResponse{
+			ctx.JSON(200, model.UpdateCardDeckResponse{
 				ID:              uint(id),
 				Owner:           request.Owner,
 				RequiredPackage: request.RequiredPackage,
@@ -219,7 +182,7 @@ func queryDeckServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(404)
 		} else if has {
 			// 找到了卡组，Success
-			ctx.JSON(200, QueryCardDeckResponse{
+			ctx.JSON(200, model.QueryCardDeckResponse{
 				ID:              entity.ID,
 				Owner:           entity.OwnerUID,
 				RequiredPackage: entity.RequiredPackages,

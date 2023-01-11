@@ -31,6 +31,7 @@ var (
 	SkillPersistence     = newFactoryPersistence[Skill]()
 
 	LocalizationPersistence = newMemoryCache[string, localization.LanguagePack]()
+	RoomInfoPersistence     = newMemoryCache[uint, RoomInfo]()
 	TokenPersistence        = newTimingMemoryCache[string, Token]()
 
 	CardDeckPersistence DatabasePersistence[uint, CardDeck]
@@ -53,6 +54,7 @@ func Serve(flushFeq time.Duration, errChan chan error) {
 	CardPersistence.Serve(flushFeq, storagePath, cardPersistenceFileName, errChan)
 	CharacterPersistence.Serve(flushFeq, storagePath, characterPersistenceFileName, errChan)
 	SkillPersistence.Serve(flushFeq, storagePath, skillPersistenceFileName, errChan)
+	TokenPersistence.Serve(time.Second*time.Duration(300), 0.5)
 }
 
 // Load 从持久化文件读取信息，写入持久化模块
@@ -99,10 +101,11 @@ func Load(errChan chan error) {
 	}
 }
 
-// Quit 持久化模块退出前将缓存写入文件
+// Quit 退出持久化模块的各种持久化服务
 func Quit() {
 	RuleSetPersistence.Exit()
 	CardPersistence.Exit()
 	CharacterPersistence.Exit()
 	SkillPersistence.Exit()
+	TokenPersistence.Exit()
 }

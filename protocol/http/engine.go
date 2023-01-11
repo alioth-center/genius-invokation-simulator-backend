@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/config"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
 )
 
@@ -14,8 +15,8 @@ var (
 
 var (
 	EngineMiddlewares = []gin.HandlerFunc{
-		middleware.NewIPTracer(config.Middleware),   // IP追踪器
-		middleware.NewUUIDTagger(config.Middleware), // UUID标记器
+		middleware.NewIPTracer(config.GetConfig().Middleware),   // IP追踪器
+		middleware.NewUUIDTagger(config.GetConfig().Middleware), // UUID标记器
 	}
 )
 

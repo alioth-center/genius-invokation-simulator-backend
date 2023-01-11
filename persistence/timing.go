@@ -1,8 +1,13 @@
 package persistence
 
 import (
+	"math/rand"
 	"sync"
 	"time"
+)
+
+var (
+	random = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 type timingCacheRecord[T any] struct {
@@ -51,6 +56,10 @@ func (t *timingMemoryCache[PK, T]) proactivelyClean(index float64) {
 }
 
 func (t *timingMemoryCache[PK, T]) serve(proactivelyCleanTime time.Duration, proactivelyCleanIndex float64) {
+	// 起服务前先随机sleep一会，让一起初始化的多个组建主动清理时间错开
+	randomNum := random.Int63n(int64(proactivelyCleanTime))
+	time.Sleep(time.Duration(randomNum))
+
 	for {
 		select {
 		case <-t.exit:

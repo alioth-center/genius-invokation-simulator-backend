@@ -2,29 +2,7 @@ package entity
 
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 )
-
-var (
-	nullDirectAttackModifiers kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
-	nullFinalAttackModifiers  kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
-	nullDefenceModifiers      kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
-	nullChargeModifiers       kv.Map[uint, []modifier.Modifier[context.ChargeContext]] = nil
-	nullHealModifiers         kv.Map[uint, []modifier.Modifier[context.HealContext]]   = nil
-	nullCostModifiers         kv.Map[uint, []modifier.Modifier[context.CostContext]]   = nil
-)
-
-type CharacterInfo struct {
-	ID          uint
-	Affiliation enum.Affiliation
-	Vision      enum.ElementType
-	Weapon      enum.WeaponType
-	MaxHP       uint
-	MaxMP       uint
-	Skills      map[uint]Skill
-}
 
 type character struct {
 	id          uint             // id 角色的ID，由框架确定
@@ -136,36 +114,4 @@ func (c character) GetLocalModifiers(modifierType enum.ModifierType) (modifiers 
 	default:
 		return []uint{}
 	}
-}
-
-func newCharacter(owner uint, info CharacterInfo, ruleSet RuleSet) *character {
-	character := &character{
-		id:                         info.ID,
-		player:                     owner,
-		affiliation:                info.Affiliation,
-		vision:                     info.Vision,
-		weapon:                     info.Weapon,
-		skills:                     map[uint]Skill{},
-		maxHP:                      info.MaxHP,
-		currentHP:                  info.MaxHP,
-		maxMP:                      info.MaxMP,
-		currentMP:                  0,
-		status:                     enum.CharacterStatusReady,
-		elements:                   []enum.ElementType{},
-		satiety:                    false,
-		equipments:                 map[enum.EquipmentType]uint{},
-		localDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
-		localFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
-		localDefenceModifiers:      modifier.NewChain[context.DamageContext](),
-		localChargeModifiers:       modifier.NewChain[context.ChargeContext](),
-		localHealModifiers:         modifier.NewChain[context.HealContext](),
-		localCostModifiers:         modifier.NewChain[context.CostContext](),
-		ruleSet:                    ruleSet,
-	}
-
-	for id, skill := range info.Skills {
-		character.skills[id] = skill
-	}
-
-	return character
 }

@@ -2,9 +2,7 @@ package entity
 
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/event"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 )
 
 type PlayerInfo struct {
@@ -22,7 +20,7 @@ type player struct {
 	staticCost  *Cost // staticCost 每回合投掷阶段固定产出的骰子
 
 	holdingCost     *Cost         // holdingCost 玩家持有的骰子
-	cardDeck        CardDeck      // cardDeck 玩家的牌堆
+	cardDeck        *CardDeck     // cardDeck 玩家的牌堆
 	holdingCards    map[uint]Card // holdingCards 玩家持有的卡牌
 	activeCharacter uint          // activeCharacter 玩家当前的前台角色
 
@@ -126,35 +124,4 @@ func (p player) GetCooperativeSkills(trigger enum.TriggerType) (skills []uint) {
 
 func (p player) GetEvents(trigger enum.TriggerType) (events []uint) {
 	return p.callbackEvents.Expose(trigger)
-}
-
-func newPlayer(info PlayerInfo) *player {
-	player := &player{
-		uid:                         info.UID,
-		status:                      enum.PlayerStatusViewing,
-		operated:                    false,
-		reRollTimes:                 1,
-		staticCost:                  NewCost(),
-		holdingCost:                 NewCost(),
-		cardDeck:                    *NewCardDeck(info.Cards),
-		holdingCards:                map[uint]Card{},
-		activeCharacter:             0,
-		characters:                  map[uint]*character{},
-		characterList:               []uint{},
-		summons:                     map[uint]Summon{},
-		summonList:                  []uint{},
-		supports:                    map[uint]Support{},
-		supportList:                 []uint{},
-		globalDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
-		globalFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
-		globalDefenceModifiers:      modifier.NewChain[context.DamageContext](),
-		globalHealModifiers:         modifier.NewChain[context.HealContext](),
-		globalChargeModifiers:       modifier.NewChain[context.ChargeContext](),
-		globalCostModifiers:         modifier.NewChain[context.CostContext](),
-		cooperativeAttacks:          []CooperativeSkill{},
-		callbackEvents:              event.NewEventMap(),
-	}
-
-	// todo: complete ctor of player
-	return player
 }

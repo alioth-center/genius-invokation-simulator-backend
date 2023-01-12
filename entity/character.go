@@ -27,21 +27,21 @@ type CharacterInfo struct {
 }
 
 type character struct {
-	id          uint                // id 角色的ID，由框架确定
-	player      uint                // player 所属玩家的ID，由框架确定
-	affiliation enum.Affiliation    // affiliation 角色的势力归属
-	vision      enum.ElementType    // vision 角色的元素类型
-	weapon      enum.WeaponType     // weapon 角色的武器类型
-	skills      kv.Map[uint, Skill] // skills 角色的技能
+	id          uint             // id 角色的ID，由框架确定
+	player      uint             // player 所属玩家的ID，由框架确定
+	affiliation enum.Affiliation // affiliation 角色的势力归属
+	vision      enum.ElementType // vision 角色的元素类型
+	weapon      enum.WeaponType  // weapon 角色的武器类型
+	skills      map[uint]Skill   // skills 角色的技能
 
-	maxHP      uint                      // maxHP 角色的最大生命值
-	currentHP  uint                      // currentHP 角色的当前生命值
-	maxMP      uint                      // maxMP 角色的最大能量值
-	currentMP  uint                      // currentMP 角色的当前能量值
-	status     enum.CharacterStatus      // status 角色的状态
-	elements   []enum.ElementType        // elements 角色目前附着的元素
-	satiety    bool                      // satiety 角色的饱腹状态
-	equipments kv.Map[uint, interface{}] // equipments 角色穿着的装备
+	maxHP      uint                        // maxHP 角色的最大生命值
+	currentHP  uint                        // currentHP 角色的当前生命值
+	maxMP      uint                        // maxMP 角色的最大能量值
+	currentMP  uint                        // currentMP 角色的当前能量值
+	status     enum.CharacterStatus        // status 角色的状态
+	elements   []enum.ElementType          // elements 角色目前附着的元素
+	satiety    bool                        // satiety 角色的饱腹状态
+	equipments map[enum.EquipmentType]uint // equipments 角色穿着的装备
 
 	localDirectAttackModifiers AttackModifiers  // localDirectAttackModifiers 本地直接攻击修正
 	localFinalAttackModifiers  AttackModifiers  // localFinalAttackModifiers 本地最终攻击修正
@@ -53,229 +53,99 @@ type character struct {
 	ruleSet RuleSet // ruleSet 用于结算的规则集合
 }
 
-func (c *character) SwitchUp() {
-	c.status = enum.CharacterStatusActive
-}
-
-func (c *character) SwitchDown() {
-	c.status = enum.CharacterStatusBackground
-}
-
-func (c character) HasSkill(skill uint) bool {
-	return c.skills.Exists(skill)
-}
-
-func (c *character) ExecuteCharge(ctx *context.ChargeContext) {
-	c.localChargeModifiers.Execute(ctx)
-	executeAmount := ctx.Charge()[c.id]
-
-	if executeAmount > 0 {
-		if c.currentMP+uint(executeAmount) > c.maxMP {
-			c.currentMP = c.maxMP
-		} else {
-			c.currentMP += uint(executeAmount)
-		}
-	} else {
-		if c.currentMP < uint(executeAmount) {
-			c.currentMP = 0
-		} else {
-			c.currentMP -= uint(executeAmount)
-		}
-	}
-}
-
-func (c *character) ExecuteHeal(ctx *context.HealContext) {
-	c.localHealModifiers.Execute(ctx)
-	executeAmount := ctx.Heal()[c.id]
-
-	if c.currentHP+executeAmount > c.maxHP {
-		c.currentHP = c.maxHP
-	} else {
-		c.currentHP += executeAmount
-	}
-}
-
-func (c *character) PreviewCostModify(ctx *context.CostContext) {
-	c.localCostModifiers.Preview(ctx)
-}
-
-func (c *character) ExecuteCostModify(ctx *context.CostContext) {
-	c.localCostModifiers.Execute(ctx)
-}
-
-func (c *character) ExecuteModify(ctx *context.ModifierContext) {
-	if ctx.AddLocalChargeModifiers() != nullChargeModifiers {
-		localChargeModifiers := ctx.AddLocalChargeModifiers().Get(c.id)
-		for _, localChargeModifier := range localChargeModifiers {
-			c.localChargeModifiers.Append(localChargeModifier)
-		}
-	}
-
-	if ctx.AddLocalHealModifiers() != nullHealModifiers {
-		localHealModifiers := ctx.AddLocalHealModifiers().Get(c.id)
-		for _, localHealModifier := range localHealModifiers {
-			c.localHealModifiers.Append(localHealModifier)
-		}
-	}
-
-	if ctx.AddLocalCostModifiers() != nullCostModifiers {
-		localCostModifiers := ctx.AddLocalCostModifiers().Get(c.id)
-		for _, localCostModifier := range localCostModifiers {
-			c.localCostModifiers.Append(localCostModifier)
-		}
-	}
-
-	if ctx.AddLocalDefenceModifiers() != nullDefenceModifiers {
-		localDefenceModifiers := ctx.AddLocalDefenceModifiers().Get(c.id)
-		for _, localDefenceModifier := range localDefenceModifiers {
-			c.localDefenceModifiers.Append(localDefenceModifier)
-		}
-	}
-
-	if ctx.AddLocalDirectAttackModifiers() != nullDirectAttackModifiers {
-		localDirectAttackModifiers := ctx.AddLocalDirectAttackModifiers().Get(c.id)
-		for _, localDirectAttackModifier := range localDirectAttackModifiers {
-			c.localDirectAttackModifiers.Append(localDirectAttackModifier)
-		}
-	}
-
-	if ctx.AddLocalFinalAttackModifiers() != nullFinalAttackModifiers {
-		localFinalAttackModifiers := ctx.AddLocalFinalAttackModifiers().Get(c.id)
-		for _, localFinalAttackModifier := range localFinalAttackModifiers {
-			c.localFinalAttackModifiers.Append(localFinalAttackModifier)
-		}
-	}
-
-	if ctx.RemoveLocalChargeModifiers() != nullChargeModifiers {
-		localChargeModifiers := ctx.RemoveLocalChargeModifiers().Get(c.id)
-		for _, localChargeModifier := range localChargeModifiers {
-			c.localChargeModifiers.Remove(localChargeModifier.ID())
-		}
-	}
-
-	if ctx.RemoveLocalHealModifiers() != nullHealModifiers {
-		localHealModifiers := ctx.RemoveLocalHealModifiers().Get(c.id)
-		for _, localHealModifier := range localHealModifiers {
-			c.localHealModifiers.Remove(localHealModifier.ID())
-		}
-	}
-
-	if ctx.RemoveLocalCostModifiers() != nullCostModifiers {
-		localCostModifiers := ctx.RemoveLocalCostModifiers().Get(c.id)
-		for _, localCostModifier := range localCostModifiers {
-			c.localCostModifiers.Remove(localCostModifier.ID())
-		}
-	}
-
-	if ctx.RemoveLocalDefenceModifiers() != nullDefenceModifiers {
-		localDefenceModifiers := ctx.RemoveLocalDefenceModifiers().Get(c.id)
-		for _, localDefenceModifier := range localDefenceModifiers {
-			c.localDefenceModifiers.Remove(localDefenceModifier.ID())
-		}
-	}
-
-	if ctx.RemoveLocalDirectAttackModifiers() != nullDirectAttackModifiers {
-		localDirectAttackModifiers := ctx.RemoveLocalDirectAttackModifiers().Get(c.id)
-		for _, localDirectAttackModifier := range localDirectAttackModifiers {
-			c.localDirectAttackModifiers.Remove(localDirectAttackModifier.ID())
-		}
-	}
-
-	if ctx.RemoveLocalFinalAttackModifiers() != nullFinalAttackModifiers {
-		localFinalAttackModifiers := ctx.RemoveLocalFinalAttackModifiers().Get(c.id)
-		for _, localFinalAttackModifier := range localFinalAttackModifiers {
-			c.localFinalAttackModifiers.Remove(localFinalAttackModifier.ID())
-		}
-	}
-}
-
-func (c *character) ExecuteDefence(ctx *context.DamageContext) {
-	c.localDefenceModifiers.Execute(ctx)
-	executeAmount := ctx.Damage()[c.id]
-
-	if executeAmount.Amount() >= c.currentHP {
-		c.currentHP = 0
-		c.status = enum.CharacterStatusDefeated
-	} else {
-		c.currentHP -= executeAmount.Amount()
-	}
-}
-
-func (c *character) ExecuteAttack(skill, target uint, background []uint) (ctx *context.DamageContext) {
-	s := c.skills.Get(skill)
-	if attackSkill, ok := s.(AttackSkill); ok {
-		return attackSkill.BaseDamage(target, c.player, background)
-	} else {
-		return context.NewEmptyDamageContext(skill, c.player, target, background)
-	}
-}
-
-func (c *character) ExecuteDirectAttackModifiers(ctx *context.DamageContext) {
-	c.localDirectAttackModifiers.Execute(ctx)
-}
-
-func (c *character) ExecuteFinalAttackModifiers(ctx *context.DamageContext) {
-	c.localFinalAttackModifiers.Execute(ctx)
-}
-
-func (c *character) ExecuteEatFood(ctx *context.ModifierContext) {
-	c.ExecuteModify(ctx)
-	c.satiety = true
-}
-
-func (c *character) ExecuteElementAttachment(attachElement enum.ElementType) {
-	c.elements = c.ruleSet.ReactionCalculator.Attach(c.elements, attachElement)
-}
-
-func (c *character) ExecuteElementReaction() (reaction enum.Reaction) {
-	reaction, c.elements = c.ruleSet.ReactionCalculator.ReactionCalculate(c.elements)
-	return reaction
-}
-
-func (c character) ID() uint {
+func (c character) GetID() (id uint) {
 	return c.id
 }
 
-func (c character) Affiliation() enum.Affiliation {
+func (c character) GetOwner() (owner uint) {
+	return c.player
+}
+
+func (c character) GetAffiliation() (affiliation enum.Affiliation) {
 	return c.affiliation
 }
 
-func (c character) Vision() enum.ElementType {
+func (c character) GetVision() (element enum.ElementType) {
 	return c.vision
 }
 
-func (c character) Weapon() enum.WeaponType {
+func (c character) GetWeaponType() (weaponType enum.WeaponType) {
 	return c.weapon
 }
 
-func (c character) MaxHP() uint {
-	return c.maxHP
+func (c character) GetSkills() (skills []uint) {
+	skills = make([]uint, 0)
+	for id := range c.skills {
+		skills = append(skills, id)
+	}
+	return skills
 }
 
-func (c character) MaxMP() uint {
-	return c.maxMP
-}
-
-func (c character) HP() uint {
+func (c character) GetHP() (hp uint) {
 	return c.currentHP
 }
 
-func (c character) MP() uint {
+func (c character) GetMaxHP() (maxHP uint) {
+	return c.maxHP
+}
+
+func (c character) GetMP() (mp uint) {
 	return c.currentMP
 }
 
-func (c character) Status() enum.CharacterStatus {
+func (c character) GetMaxMP() (maxMP uint) {
+	return c.maxMP
+}
+
+func (c character) GetEquipment(equipmentType enum.EquipmentType) (equipped bool, equipment uint) {
+	equipmentID, exist := c.equipments[equipmentType]
+	return exist, equipmentID
+}
+
+func (c character) GetSatiety() (satiety bool) {
+	return c.satiety
+}
+
+func (c character) GetAttachedElements() (elements []enum.ElementType) {
+	return c.elements
+}
+
+func (c character) GetStatus() (status enum.CharacterStatus) {
 	return c.status
 }
 
-func NewCharacter(owner uint, info CharacterInfo, ruleSet RuleSet) *character {
+func (c character) GetLocalModifiers(modifierType enum.ModifierType) (modifiers []uint) {
+	switch modifierType {
+	case enum.ModifierTypeNone:
+		return []uint{}
+	case enum.ModifierTypeAttack:
+		modifiers = []uint{}
+		modifiers = append(modifiers, c.localDirectAttackModifiers.Expose()...)
+		modifiers = append(modifiers, c.localFinalAttackModifiers.Expose()...)
+		return modifiers
+	case enum.ModifierTypeCharacter:
+		return []uint{}
+	case enum.ModifierTypeCharge:
+		return c.localChargeModifiers.Expose()
+	case enum.ModifierTypeCost:
+		return c.localCostModifiers.Expose()
+	case enum.ModifierTypeDefence:
+		return c.localDefenceModifiers.Expose()
+	case enum.ModifierTypeHeal:
+		return c.localHealModifiers.Expose()
+	default:
+		return []uint{}
+	}
+}
+
+func newCharacter(owner uint, info CharacterInfo, ruleSet RuleSet) *character {
 	character := &character{
 		id:                         info.ID,
 		player:                     owner,
 		affiliation:                info.Affiliation,
 		vision:                     info.Vision,
 		weapon:                     info.Weapon,
-		skills:                     kv.NewSimpleMap[Skill](),
+		skills:                     map[uint]Skill{},
 		maxHP:                      info.MaxHP,
 		currentHP:                  info.MaxHP,
 		maxMP:                      info.MaxMP,
@@ -283,7 +153,7 @@ func NewCharacter(owner uint, info CharacterInfo, ruleSet RuleSet) *character {
 		status:                     enum.CharacterStatusReady,
 		elements:                   []enum.ElementType{},
 		satiety:                    false,
-		equipments:                 kv.NewSimpleMap[interface{}](),
+		equipments:                 map[enum.EquipmentType]uint{},
 		localDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
 		localFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
 		localDefenceModifiers:      modifier.NewChain[context.DamageContext](),
@@ -294,7 +164,7 @@ func NewCharacter(owner uint, info CharacterInfo, ruleSet RuleSet) *character {
 	}
 
 	for id, skill := range info.Skills {
-		character.skills.Set(id, skill)
+		character.skills[id] = skill
 	}
 
 	return character

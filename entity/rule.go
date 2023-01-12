@@ -13,13 +13,18 @@ type ReactionCalculator interface {
 	DamageCalculate(reaction enum.Reaction, targetCharacter uint, ctx *context.DamageContext)
 
 	// EffectCalculate 根据反应类型计算对应的反应效果
-	EffectCalculate(reaction enum.Reaction, targetPlayer *player) (ctx *context.CallbackContext)
+	EffectCalculate(reaction enum.Reaction, targetPlayer Player) (ctx *context.CallbackContext)
 
 	// Attach 尝试让新元素附着在现有元素集合内，此时不触发元素反应，返回尝试附着后的元素集合
 	Attach(originalElements []enum.ElementType, newElement enum.ElementType) (resultElements []enum.ElementType)
 
 	// Relative 判断某种反应是否是某元素的相关反应
 	Relative(reaction enum.Reaction, relativeElement enum.ElementType) bool
+}
+
+type VictorCalculator interface {
+	// CalculateVictors 计算游戏的胜利者
+	CalculateVictors(players []Player) (has bool, victors []Player)
 }
 
 type GameOptions struct {
@@ -31,11 +36,13 @@ type GameOptions struct {
 
 var (
 	nullReactionCalculator ReactionCalculator = nil
+	nullVictorCalculator   VictorCalculator   = nil
 )
 
 type RuleSet struct {
 	GameOptions        *GameOptions
 	ReactionCalculator ReactionCalculator
+	VictorCalculator   VictorCalculator
 }
 
 func (r RuleSet) ImplementationCheck() bool {
@@ -44,6 +51,10 @@ func (r RuleSet) ImplementationCheck() bool {
 	}
 
 	if r.ReactionCalculator == nullReactionCalculator {
+		return false
+	}
+
+	if r.VictorCalculator == nullVictorCalculator {
 		return false
 	}
 

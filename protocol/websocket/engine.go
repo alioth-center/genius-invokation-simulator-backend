@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/websocket/config"
@@ -107,12 +106,8 @@ func (c *Connection) Close() {
 	close(c.exitChan)
 }
 
-func (c *Connection) Write(object interface{}) {
-	if jsonBytes, err := json.Marshal(object); err != nil {
-		c.errChan <- err
-	} else {
-		c.oStream <- jsonBytes
-	}
+func (c *Connection) Write(jsonBytes []byte) {
+	c.oStream <- jsonBytes
 }
 
 func (c *Connection) Read() <-chan []byte {

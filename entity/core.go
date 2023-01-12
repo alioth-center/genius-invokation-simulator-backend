@@ -1,25 +1,26 @@
 package entity
 
 import (
-	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
 )
 
+// playerChain 玩家的行动顺序表
 type playerChain struct {
-	canOperated kv.Map[uint, bool]
+	canOperated map[uint]bool
 	queue       []uint
 	offset      int
 }
 
+// next 寻找下一个可以执行操作的玩家
 func (pc *playerChain) next() (has bool, player uint) {
 	for i := pc.offset; i < len(pc.queue); i++ {
-		if pc.canOperated.Get(pc.queue[i]) {
+		if pc.canOperated[pc.queue[i]] {
 			pc.offset = i + 1
 			return true, pc.queue[i]
 		}
 	}
 	for i := 0; i < pc.offset; i++ {
-		if pc.canOperated.Get(pc.queue[i]) {
+		if pc.canOperated[pc.queue[i]] {
 			pc.offset = i + 1
 			return true, pc.queue[i]
 		}
@@ -28,25 +29,33 @@ func (pc *playerChain) next() (has bool, player uint) {
 	return false, 0
 }
 
+// complete 将player设置为不可执行操作
 func (pc *playerChain) complete(player uint) {
-	pc.canOperated.Set(player, false)
+	if _, exist := pc.canOperated[player]; exist {
+		pc.canOperated[player] = false
+	}
 }
 
+// empty 将队列清空，为复用准备
 func (pc *playerChain) empty() {
-	pc.canOperated = kv.NewSimpleMap[bool]()
+	pc.canOperated = map[uint]bool{}
 	pc.queue = []uint{}
 	pc.offset = 0
 }
 
-func (pc *playerChain) add(player *player) {
-	pc.canOperated.Set(player.UID(), true)
-	pc.queue = append(pc.queue, player.UID())
+// add 向队列中加入一个玩家，并将其可执行状态设置为true
+func (pc *playerChain) add(player uint) {
+	if _, exist := pc.canOperated[player]; !exist {
+		pc.queue = append(pc.queue, player)
+		pc.canOperated[player] = true
+	}
 }
 
+// allActive 将队列中所有可执行状态为true的玩家导出
 func (pc *playerChain) allActive() []uint {
 	result := make([]uint, 0)
 	for _, id := range pc.queue {
-		if pc.canOperated.Get(id) {
+		if pc.canOperated[id] {
 			result = append(result, id)
 		}
 	}
@@ -56,7 +65,7 @@ func (pc *playerChain) allActive() []uint {
 
 func newPlayerChain() *playerChain {
 	return &playerChain{
-		canOperated: kv.NewSimpleMap[bool](),
+		canOperated: map[uint]bool{},
 		queue:       []uint{},
 		offset:      0,
 	}

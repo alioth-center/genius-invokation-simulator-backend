@@ -26,3 +26,31 @@ func BenchmarkTestCostEquals(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkTestPlayerChainNext(b *testing.B) {
+	pc := newPlayerChain()
+	for i := uint(0); i < 100; i++ {
+		pc.add(i)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		pc.next()
+	}
+}
+
+func BenchmarkTestPlayerChainNextWithComplete(b *testing.B) {
+	pc := newPlayerChain()
+	for i := uint(0); i < 11451419; i++ {
+		pc.add(i)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		exist, _ := pc.next()
+		pc.complete(uint(i))
+		if !exist {
+			break
+		}
+	}
+}

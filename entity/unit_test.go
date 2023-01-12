@@ -366,3 +366,48 @@ func TestCardDeckShuffle(t *testing.T) {
 		})
 	}
 }
+
+func TestPlayerChainNext(t *testing.T) {
+	pc := newPlayerChain()
+	for i := 0; i < 3; i++ {
+		pc.add(uint(i))
+	}
+
+	t.Run("TestPlayerChainNext-1", func(t *testing.T) {
+		for i := uint(0); i < 30; i++ {
+			if exist, gotten := pc.next(); !exist || gotten != i%3 {
+				t.Errorf("failed in TestPlayerChainNext")
+			}
+		}
+	})
+
+	t.Run("TestPlayerChainNext-2", func(t *testing.T) {
+		pc.complete(0)
+		tag := uint(1)
+		for i := uint(0); i < 30; i++ {
+			if exist, gotten := pc.next(); !exist || gotten != tag {
+				t.Errorf("failed in TestPlayerChainNext")
+			} else {
+				tag = tag%2 + 1
+			}
+		}
+	})
+
+	t.Run("TestPlayerChainNext-3", func(t *testing.T) {
+		pc.complete(2)
+		for i := uint(0); i < 30; i++ {
+			if exist, gotten := pc.next(); !exist || gotten != 1 {
+				t.Errorf("failed in TestPlayerChainNext")
+			}
+		}
+	})
+
+	t.Run("TestPlayerChainNext-4", func(t *testing.T) {
+		pc.complete(1)
+		for i := uint(0); i < 30; i++ {
+			if exist, gotten := pc.next(); exist && gotten != 0 {
+				t.Errorf("failed in TestPlayerChainNext: %v, %v", exist, gotten)
+			}
+		}
+	})
+}

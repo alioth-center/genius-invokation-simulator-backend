@@ -1,4 +1,4 @@
-package entity
+package model
 
 import "github.com/sunist-c/genius-invokation-simulator-backend/enum"
 

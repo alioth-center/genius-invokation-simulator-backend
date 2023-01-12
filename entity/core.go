@@ -3,6 +3,7 @@ package entity
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/event"
@@ -193,7 +194,7 @@ type Core struct {
 	actingPlayer uint                              // actingPlayer 当前正在操作的玩家
 	roundCount   uint                              // roundCount 回合数
 	roundStage   enum.RoundStage                   // roundStage 当前回合阶段
-	ruleSet      RuleSet                           // ruleSet 当前战斗的规则
+	ruleSet      model.RuleSet                     // ruleSet 当前战斗的规则
 	activeChain  *playerChain                      // activeChain 当前回合的结算队列
 	nextChain    *playerChain                      // nextChain 下个回合的结算队列
 	defeatedChan chan SyncDefeatedCharacterMessage // defeatedChan 有玩家的前台角色被击败了，需要切换角色时，会往此管道写消息
@@ -436,7 +437,7 @@ func (c *Core) executeUseCard(action message.UseCardAction) {
 
 func (c *Core) executeReRoll(action message.ReRollAction) {
 	executePlayer := c.room[action.Sender].player
-	if executePlayer.holdingCost.Contains(*NewCostFromMap(action.Dropped)) {
+	if executePlayer.holdingCost.Contains(*model.NewCostFromMap(action.Dropped)) {
 
 	}
 }
@@ -485,7 +486,7 @@ func (c *Core) injectPlayers(initializeMessage message.InitializeMessage) (succe
 		// 规则集合含有未实现接口，初始化失败
 		return false
 	} else {
-		ruleSet.GameOptions = &GameOptions{
+		ruleSet.GameOptions = &model.GameOptions{
 			ReRollTimes: initializeMessage.Options.ReRollTime,
 			StaticCost:  initializeMessage.Options.StaticElement,
 			RollAmount:  initializeMessage.Options.ElementAmount,
@@ -616,7 +617,7 @@ func generateSelfMessage(c *Core, player *player) (selfMessage message.Self) {
 			LegalActions: legalActions,
 			Status:       player.status,
 		},
-		Cost:  player.holdingCost.costs,
+		Cost:  player.holdingCost.Costs(),
 		Cards: cardList,
 	}
 }
@@ -735,7 +736,7 @@ func generateOtherMessage(c *Core, player *player) (othersMessage []message.Othe
 				LegalActions: legalActions,
 				Status:       otherPlayer.status,
 			},
-			Cost:  playerContext.player.holdingCost.total,
+			Cost:  playerContext.player.holdingCost.Total(),
 			Cards: uint(len(player.holdingCards)),
 		}
 
@@ -764,7 +765,7 @@ func generateDictionary(c *Core) (dictionary []message.DictionaryPair) {
 	return dictionary
 }
 
-func initCharacter(characterID, ownerID uint, ruleSet RuleSet) (success bool, result *character) {
+func initCharacter(characterID, ownerID uint, ruleSet model.RuleSet) (success bool, result *character) {
 	exist, characterPersistence := persistence.CharacterPersistence.QueryByID(characterID)
 	if !exist {
 		// 找不到角色实现，初始化失败
@@ -772,7 +773,7 @@ func initCharacter(characterID, ownerID uint, ruleSet RuleSet) (success bool, re
 	}
 
 	characterInfo := characterPersistence.Ctor()()
-	characterSkill := map[uint]Skill{}
+	characterSkill := map[uint]model.Skill{}
 	for _, skillID := range characterInfo.Skills {
 		if existSkill, skillPersistence := persistence.SkillPersistence.QueryByID(skillID); !existSkill {
 			// 找不到技能实现，初始化失败
@@ -810,7 +811,7 @@ func initCharacter(characterID, ownerID uint, ruleSet RuleSet) (success bool, re
 	return true, character
 }
 
-func initPlayer(matchingMessage message.MatchingMessage, ruleSet RuleSet) (success bool, result *player) {
+func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) (success bool, result *player) {
 	if existPlayer, _ := persistence.PlayerPersistence.QueryByID(matchingMessage.UID); !existPlayer {
 		// 不存在玩家信息，初始化失败
 		return false, nil
@@ -828,7 +829,7 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet RuleSet) (succe
 		}
 	}
 
-	var cardList []Card
+	var cardList []model.Card
 	for _, cardID := range matchingMessage.CardDeck {
 		if existCard, cardPersistence := persistence.CardPersistence.QueryByID(cardID); !existCard {
 			// 不存在卡牌，初始化失败
@@ -843,10 +844,10 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet RuleSet) (succe
 		status:                      enum.PlayerStatusInitialized,
 		operated:                    false,
 		reRollTimes:                 ruleSet.GameOptions.ReRollTimes,
-		staticCost:                  NewCostFromMap(ruleSet.GameOptions.StaticCost),
-		holdingCost:                 NewCost(),
+		staticCost:                  model.NewCostFromMap(ruleSet.GameOptions.StaticCost),
+		holdingCost:                 model.NewCost(),
 		cardDeck:                    NewCardDeck(cardList),
-		holdingCards:                map[uint]Card{},
+		holdingCards:                map[uint]model.Card{},
 		activeCharacter:             0,
 		characters:                  characterMap,
 		characterList:               characterList,
@@ -860,7 +861,7 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet RuleSet) (succe
 		globalChargeModifiers:       modifier.NewChain[context.ChargeContext](),
 		globalHealModifiers:         modifier.NewChain[context.HealContext](),
 		globalCostModifiers:         modifier.NewChain[context.CostContext](),
-		cooperativeAttacks:          []CooperativeSkill{},
+		cooperativeAttacks:          []model.CooperativeSkill{},
 		callbackEvents:              event.NewEventMap(),
 	}
 

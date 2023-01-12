@@ -1,16 +1,17 @@
 package entity
 
 import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 )
 
 type character struct {
-	id          uint             // id 角色的ID，由框架确定
-	player      uint             // player 所属玩家的ID，由框架确定
-	affiliation enum.Affiliation // affiliation 角色的势力归属
-	vision      enum.ElementType // vision 角色的元素类型
-	weapon      enum.WeaponType  // weapon 角色的武器类型
-	skills      map[uint]Skill   // skills 角色的技能
+	id          uint                 // id 角色的ID，由框架确定
+	player      uint                 // player 所属玩家的ID，由框架确定
+	affiliation enum.Affiliation     // affiliation 角色的势力归属
+	vision      enum.ElementType     // vision 角色的元素类型
+	weapon      enum.WeaponType      // weapon 角色的武器类型
+	skills      map[uint]model.Skill // skills 角色的技能
 
 	maxHP      uint                        // maxHP 角色的最大生命值
 	currentHP  uint                        // currentHP 角色的当前生命值
@@ -28,7 +29,7 @@ type character struct {
 	localHealModifiers         HealModifiers    // localHealModifiers 本地治疗修正
 	localCostModifiers         CostModifiers    // localCostModifiers 本地费用修正
 
-	ruleSet RuleSet // ruleSet 用于结算的规则集合
+	ruleSet model.RuleSet // ruleSet 用于结算的规则集合
 }
 
 func (c character) GetID() (id uint) {

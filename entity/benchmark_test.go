@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"testing"
 )
@@ -17,8 +18,8 @@ func BenchmarkTestCostEquals(b *testing.B) {
 		cost:   map[enum.ElementType]uint{enum.ElementCurrency: 3, enum.ElementNone: 2},
 		want:   true,
 	}
-	originCost := NewCostFromMap(tt.origin)
-	otherCost := NewCostFromMap(tt.cost)
+	originCost := model.NewCostFromMap(tt.origin)
+	otherCost := model.NewCostFromMap(tt.cost)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if got := originCost.Equals(*otherCost); got != tt.want {

@@ -1,13 +1,14 @@
 package entity
 
 import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/event"
 )
 
 type PlayerInfo struct {
 	UID        uint
-	Cards      []Card
+	Cards      []model.Card
 	Characters []*character
 }
 
@@ -15,14 +16,14 @@ type player struct {
 	uid    uint              // uid 玩家的UID，由其他模块托管
 	status enum.PlayerStatus // status 玩家的状态
 
-	operated    bool  // operated 本回合玩家是否操作过
-	reRollTimes uint  // reRollTimes 重新投掷的次数
-	staticCost  *Cost // staticCost 每回合投掷阶段固定产出的骰子
+	operated    bool        // operated 本回合玩家是否操作过
+	reRollTimes uint        // reRollTimes 重新投掷的次数
+	staticCost  *model.Cost // staticCost 每回合投掷阶段固定产出的骰子
 
-	holdingCost     *Cost         // holdingCost 玩家持有的骰子
-	cardDeck        *CardDeck     // cardDeck 玩家的牌堆
-	holdingCards    map[uint]Card // holdingCards 玩家持有的卡牌
-	activeCharacter uint          // activeCharacter 玩家当前的前台角色
+	holdingCost     *model.Cost         // holdingCost 玩家持有的骰子
+	cardDeck        *CardDeck           // cardDeck 玩家的牌堆
+	holdingCards    map[uint]model.Card // holdingCards 玩家持有的卡牌
+	activeCharacter uint                // activeCharacter 玩家当前的前台角色
 
 	characters    map[uint]*character // characters 玩家出战的角色
 	characterList []uint              // characterList 玩家的角色列表
@@ -38,8 +39,8 @@ type player struct {
 	globalChargeModifiers       ChargeModifiers  // globalChargeModifiers 全局充能修正
 	globalCostModifiers         CostModifiers    // globalCostModifiers 全局费用修正
 
-	cooperativeAttacks []CooperativeSkill // cooperativeAttacks 协同攻击技能
-	callbackEvents     *event.Map         // callbackEvents 回调事件集合
+	cooperativeAttacks []model.CooperativeSkill // cooperativeAttacks 协同攻击技能
+	callbackEvents     *event.Map               // callbackEvents 回调事件集合
 }
 
 func (p player) GetUID() (uid uint) {
@@ -47,7 +48,7 @@ func (p player) GetUID() (uid uint) {
 }
 
 func (p player) GetCost() (cost map[enum.ElementType]uint) {
-	return p.holdingCost.costs
+	return p.holdingCost.Costs()
 }
 
 func (p player) GetCards() (cards []uint) {
@@ -86,7 +87,7 @@ func (p player) GetBackgroundCharacters() (characters []uint) {
 	return append(p.characterList[:index], p.characterList[index+1:]...)
 }
 
-func (p player) GetCharacter(character uint) (has bool, entity Character) {
+func (p player) GetCharacter(character uint) (has bool, entity model.Character) {
 	characterEntity, exist := p.characters[character]
 	return exist, characterEntity
 }

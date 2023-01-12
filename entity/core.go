@@ -1,7 +1,100 @@
 package entity
 
 import (
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
+	"fmt"
+	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
+)
+
+// filter 玩家行动过滤器
+type filter = map[enum.ActionType]bool
+
+var (
+	cachedFilter = map[enum.PlayerStatus]map[enum.ActionType]bool{
+		enum.PlayerStatusInitialized: {
+			enum.ActionNone:           false,
+			enum.ActionNormalAttack:   false,
+			enum.ActionElementalSkill: false,
+			enum.ActionElementalBurst: false,
+			enum.ActionSwitch:         true,
+			enum.ActionBurnCard:       false,
+			enum.ActionUseCard:        false,
+			enum.ActionReRoll:         false,
+			enum.ActionSkipRound:      false,
+			enum.ActionConcede:        true,
+		},
+		enum.PlayerStatusReady: {
+			enum.ActionNone:           false,
+			enum.ActionNormalAttack:   false,
+			enum.ActionElementalSkill: false,
+			enum.ActionElementalBurst: false,
+			enum.ActionSwitch:         false,
+			enum.ActionBurnCard:       false,
+			enum.ActionUseCard:        false,
+			enum.ActionReRoll:         true,
+			enum.ActionSkipRound:      false,
+			enum.ActionConcede:        true,
+		},
+		enum.PlayerStatusWaiting: {
+			enum.ActionNone:           false,
+			enum.ActionNormalAttack:   false,
+			enum.ActionElementalSkill: false,
+			enum.ActionElementalBurst: false,
+			enum.ActionSwitch:         false,
+			enum.ActionBurnCard:       false,
+			enum.ActionUseCard:        false,
+			enum.ActionReRoll:         false,
+			enum.ActionSkipRound:      false,
+			enum.ActionConcede:        true,
+		},
+		enum.PlayerStatusActing: {
+			enum.ActionNone:           false,
+			enum.ActionNormalAttack:   true,
+			enum.ActionElementalSkill: true,
+			enum.ActionElementalBurst: true,
+			enum.ActionSwitch:         true,
+			enum.ActionBurnCard:       true,
+			enum.ActionUseCard:        true,
+			enum.ActionReRoll:         true,
+			enum.ActionSkipRound:      true,
+			enum.ActionConcede:        true,
+		},
+		enum.PlayerStatusDefeated: {
+			enum.ActionNone:           false,
+			enum.ActionNormalAttack:   false,
+			enum.ActionElementalSkill: false,
+			enum.ActionElementalBurst: false,
+			enum.ActionSwitch:         false,
+			enum.ActionBurnCard:       false,
+			enum.ActionUseCard:        false,
+			enum.ActionReRoll:         false,
+			enum.ActionSkipRound:      false,
+			enum.ActionConcede:        false,
+		},
+		enum.PlayerStatusViewing: {
+			enum.ActionNone:           false,
+			enum.ActionNormalAttack:   false,
+			enum.ActionElementalSkill: false,
+			enum.ActionElementalBurst: false,
+			enum.ActionSwitch:         false,
+			enum.ActionBurnCard:       false,
+			enum.ActionUseCard:        false,
+			enum.ActionReRoll:         false,
+			enum.ActionSkipRound:      false,
+			enum.ActionConcede:        false,
+		},
+		enum.PlayerStatusCharacterDefeated: {
+			enum.ActionNone:           false,
+			enum.ActionNormalAttack:   false,
+			enum.ActionElementalSkill: false,
+			enum.ActionElementalBurst: false,
+			enum.ActionSwitch:         true,
+			enum.ActionBurnCard:       false,
+			enum.ActionUseCard:        false,
+			enum.ActionReRoll:         false,
+			enum.ActionSkipRound:      false,
+			enum.ActionConcede:        true,
+		},
+	}
 )
 
 // playerChain 玩家的行动顺序表
@@ -72,213 +165,74 @@ func newPlayerChain() *playerChain {
 }
 
 type SyncDefeatedCharacterMessage struct {
-	WaitingPlayerUID uint
+	DefeatedPlayerUID uint
 }
 
-type SyncChangeCharacterMessage struct{}
+type SyncSwitchedCharacterMessage struct {
+	SwitchedPlayerUID uint
+}
 
 type Core struct {
-	Players      kv.Map[uint, *player]
-	Entities     kv.Map[uint, uint]
-	RoundCount   uint
+	players      map[uint]*player
+	filters      map[uint]filter
+	entities     map[uint]uint
+	actingPlayer uint
+	roundCount   uint
 	ruleSet      RuleSet
 	activeChain  *playerChain
 	nextChain    *playerChain
-	defeatedChan chan SyncDefeatedCharacterMessage
-	waitChan     chan SyncChangeCharacterMessage
+	defeatedChan chan SyncDefeatedCharacterMessage // defeatedChan 有玩家的前台角色被击败了，需要切换角色时，会往此管道写消息
+	switchedChan chan SyncSwitchedCharacterMessage // switchedChan 玩家的前台角色被击败后，切换被击败角色完成时，会往此管道写信息
+	operatedChan chan struct{}                     // operatedChan 玩家结束操作时，会往此管道些信息
+	errChan      chan error
 }
 
-// RoundEnd 回合结束时的结算逻辑
-func (c *Core) RoundEnd() {
-	// 将行动队列更新为下回合队列
-	c.activeChain, c.nextChain = c.nextChain, c.activeChain
-	c.nextChain.empty()
-	newCallList := c.activeChain.allActive()
-
-	// 按照行动队列执行召唤物结算
-	for _, player := range newCallList {
-		c.Players.Get(player).ExecuteSummonSkills()
-	}
-
-	// 按照行动队列执行结束回合结算
-	for _, player := range newCallList {
-		c.Players.Get(player).ExecuteRoundEndCallback()
-	}
-
-	// 回合计数器增加
-	c.RoundCount++
+// updatePlayerStatusAndCoreFilter 更新玩家状态与玩家可操作列表，没有做校验，请在调用前校验player不为nil且在filter中有记录
+func (c *Core) updatePlayerStatusAndCoreFilter(player *player, status enum.PlayerStatus) {
+	player.status = status
+	c.filters[player.uid] = cachedFilter[status]
 }
 
-// RoundStart 回合开始时的结算逻辑
-func (c *Core) RoundStart() {
-	newCallList := c.activeChain.allActive()
+// filterUpdater 负责更新玩家可执行操作的协程，响应operatedChan和defeatedChan
+func (c *Core) filterUpdater() {
+	for existNextPlayer, actingPlayer := c.activeChain.next(); existNextPlayer; existNextPlayer, actingPlayer = c.activeChain.next() {
+		if player, existPlayer := c.players[actingPlayer]; existPlayer {
+			// 更新下一个玩家的状态为执行中
+			c.updatePlayerStatusAndCoreFilter(player, enum.PlayerStatusActing)
+			c.actingPlayer = actingPlayer
 
-	// 按照行动队列重置所有玩家的状态
-	for _, player := range newCallList {
-		c.Players.Get(player).ExecuteResetCallback()
-	}
+		block:
+			// 阻塞更新协程并等待同步
+			for {
+				select {
+				case defeated := <-c.defeatedChan:
+					// 让当前执行的玩家进行等待
+					waitingPlayer, _ := c.players[c.actingPlayer]
+					c.updatePlayerStatusAndCoreFilter(waitingPlayer, enum.PlayerStatusWaiting)
 
-	// 按照行动队列执行玩家的开始阶段
-	for _, player := range newCallList {
-		c.Players.Get(player).ExecuteRoundStartCallback()
-	}
-}
+					// 让被击败的玩家切换被击败的角色
+					defeatedPlayer, _ := c.players[defeated.DefeatedPlayerUID]
+					c.updatePlayerStatusAndCoreFilter(defeatedPlayer, enum.PlayerStatusCharacterDefeated)
+				case switched := <-c.switchedChan:
+					// 让切换完毕的玩家进入等待
+					switchedPlayer, _ := c.players[switched.SwitchedPlayerUID]
+					c.updatePlayerStatusAndCoreFilter(switchedPlayer, enum.PlayerStatusWaiting)
 
-// RoundRoll 投掷阶段的计算逻辑
-func (c *Core) RoundRoll() {
-	newCallList := c.activeChain.allActive()
-	for _, player := range newCallList {
-		targetPlayer := c.Players.Get(player)
-		holdingCost := targetPlayer.StaticCost()
-
-		// 计算需要多少随机元素骰子
-		remainRandomCount := int(c.ruleSet.GameOptions.RollAmount) - int(holdingCost.total)
-		if remainRandomCount >= 0 {
-			// 使用随机元素骰子补足缺口
-			randomCost := NewRandomCost(uint(remainRandomCount))
-			holdingCost.Add(*randomCost)
-
-			targetPlayer.SetHoldingCost(holdingCost)
-		} else {
-			// 如果固定骰子多余可获得骰子，舍弃多出的固定元素骰子
-			have, finalCount := uint(0), c.ruleSet.GameOptions.RollAmount
-			finalCost := NewCost()
-			for element := enum.ElementType(0); element <= enum.ElementEndIndex; element++ {
-				if holdingCost.costs[element]+have > finalCount {
-					finalCost.add(element, finalCount-have)
-					break
-				} else {
-					finalCost.add(element, holdingCost.costs[element])
-					have += holdingCost.costs[element]
+					// 让当前行动的玩家继续行动
+					continuePlayer, _ := c.players[c.actingPlayer]
+					c.updatePlayerStatusAndCoreFilter(continuePlayer, enum.PlayerStatusActing)
+				case <-c.operatedChan:
+					// 让当前行动的玩家进入等待
+					completedPlayer, _ := c.players[c.actingPlayer]
+					c.updatePlayerStatusAndCoreFilter(completedPlayer, enum.PlayerStatusWaiting)
+					// 当前玩家操作完毕，退出阻塞
+					break block
 				}
 			}
-
-			targetPlayer.SetHoldingCost(*finalCost)
+		} else {
+			// 下一个玩家没有被框架托管，理论上不可能，致命错误
+			c.errChan <- fmt.Errorf("error occurred while handling player %v, does not exist", actingPlayer)
+			// todo: 关闭Core服务
 		}
 	}
-}
-
-func (c *Core) ExecuteReRoll(sender uint, drop map[enum.ElementType]uint) {
-	if c.Players.Exists(sender) {
-		c.Players.Get(sender).ExecuteElementReRoll(*NewCostFromMap(drop))
-	}
-}
-
-func (c *Core) ExecutePayment(sender uint, need, paid map[enum.ElementType]uint) {
-	if c.Players.Exists(sender) {
-		basicCost, paidCost := NewCostFromMap(need), NewCostFromMap(paid)
-		c.Players.Get(sender).ExecuteElementPayment(*basicCost, *paidCost)
-	}
-}
-
-func (c *Core) ExecuteAttack(sender uint, target uint, skill uint) {
-	if c.Players.Exists(sender) && c.Players.Exists(target) {
-		senderPlayer, targetPlayer := c.Players.Get(sender), c.Players.Get(target)
-
-		if has, character := senderPlayer.GetActiveCharacter(); has && character.HasSkill(skill) {
-			// 填充DamageContext
-			_, targetCharacter := targetPlayer.GetActiveCharacter()
-			backgroundCharacters := targetPlayer.GetBackgroundCharacters()
-			background := make([]uint, len(backgroundCharacters))
-			for i, backgroundCharacter := range backgroundCharacters {
-				background[i] = backgroundCharacter.ID()
-			}
-			ctx := senderPlayer.ExecuteAttack(skill, targetCharacter.ID(), background)
-
-			// 执行攻击流程
-			senderPlayer.ExecuteDirectAttackModifiers(ctx)
-			targetPlayer.ExecuteElementAttachment(ctx)
-			for targetCharacterID := range ctx.Damage() {
-				_, executeCharacter := targetPlayer.GetCharacter(targetCharacterID)
-				reaction := executeCharacter.ExecuteElementReaction()
-				ctx.SetReaction(targetCharacterID, reaction)
-				c.ruleSet.ReactionCalculator.DamageCalculate(reaction, targetCharacterID, ctx)
-			}
-			senderPlayer.ExecuteFinalAttackModifiers(ctx)
-			targetPlayer.ExecuteDefence(ctx)
-			if event := c.ruleSet.ReactionCalculator.EffectCalculate(ctx.GetTargetCharacterReaction(), targetPlayer); event != nil {
-				// 触发反应，可能导致目标玩家前台角色改变
-				targetPlayer.ExecuteCallbackModify(event)
-			}
-
-			// 如果此次攻击导致对方角色被击败，阻塞执行过程并等待对方切换角色
-			if _, activeCharacter := targetPlayer.GetActiveCharacter(); activeCharacter.Status() == enum.CharacterStatusDefeated {
-				targetPlayer.SetStatus(enum.PlayerStatusCharacterDefeated)
-				backup := senderPlayer.Status()
-				senderPlayer.SetStatus(enum.PlayerStatusWaiting)
-				c.defeatedChan <- SyncDefeatedCharacterMessage{WaitingPlayerUID: target}
-				<-c.waitChan
-				targetPlayer.SetStatus(enum.PlayerStatusWaiting)
-				senderPlayer.SetStatus(backup)
-			}
-
-			// 执行回调流程
-			senderPlayer.ExecuteAfterAttackCallback()
-			targetPlayer.ExecuteAfterDefenceCallback()
-		}
-	}
-}
-
-func (c *Core) ExecuteBurnCard(sender uint, card uint, exchangeElement enum.ElementType) {
-	if c.Players.Exists(sender) {
-		c.Players.Get(sender).ExecuteBurnCard(card, exchangeElement)
-	}
-}
-
-func (c *Core) ExecuteSkipRound(sender uint) {
-	if c.Players.Exists(sender) {
-		c.Players.Get(sender).ExecuteSkipRound()
-	}
-}
-
-func (c *Core) ExecuteConcede(sender uint) {
-	if c.Players.Exists(sender) {
-		c.Players.Get(sender).ExecuteConcede()
-	}
-}
-
-func (c *Core) ExecuteSwitchCharacter(sender uint, targetCharacter uint) {
-	if c.Players.Exists(sender) {
-		player := c.Players.Get(sender)
-		if has, _ := player.GetCharacter(targetCharacter); has {
-			player.SwitchCharacter(targetCharacter)
-		}
-	}
-}
-
-func (c *Core) ExecuteUseCard(sender uint, card uint) {
-	if c.Players.Exists(sender) {
-		player := c.Players.Get(sender)
-		if player.HeldCard(card) {
-			// todo: implement use card logic
-			panic("not implemented yet")
-		}
-	}
-}
-
-func (c *Core) GetPlayerStatus(player uint) (has bool, status enum.PlayerStatus) {
-	if c.Players.Exists(player) {
-		return true, c.Players.Get(player).Status()
-	} else {
-		return false, enum.PlayerStatusDefeated
-	}
-}
-
-func NewCore(rule RuleSet, players []*player, defeatedChan chan SyncDefeatedCharacterMessage, waitChan chan SyncChangeCharacterMessage) *Core {
-	core := &Core{
-		RoundCount:   0,
-		ruleSet:      rule,
-		Players:      kv.NewSimpleMap[*player](),
-		activeChain:  newPlayerChain(),
-		nextChain:    newPlayerChain(),
-		defeatedChan: defeatedChan,
-		waitChan:     waitChan,
-	}
-
-	for _, player := range players {
-		core.activeChain.add(player)
-		core.Players.Set(player.UID(), player)
-	}
-
-	return core
 }

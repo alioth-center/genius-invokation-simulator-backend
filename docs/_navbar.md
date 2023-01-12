@@ -1,0 +1,4 @@
+- [pkg.go.dev](https://pkg.go.dev/github.com/sunist-c/genius-invokation-simulator-backend#section-readme)
+- Translations
+    - [:cn: 中文](/)
+    - [:uk: English](/en/)

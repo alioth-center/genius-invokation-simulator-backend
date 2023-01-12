@@ -12,7 +12,7 @@ type Player interface {
 	CardDeckRemain() (remain uint)
 	GetActiveCharacter() (character uint)
 	GetBackgroundCharacters() (characters []uint)
-	GetCharacter(character uint) (entity Character)
+	GetCharacter(character uint) (has bool, entity Character)
 	GetStatus() (status enum.PlayerStatus)
 	GetGlobalModifiers(modifierType enum.ModifierType) (modifiers []uint)
 	GetCooperativeSkills(trigger enum.TriggerType) (skills []uint)

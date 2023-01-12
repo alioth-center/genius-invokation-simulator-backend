@@ -6,9 +6,9 @@
 
 这里是原神(Genshin Impact)的《七圣召唤》模拟器，是参考原神3.3版本的「七圣召唤」玩法重新实现的后端(服务端)，包括所有的原神内的游戏内容，并拓展一些米哈游没有做的内容。
 
-**本自述文件供开发者参考，若您只是使用本项目，您可以转到我们的[文档(未准备完成)]()**
+**本自述文件供开发者参考，若您只是使用本项目，您可以转到我们的[文档](https://sunist-c.github.io/genius-invokation-simulator-backend/)**
 
-[English Version(not complete yet)]()
+[English Version](https://sunist-c.github.io/genius-invokation-simulator-backend/#/en/)
 
 ### 1.2 声明
 

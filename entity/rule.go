@@ -13,7 +13,7 @@ type ReactionCalculator interface {
 	DamageCalculate(reaction enum.Reaction, targetCharacter uint, ctx *context.DamageContext)
 
 	// EffectCalculate 根据反应类型计算对应的反应效果
-	EffectCalculate(reaction enum.Reaction, targetPlayer Player) (ctx *context.CallbackContext)
+	EffectCalculate(reaction enum.Reaction, targetPlayer *player) (ctx *context.CallbackContext)
 
 	// Attach 尝试让新元素附着在现有元素集合内，此时不触发元素反应，返回尝试附着后的元素集合
 	Attach(originalElements []enum.ElementType, newElement enum.ElementType) (resultElements []enum.ElementType)

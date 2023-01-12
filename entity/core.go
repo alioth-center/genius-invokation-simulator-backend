@@ -38,7 +38,7 @@ func (pc *playerChain) empty() {
 	pc.offset = 0
 }
 
-func (pc *playerChain) add(player Player) {
+func (pc *playerChain) add(player *player) {
 	pc.canOperated.Set(player.UID(), true)
 	pc.queue = append(pc.queue, player.UID())
 }
@@ -69,7 +69,7 @@ type SyncDefeatedCharacterMessage struct {
 type SyncChangeCharacterMessage struct{}
 
 type Core struct {
-	Players      kv.Map[uint, Player]
+	Players      kv.Map[uint, *player]
 	Entities     kv.Map[uint, uint]
 	RoundCount   uint
 	ruleSet      RuleSet
@@ -255,11 +255,11 @@ func (c *Core) GetPlayerStatus(player uint) (has bool, status enum.PlayerStatus)
 	}
 }
 
-func NewCore(rule RuleSet, players []Player, defeatedChan chan SyncDefeatedCharacterMessage, waitChan chan SyncChangeCharacterMessage) *Core {
+func NewCore(rule RuleSet, players []*player, defeatedChan chan SyncDefeatedCharacterMessage, waitChan chan SyncChangeCharacterMessage) *Core {
 	core := &Core{
 		RoundCount:   0,
 		ruleSet:      rule,
-		Players:      kv.NewSimpleMap[Player](),
+		Players:      kv.NewSimpleMap[*player](),
 		activeChain:  newPlayerChain(),
 		nextChain:    newPlayerChain(),
 		defeatedChan: defeatedChan,

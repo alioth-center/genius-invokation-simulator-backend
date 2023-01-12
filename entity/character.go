@@ -26,80 +26,6 @@ type CharacterInfo struct {
 	Skills      map[uint]Skill
 }
 
-type Character interface {
-	// ID 角色的ID
-	ID() uint
-
-	// Affiliation 角色的归属地
-	Affiliation() enum.Affiliation
-
-	// Vision 角色的元素
-	Vision() enum.ElementType
-
-	// Weapon 角色的武器类型
-	Weapon() enum.WeaponType
-
-	// MaxHP 角色的最大HP
-	MaxHP() uint
-
-	// MaxMP 角色的最大MP
-	MaxMP() uint
-
-	// HP 角色的当前HP
-	HP() uint
-
-	// MP 角色的当前MP
-	MP() uint
-
-	// HasSkill 角色是否持有id为skill的技能
-	HasSkill(skill uint) bool
-
-	// Status 角色的状态
-	Status() enum.CharacterStatus
-
-	// SwitchUp 切换到前台
-	SwitchUp()
-
-	// SwitchDown 切换到后台
-	SwitchDown()
-
-	// ExecuteCharge 根据ChargeContext给角色增加或减少MP
-	ExecuteCharge(ctx *context.ChargeContext)
-
-	// ExecuteHeal 根据HealContext给角色进行治疗
-	ExecuteHeal(ctx *context.HealContext)
-
-	// PreviewCostModify 预览CostModifiers的效果
-	PreviewCostModify(ctx *context.CostContext)
-
-	// ExecuteCostModify 使用角色的CostModifiers对CostContext进行修正
-	ExecuteCostModify(ctx *context.CostContext)
-
-	// ExecuteModify 根据ModifierContext对角色的Modifiers进行修改
-	ExecuteModify(ctx *context.ModifierContext)
-
-	// ExecuteDefence 根据DamageContext对角色进行伤害结算，不包括效果结算
-	ExecuteDefence(ctx *context.DamageContext)
-
-	// ExecuteEatFood 根据食物卡的效果执行食物结算
-	ExecuteEatFood(ctx *context.ModifierContext)
-
-	// ExecuteAttack 使用skill进行对target角色和background后台角色进行攻击
-	ExecuteAttack(skill, target uint, background []uint) (ctx *context.DamageContext)
-
-	// ExecuteDirectAttackModifiers 使用角色的DirectAttackModifiers对DamageContext进行伤害修正
-	ExecuteDirectAttackModifiers(ctx *context.DamageContext)
-
-	// ExecuteFinalAttackModifiers 使用角色的FinalAttackModifiers对DamageContext进行伤害修正
-	ExecuteFinalAttackModifiers(ctx *context.DamageContext)
-
-	// ExecuteElementAttachment 判断角色能否附着attachElement元素并尝试进行附着，此时不触发元素反应
-	ExecuteElementAttachment(attachElement enum.ElementType)
-
-	// ExecuteElementReaction 尝试使用角色身上附着的元素进行反应，返回反应类型
-	ExecuteElementReaction() (reaction enum.Reaction)
-}
-
 type character struct {
 	id          uint                // id 角色的ID，由框架确定
 	player      uint                // player 所属玩家的ID，由框架确定
@@ -342,7 +268,7 @@ func (c character) Status() enum.CharacterStatus {
 	return c.status
 }
 
-func NewCharacter(owner uint, info CharacterInfo, ruleSet RuleSet) Character {
+func NewCharacter(owner uint, info CharacterInfo, ruleSet RuleSet) *character {
 	character := &character{
 		id:                         info.ID,
 		player:                     owner,

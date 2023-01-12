@@ -11,56 +11,7 @@ import (
 type PlayerInfo struct {
 	UID        uint
 	Cards      []Card
-	Characters map[uint]Character
-}
-
-type Player interface {
-	UID() uint
-	Status() enum.PlayerStatus
-	Operated() bool
-	ReRollTimes() uint
-	StaticCost() Cost
-	HoldingCost() Cost
-	SwitchNextCharacter()
-	SwitchPrevCharacter()
-	SwitchCharacter(target uint)
-	ExecuteCallbackModify(ctx *context.CallbackContext)
-	ExecuteElementAttachment(ctx *context.DamageContext)
-	ExecuteAttack(skill, target uint, background []uint) (result *context.DamageContext)
-	ExecuteDefence(ctx *context.DamageContext)
-	ExecuteModify(ctx *context.ModifierContext)
-	ExecuteCharge(ctx *context.ChargeContext)
-	ExecuteHeal(ctx *context.HealContext)
-	ExecuteElementPayment(basic, pay Cost) (success bool)
-	ExecuteElementObtain(obtain Cost)
-	ExecuteElementReRoll(drop Cost)
-	ExecuteBurnCard(card uint, exchangeElement enum.ElementType)
-	ExecuteEatFood(card, targetCharacter uint)
-	ExecuteDirectAttackModifiers(ctx *context.DamageContext)
-	ExecuteFinalAttackModifiers(ctx *context.DamageContext)
-	ExecuteAfterAttackCallback()
-	ExecuteAfterDefenceCallback()
-	ExecuteResetCallback()
-	ExecuteRoundEndCallback()
-	ExecuteRoundStartCallback()
-	ExecuteSummonSkills()
-	ExecuteAddSummonRounds(summon uint, rounds uint)
-	ExecuteRemoveSummon(summon uint)
-	ExecuteRemoveAllSummons()
-	ExecuteSkipRound()
-	ExecuteConcede()
-
-	PreviewElementCost(basic Cost) (result Cost)
-
-	ResetOperated()
-	SetStatus(status enum.PlayerStatus)
-	SetHoldingCost(cost Cost)
-
-	GetActiveCharacter() (has bool, character Character)
-	GetCharacter(id uint) (has bool, character Character)
-	GetBackgroundCharacters() (characters []Character)
-	HeldCard(card uint) (held bool)
-	Defeated() bool
+	Characters map[uint]*character
 }
 
 type player struct {
@@ -71,13 +22,13 @@ type player struct {
 	reRollTimes uint // reRollTimes 重新投掷的次数
 	staticCost  Cost // staticCost 每回合投掷阶段固定产出的骰子
 
-	holdingCost     Cost                           // holdingCost 玩家持有的骰子
-	cardDeck        CardDeck                       // cardDeck 玩家的牌堆
-	holdingCards    kv.Map[uint, Card]             // holdingCards 玩家持有的卡牌
-	activeCharacter uint                           // activeCharacter 玩家当前的前台角色
-	characters      kv.OrderedMap[uint, Character] // characters 玩家出战的角色
-	summons         kv.OrderedMap[uint, Summon]    // summons 玩家在场的召唤物
-	supports        kv.OrderedMap[uint, Support]   // supports 玩家在场的支援
+	holdingCost     Cost                            // holdingCost 玩家持有的骰子
+	cardDeck        CardDeck                        // cardDeck 玩家的牌堆
+	holdingCards    kv.Map[uint, Card]              // holdingCards 玩家持有的卡牌
+	activeCharacter uint                            // activeCharacter 玩家当前的前台角色
+	characters      kv.OrderedMap[uint, *character] // characters 玩家出战的角色
+	summons         kv.OrderedMap[uint, Summon]     // summons 玩家在场的召唤物
+	supports        kv.OrderedMap[uint, Support]    // supports 玩家在场的支援
 
 	globalDirectAttackModifiers AttackModifiers  // globalDirectAttackModifiers 全局直接攻击修正
 	globalFinalAttackModifiers  AttackModifiers  // globalFinalAttackModifiers 全局最终攻击修正
@@ -91,7 +42,7 @@ type player struct {
 }
 
 func (p *player) executeCharacterModify(ctx *context.ModifierContext) {
-	p.characters.Range(func(id uint, character Character) bool {
+	p.characters.Range(func(id uint, character *character) bool {
 		character.ExecuteModify(ctx)
 		return true
 	})
@@ -127,11 +78,11 @@ func (p player) HoldingCost() Cost {
 	return p.holdingCost
 }
 
-func (p *player) GetCharacter(id uint) (has bool, character Character) {
+func (p *player) GetCharacter(id uint) (has bool, character *character) {
 	return p.characters.Exists(id), p.characters.Get(id)
 }
 
-func (p *player) GetActiveCharacter() (has bool, character Character) {
+func (p *player) GetActiveCharacter() (has bool, character *character) {
 	if character = p.characters.Get(p.activeCharacter); character.Status() != enum.CharacterStatusDefeated {
 		return true, character
 	} else {
@@ -139,9 +90,9 @@ func (p *player) GetActiveCharacter() (has bool, character Character) {
 	}
 }
 
-func (p *player) GetBackgroundCharacters() (characters []Character) {
-	characters = []Character{}
-	p.characters.Range(func(k uint, v Character) bool {
+func (p *player) GetBackgroundCharacters() (characters []*character) {
+	characters = []*character{}
+	p.characters.Range(func(k uint, v *character) bool {
 		if k != p.activeCharacter && v.Status() != enum.CharacterStatusDefeated {
 			characters = append(characters, v)
 		}
@@ -157,7 +108,7 @@ func (p player) HeldCard(card uint) (held bool) {
 
 func (p *player) Defeated() bool {
 	tag := true
-	p.characters.Range(func(k uint, v Character) bool {
+	p.characters.Range(func(k uint, v *character) bool {
 		if v.Status() != enum.CharacterStatusDefeated {
 			tag = false
 			return false
@@ -505,7 +456,7 @@ func (p *player) SetHoldingCost(cost Cost) {
 	p.holdingCost = cost
 }
 
-func NewPlayer(info PlayerInfo) Player {
+func NewPlayer(info PlayerInfo) *player {
 	player := &player{
 		uid:                         info.UID,
 		status:                      enum.PlayerStatusViewing,
@@ -516,7 +467,7 @@ func NewPlayer(info PlayerInfo) Player {
 		cardDeck:                    *NewCardDeck(info.Cards),
 		holdingCards:                kv.NewSimpleMap[Card](),
 		activeCharacter:             0,
-		characters:                  kv.NewOrderedMap[uint, Character](),
+		characters:                  kv.NewOrderedMap[uint, *character](),
 		summons:                     kv.NewOrderedMap[uint, Summon](),
 		supports:                    kv.NewOrderedMap[uint, Support](),
 		globalDirectAttackModifiers: modifier.NewChain[context.DamageContext](),

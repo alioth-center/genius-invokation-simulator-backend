@@ -1,4 +1,4 @@
-package model
+package message
 
 type UploadCardDeckRequest struct {
 	Owner           uint     `json:"owner"`

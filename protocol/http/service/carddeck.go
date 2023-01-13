@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sunist-c/genius-invokation-simulator-backend/persistence"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http"
+	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/message"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/middleware"
-	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/http/util"
 )
 
@@ -40,7 +40,7 @@ func initCardDeckService() {
 
 func uploadDeckServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		request := model.UploadCardDeckRequest{}
+		request := message.UploadCardDeckRequest{}
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
@@ -70,7 +70,7 @@ func uploadDeckServiceHandler() func(ctx *gin.Context) {
 				ctx.AbortWithStatus(500)
 			} else {
 				// 更新成功，Success
-				ctx.JSON(200, model.UploadCardDeckResponse{
+				ctx.JSON(200, message.UploadCardDeckResponse{
 					ID:              cardDeck.ID,
 					Owner:           cardDeck.OwnerUID,
 					RequiredPackage: cardDeck.RequiredPackages,
@@ -134,7 +134,7 @@ func deleteDeckServiceHandler() func(ctx *gin.Context) {
 
 func updateDeckServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		request := model.UpdateCardDeckRequest{}
+		request := message.UpdateCardDeckRequest{}
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
@@ -161,7 +161,7 @@ func updateDeckServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(500)
 		} else {
 			// 更新成功，Success
-			ctx.JSON(200, model.UpdateCardDeckResponse{
+			ctx.JSON(200, message.UpdateCardDeckResponse{
 				ID:              uint(id),
 				Owner:           request.Owner,
 				RequiredPackage: request.RequiredPackage,
@@ -182,7 +182,7 @@ func queryDeckServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(404)
 		} else if has {
 			// 找到了卡组，Success
-			ctx.JSON(200, model.QueryCardDeckResponse{
+			ctx.JSON(200, message.QueryCardDeckResponse{
 				ID:              entity.ID,
 				Owner:           entity.OwnerUID,
 				RequiredPackage: entity.RequiredPackages,

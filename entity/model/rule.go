@@ -10,7 +10,7 @@ type ReactionCalculator interface {
 	ReactionCalculate([]enum.ElementType) (reaction enum.Reaction, elementRemains []enum.ElementType)
 
 	// DamageCalculate 根据反应类型计算对应的伤害修正
-	DamageCalculate(reaction enum.Reaction, targetCharacter uint, ctx *context.DamageContext)
+	DamageCalculate(reaction enum.Reaction, targetCharacter Character, ctx *context.DamageContext)
 
 	// EffectCalculate 根据反应类型计算对应的反应效果
 	EffectCalculate(reaction enum.Reaction, targetPlayer Player) (ctx *context.CallbackContext)
@@ -32,6 +32,7 @@ type GameOptions struct {
 	StaticCost  map[enum.ElementType]uint // StaticCost 所有玩家的基础固定持有骰子
 	RollAmount  uint                      // RollAmount 所有玩家的投掷阶段生成元素骰子数量
 	GetCards    uint                      // GetCards 所有玩家在回合开始时可以获得的卡牌数量
+	SwitchCost  map[enum.ElementType]uint // SwitchCost 切换角色所需要的消费
 }
 
 var (

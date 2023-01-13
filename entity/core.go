@@ -7,11 +7,12 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/event"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/message"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 	"github.com/sunist-c/genius-invokation-simulator-backend/persistence"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/websocket"
+	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/websocket/message"
 	"github.com/sunist-c/genius-invokation-simulator-backend/util"
+	"sync"
 )
 
 // filter 玩家行动过滤器
@@ -191,7 +192,7 @@ type Core struct {
 	errorHandler util.ErrorHandler                 // errorHandler 处理错误的日志器
 	room         map[uint]*playerContext           // room 房间信息，包括玩家、合法操作
 	viewers      map[uint]*websocket.Connection    // viewers 观战者的连接集合
-	guests       []*websocket.Connection           // guests 匿名观战者的连接集合
+	guests       map[*websocket.Connection]bool    // guests 匿名观战者的连接集合
 	entities     map[uint]uint                     // entities 实体表
 	actingPlayer uint                              // actingPlayer 当前正在操作的玩家
 	roundCount   uint                              // roundCount 回合数
@@ -204,16 +205,22 @@ type Core struct {
 	operatedChan chan struct{}                     // operatedChan 玩家结束操作时，会往此管道写信息
 	readChan     chan message.ActionMessage        // readChan 有网络信息传入时，向此管道写入信息
 	exitChan     chan struct{}                     // exitChan 当结束服务时，向此管道写入信息
+	updateMutex  sync.RWMutex                      // updateMutex 更新锁，用于避免并发更新玩家状态以引发并发问题
 }
 
 // updatePlayerStatusAndCoreFilter 更新玩家状态与玩家可操作列表，没有做校验，请在调用前校验player不为nil且在filter中有记录
 func (c *Core) updatePlayerStatusAndCoreFilter(player *player, status enum.PlayerStatus) {
+	c.updateMutex.Lock()
 	player.status = status
 	c.room[player.uid].filter = cachedFilter[status]
+	c.updateMutex.Unlock()
 }
 
 // messageFilter 过滤不合法的操作类型，若玩家发送的操作信息合法，则legal为真
 func (c *Core) messageFilter(msg message.ActionMessage) (legal bool) {
+	// 如果在执行更改操作，等待更改完成
+	c.updateMutex.RLock()
+	defer c.updateMutex.RUnlock()
 	if playerContext, exist := c.room[msg.Sender]; exist && playerContext != nil {
 		if playerContext.filter[msg.Type] {
 			// 操作类型合法
@@ -285,7 +292,7 @@ func (c *Core) handleMessage(msg message.ActionMessage) {
 	c.sendSyncMessage()
 }
 
-// generateSyncMessage 生成某玩家收到的同步信息
+// generateSyncMessage 生成某玩家收到的同步信息，playerID为0则生成匿名访客的观战信息
 func (c *Core) generateSyncMessage(player uint) (syncMessage message.SyncMessage) {
 	dictionary := generateDictionary(c)
 	background := generateBackgroundMessage(c)
@@ -339,6 +346,32 @@ func (c *Core) generateSyncMessage(player uint) (syncMessage message.SyncMessage
 
 }
 
+func (c *Core) calculateReactions(damageCtx *context.DamageContext, targetPlayer *player) {
+	for targetCharacter, damage := range damageCtx.Damage() {
+		character := targetPlayer.characters[targetCharacter]
+		// 为目标玩家附加伤害元素
+		tempElements := c.ruleSet.ReactionCalculator.Attach(character.elements, damage.ElementType())
+
+		// 根据目标玩家身上的元素计算反应类型
+		reaction, remains := c.ruleSet.ReactionCalculator.ReactionCalculate(tempElements)
+		character.elements = remains
+		damageCtx.SetReaction(targetCharacter, reaction)
+
+		// 根据元素反应类型修改伤害
+		c.ruleSet.ReactionCalculator.DamageCalculate(reaction, character, damageCtx)
+	}
+}
+
+func (c *Core) paymentCheck(need, paid model.Cost, sender *player) bool {
+	if !need.Equals(paid) {
+		return false
+	} else if !sender.holdingCost.Contains(paid) {
+		return false
+	} else {
+		return true
+	}
+}
+
 // sendSyncMessage 立即向所有玩家发送同步信息
 func (c *Core) sendSyncMessage() {
 	// 向所有参与战斗的玩家发送信息
@@ -362,12 +395,14 @@ func (c *Core) sendSyncMessage() {
 	}
 
 	// 向所有观战的游客发送信息
-	for _, conn := range c.guests {
-		syncMessage := c.generateSyncMessage(0)
-		if jsonBytes, err := json.Marshal(syncMessage); err != nil {
-			c.errorHandler.Handle(err)
-		} else {
-			conn.Write(jsonBytes)
+	for conn, isValid := range c.guests {
+		if conn != nil && isValid {
+			syncMessage := c.generateSyncMessage(0)
+			if jsonBytes, err := json.Marshal(syncMessage); err != nil {
+				c.errorHandler.Handle(err)
+			} else {
+				conn.Write(jsonBytes)
+			}
 		}
 	}
 }
@@ -458,7 +493,120 @@ func (c *Core) actionExecutor() {
 
 // executeAttack 执行攻击行动
 func (c *Core) executeAttack(action message.AttackAction) {
+	senderPlayerContext, targetPlayerContext := c.room[action.Sender], c.room[action.Target]
+	var senderPlayer, targetPlayer *player = nil, nil
+	var attackSkill model.AttackSkill = nil
 
+	// 执行状态校验
+	{
+		// 校验玩家信息
+		if senderPlayerContext == nil || targetPlayerContext == nil {
+			// 不存在玩家，不处理 todo add traces
+			return
+		} else if senderPlayer, targetPlayer = senderPlayerContext.player, targetPlayerContext.player; senderPlayer == nil || targetPlayer == nil {
+			// 玩家的对战信息未被托管，不处理 todo add traces
+			return
+		}
+
+		// 校验技能信息
+		if skill, existSkill := senderPlayer.characters[senderPlayer.activeCharacter].skills[action.Skill]; !existSkill {
+			// 在协同技能中查找该技能是否存在
+			existCooperativeSkill := false
+			for _, cooperativeSkill := range senderPlayer.cooperativeAttacks {
+				if cooperativeSkill.ID() == action.Skill {
+					existCooperativeSkill = true
+					break
+				}
+			}
+
+			// 发起玩家的前台角色不持有该技能
+			if !existCooperativeSkill {
+				return
+			}
+		} else if attack, converted := skill.(model.AttackSkill); !converted {
+			// 技能无法被转化为攻击技能，不处理
+			return
+		} else {
+			attackSkill = attack
+		}
+	}
+
+	// 扣减技能费用
+	{
+		baseCost, paidCost := attackSkill.Cost(), *model.NewCostFromMap(action.Paid)
+		if !c.paymentCheck(baseCost, paidCost, senderPlayer) {
+			// 费用不合法或玩家无力承担此次费用，不处理
+			return
+		} else {
+			// 扣费
+			senderPlayer.holdingCost.Pay(paidCost)
+		}
+	}
+
+	// 填充基础伤害
+	baseDamage := attackSkill.BaseDamage(targetPlayer.activeCharacter, senderPlayer.activeCharacter, targetPlayer.GetBackgroundCharacters())
+
+	// 计算伤害修正
+	{
+		executeCharacter := senderPlayer.characters[senderPlayer.activeCharacter]
+
+		// 先执行攻击方直接加算逻辑
+		senderPlayer.globalDirectAttackModifiers.Execute(baseDamage)
+		executeCharacter.localDirectAttackModifiers.Execute(baseDamage)
+
+		// 计算元素反应加成
+		c.calculateReactions(baseDamage, targetPlayer)
+
+		// 最后执行攻击方最终乘算逻辑
+		executeCharacter.localFinalAttackModifiers.Execute(baseDamage)
+		senderPlayer.globalFinalAttackModifiers.Execute(baseDamage)
+
+		// 计算防御方减伤逻辑
+		for targetCharacter, damage := range baseDamage.Damage() {
+			if targetCharacter != targetPlayer.activeCharacter {
+				if damage.ElementType() != enum.ElementNone {
+					// 后台角色承伤，且伤害有元素效果，意味着不是穿透伤害，享受角色防御减伤
+					targetPlayer.characters[targetCharacter].localDefenceModifiers.Execute(baseDamage)
+				} else {
+					// 穿透伤害不享受角色防御减伤
+				}
+			} else {
+				// 前台角色享受角色防御减伤
+				targetPlayer.characters[targetCharacter].localDefenceModifiers.Execute(baseDamage)
+			}
+		}
+		targetPlayer.globalDefenceModifiers.Execute(baseDamage)
+	}
+
+	// 执行伤害结果
+	{
+		// 扣减生命
+		for targetCharacter, damage := range baseDamage.Damage() {
+			character := targetPlayer.characters[targetCharacter]
+			if character.currentHP <= damage.Amount() {
+				character.currentHP = 0
+				character.status = enum.CharacterStatusDefeated
+			} else {
+				character.currentHP -= damage.Amount()
+			}
+		}
+
+		// todo: 执行元素反应效果
+		//eventContext := c.ruleSet.ReactionCalculator.EffectCalculate(baseDamage.GetTargetCharacterReaction(), targetPlayer)
+
+	}
+
+	// 执行阻塞逻辑
+	if targetPlayer.characters[targetPlayer.activeCharacter].status == enum.CharacterStatusDefeated {
+		c.defeatedChan <- SyncDefeatedCharacterMessage{DefeatedPlayerUID: targetPlayer.uid}
+		<-c.switchedChan
+	}
+
+	// 执行攻击、防御回调
+	attackCallbackContext, defenceCallbackContext := context.NewCallbackContext(), context.NewCallbackContext()
+	senderPlayer.callbackEvents.Call(enum.AfterAttack, attackCallbackContext)
+	targetPlayer.callbackEvents.Call(enum.AfterDefence, defenceCallbackContext)
+	// todo 具体执行callbackContext
 }
 
 func (c *Core) executeSwitch(action message.SwitchAction) {
@@ -474,42 +622,30 @@ func (c *Core) executeUseCard(action message.UseCardAction) {
 }
 
 func (c *Core) executeReRoll(action message.ReRollAction) {
-	executePlayer := c.room[action.Sender].player
-	if executePlayer.holdingCost.Contains(*model.NewCostFromMap(action.Dropped)) {
-
+	executePlayer, droppedCost := c.room[action.Sender].player, model.NewCostFromMap(action.Dropped)
+	if executePlayer.holdingCost.Contains(*droppedCost) {
+		// 正常请求，正常处理
+		executePlayer.holdingCost.Pay(*droppedCost)
+		reRollCost := model.NewRandomCost(droppedCost.Total())
+		executePlayer.holdingCost.Add(*reRollCost)
+	} else {
+		// 不正常请求，不处理 todo: add traces
+		return
 	}
 }
 
 func (c *Core) executeSkipRound(action message.SkipRoundAction) {
-
+	if action.Sender == c.actingPlayer && action.Sender != 0 {
+		// 正常请求，正常处理
+		c.operatedChan <- struct{}{}
+	} else {
+		// 不正常请求，不处理 todo: add traces
+		return
+	}
 }
 
 func (c *Core) executeConcede(actionMessage message.ConcedeAction) {
 
-}
-
-// Close 关闭战斗核心的所有服务
-func (c *Core) Close() {
-	// 向链式反应注入中子
-	c.exitChan <- struct{}{}
-
-	// 关闭websocket连接
-	for _, playerContext := range c.room {
-		playerContext.connection.Close()
-	}
-
-	// 关闭各种管道
-	close(c.readChan)
-	close(c.defeatedChan)
-	close(c.switchedChan)
-}
-
-// Serve 启动战斗核心的所有服务
-func (c *Core) Serve() {
-	// 启动所有websocket监听
-	for _, playerContext := range c.room {
-		go c.networkListener(playerContext.connection)
-	}
 }
 
 func (c *Core) injectPlayers(initializeMessage message.InitializeMessage) (success bool) {
@@ -545,6 +681,30 @@ func (c *Core) injectPlayers(initializeMessage message.InitializeMessage) (succe
 	}
 
 	return true
+}
+
+// Close 关闭战斗核心的所有服务
+func (c *Core) Close() {
+	// 向链式反应注入中子
+	c.exitChan <- struct{}{}
+
+	// 关闭websocket连接
+	for _, playerContext := range c.room {
+		playerContext.connection.Close()
+	}
+
+	// 关闭各种管道
+	close(c.readChan)
+	close(c.defeatedChan)
+	close(c.switchedChan)
+}
+
+// Serve 启动战斗核心的所有服务
+func (c *Core) Serve() {
+	// 启动所有websocket监听
+	for _, playerContext := range c.room {
+		go c.networkListener(playerContext.connection)
+	}
 }
 
 func generateSelfMessage(c *Core, player *player) (selfMessage message.Self) {
@@ -856,7 +1016,7 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 	}
 
 	var characterList []uint
-	var characterMap map[uint]*character
+	characterMap := map[uint]*character{}
 	for _, characterID := range matchingMessage.Characters {
 		if initCharacterSuccess, character := initCharacter(characterID, matchingMessage.UID, ruleSet); !initCharacterSuccess {
 			// 初始化角色失败
@@ -899,7 +1059,7 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 		globalChargeModifiers:       modifier.NewChain[context.ChargeContext](),
 		globalHealModifiers:         modifier.NewChain[context.HealContext](),
 		globalCostModifiers:         modifier.NewChain[context.CostContext](),
-		cooperativeAttacks:          []model.CooperativeSkill{},
+		cooperativeAttacks:          map[enum.TriggerType]model.CooperativeSkill{},
 		callbackEvents:              event.NewEventMap(),
 	}
 

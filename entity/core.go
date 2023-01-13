@@ -7,6 +7,7 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/event"
+	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 	"github.com/sunist-c/genius-invokation-simulator-backend/persistence"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/websocket"
@@ -19,6 +20,13 @@ import (
 type filter = map[enum.ActionType]bool
 
 var (
+	nullDirectAttackModifiers kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
+	nullFinalAttackModifiers  kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
+	nullDefenceModifiers      kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
+	nullChargeModifiers       kv.Map[uint, []modifier.Modifier[context.ChargeContext]] = nil
+	nullHealModifiers         kv.Map[uint, []modifier.Modifier[context.HealContext]]   = nil
+	nullCostModifiers         kv.Map[uint, []modifier.Modifier[context.CostContext]]   = nil
+
 	cachedFilter = map[enum.PlayerStatus]map[enum.ActionType]bool{
 		enum.PlayerStatusInitialized: {
 			enum.ActionNone:           false,
@@ -362,6 +370,10 @@ func (c *Core) calculateReactions(damageCtx *context.DamageContext, targetPlayer
 	}
 }
 
+func (c *Core) executeReactionEffect(reaction enum.Reaction) {
+
+}
+
 func (c *Core) paymentCheck(need, paid model.Cost, sender *player) bool {
 	if !need.Equals(paid) {
 		return false
@@ -491,6 +503,295 @@ func (c *Core) actionExecutor() {
 	}
 }
 
+// executeCallback 执行某玩家的回调效果
+func (c *Core) executeCallbackModify(p *player, ctx *context.CallbackContext) {
+	// 执行元素转换效果
+	{
+		if needExecuteChangeElement, changeElementResult := ctx.ChangeElementsResult(); needExecuteChangeElement {
+			// 计算需要更改的元素，将增加和删除分离
+			addElement, removeElement := map[enum.ElementType]uint{}, map[enum.ElementType]uint{}
+			for element, amount := range changeElementResult.Cost() {
+				if amount > 0 {
+					addElement[element] += uint(amount)
+				} else {
+					removeElement[element] += uint(-amount)
+				}
+			}
+
+			// 执行增加和删除操作
+			removeElementCost, addElementCost := *model.NewCostFromMap(removeElement), *model.NewCostFromMap(addElement)
+			p.holdingCost.Pay(removeElementCost)
+			p.holdingCost.Add(addElementCost)
+		}
+	}
+
+	// 执行充能更改效果
+	{
+		if needChangeCharge, changeChargeResult := ctx.ChangeChargeResult(); needChangeCharge {
+			// 全局修正充能效果
+			p.globalChargeModifiers.Execute(changeChargeResult)
+
+			for characterID := range changeChargeResult.Charge() {
+				character := p.characters[characterID]
+				// 本地修正充能效果
+				character.localChargeModifiers.Execute(changeChargeResult)
+
+				// 执行充能结果
+				chargeAmount := changeChargeResult.Charge()[characterID]
+				if chargeAmount > 0 {
+					// 充能，需要考虑上界
+					if character.currentMP+uint(chargeAmount) > character.maxMP {
+						character.currentMP = character.maxMP
+					} else {
+						character.currentMP += uint(chargeAmount)
+					}
+				} else if chargeAmount < 0 {
+					// 扣能量，需要考虑下界
+					if chargeAmount+int(character.currentMP) < 0 {
+						character.currentMP = 0
+					} else {
+						character.currentMP = uint(chargeAmount + int(character.currentMP))
+					}
+				} else {
+					// 0值，不改变
+					continue
+				}
+			}
+		}
+	}
+
+	// 执行修正修改结果
+	{
+		if needChangeModifiers, changeModifiersResult := ctx.ChangeModifiersResult(); needChangeModifiers {
+			// 修改全局修正
+			{
+				if changeModifiersResult.AddGlobalChargeModifiers() != nil {
+					for _, mdf := range changeModifiersResult.AddGlobalChargeModifiers() {
+						p.globalChargeModifiers.Append(mdf)
+					}
+				}
+
+				if changeModifiersResult.AddGlobalCostModifiers() != nil {
+					for _, mdf := range changeModifiersResult.AddGlobalCostModifiers() {
+						p.globalCostModifiers.Append(mdf)
+					}
+				}
+
+				if changeModifiersResult.AddGlobalDefenceModifiers() != nil {
+					for _, mdf := range changeModifiersResult.AddGlobalDefenceModifiers() {
+						p.globalDefenceModifiers.Append(mdf)
+					}
+				}
+
+				if changeModifiersResult.AddGlobalDirectAttackModifiers() != nil {
+					for _, mdf := range changeModifiersResult.AddGlobalDirectAttackModifiers() {
+						p.globalDirectAttackModifiers.Append(mdf)
+					}
+				}
+
+				if changeModifiersResult.AddGlobalFinalAttackModifiers() != nil {
+					for _, mdf := range changeModifiersResult.AddGlobalFinalAttackModifiers() {
+						p.globalFinalAttackModifiers.Append(mdf)
+					}
+				}
+
+				if changeModifiersResult.AddGlobalHealModifiers() != nil {
+					for _, mdf := range changeModifiersResult.AddGlobalHealModifiers() {
+						p.globalHealModifiers.Append(mdf)
+					}
+				}
+
+				if changeModifiersResult.RemoveGlobalChargeModifiers() != nil {
+					for _, mdf := range changeModifiersResult.RemoveGlobalChargeModifiers() {
+						p.globalChargeModifiers.Remove(mdf.ID())
+					}
+				}
+
+				if changeModifiersResult.RemoveGlobalCostModifiers() != nil {
+					for _, mdf := range changeModifiersResult.RemoveGlobalCostModifiers() {
+						p.globalCostModifiers.Remove(mdf.ID())
+					}
+				}
+
+				if changeModifiersResult.RemoveGlobalDefenceModifiers() != nil {
+					for _, mdf := range changeModifiersResult.RemoveGlobalDefenceModifiers() {
+						p.globalDefenceModifiers.Remove(mdf.ID())
+					}
+				}
+
+				if changeModifiersResult.RemoveGlobalDirectAttackModifiers() != nil {
+					for _, mdf := range changeModifiersResult.RemoveGlobalDirectAttackModifiers() {
+						p.globalDirectAttackModifiers.Remove(mdf.ID())
+					}
+				}
+
+				if changeModifiersResult.RemoveGlobalFinalAttackModifiers() != nil {
+					for _, mdf := range changeModifiersResult.RemoveGlobalFinalAttackModifiers() {
+						p.globalFinalAttackModifiers.Remove(mdf.ID())
+					}
+				}
+
+				if changeModifiersResult.RemoveGlobalHealModifiers() != nil {
+					for _, mdf := range changeModifiersResult.RemoveGlobalHealModifiers() {
+						p.globalHealModifiers.Remove(mdf.ID())
+					}
+				}
+			}
+
+			// 修改角色本地修正
+			for _, character := range p.characters {
+				if changeModifiersResult.AddLocalChargeModifiers() != nullChargeModifiers {
+					localChargeModifiers := changeModifiersResult.AddLocalChargeModifiers().Get(character.id)
+					for _, localChargeModifier := range localChargeModifiers {
+						character.localChargeModifiers.Append(localChargeModifier)
+					}
+				}
+
+				if changeModifiersResult.AddLocalHealModifiers() != nullHealModifiers {
+					localHealModifiers := changeModifiersResult.AddLocalHealModifiers().Get(character.id)
+					for _, localHealModifier := range localHealModifiers {
+						character.localHealModifiers.Append(localHealModifier)
+					}
+				}
+
+				if changeModifiersResult.AddLocalCostModifiers() != nullCostModifiers {
+					localCostModifiers := changeModifiersResult.AddLocalCostModifiers().Get(character.id)
+					for _, localCostModifier := range localCostModifiers {
+						character.localCostModifiers.Append(localCostModifier)
+					}
+				}
+
+				if changeModifiersResult.AddLocalDefenceModifiers() != nullDefenceModifiers {
+					localDefenceModifiers := changeModifiersResult.AddLocalDefenceModifiers().Get(character.id)
+					for _, localDefenceModifier := range localDefenceModifiers {
+						character.localDefenceModifiers.Append(localDefenceModifier)
+					}
+				}
+
+				if changeModifiersResult.AddLocalDirectAttackModifiers() != nullDirectAttackModifiers {
+					localDirectAttackModifiers := changeModifiersResult.AddLocalDirectAttackModifiers().Get(character.id)
+					for _, localDirectAttackModifier := range localDirectAttackModifiers {
+						character.localDirectAttackModifiers.Append(localDirectAttackModifier)
+					}
+				}
+
+				if changeModifiersResult.AddLocalFinalAttackModifiers() != nullFinalAttackModifiers {
+					localFinalAttackModifiers := changeModifiersResult.AddLocalFinalAttackModifiers().Get(character.id)
+					for _, localFinalAttackModifier := range localFinalAttackModifiers {
+						character.localFinalAttackModifiers.Append(localFinalAttackModifier)
+					}
+				}
+
+				if changeModifiersResult.RemoveLocalChargeModifiers() != nullChargeModifiers {
+					localChargeModifiers := changeModifiersResult.RemoveLocalChargeModifiers().Get(character.id)
+					for _, localChargeModifier := range localChargeModifiers {
+						character.localChargeModifiers.Remove(localChargeModifier.ID())
+					}
+				}
+
+				if changeModifiersResult.RemoveLocalHealModifiers() != nullHealModifiers {
+					localHealModifiers := changeModifiersResult.RemoveLocalHealModifiers().Get(character.id)
+					for _, localHealModifier := range localHealModifiers {
+						character.localHealModifiers.Remove(localHealModifier.ID())
+					}
+				}
+
+				if changeModifiersResult.RemoveLocalCostModifiers() != nullCostModifiers {
+					localCostModifiers := changeModifiersResult.RemoveLocalCostModifiers().Get(character.id)
+					for _, localCostModifier := range localCostModifiers {
+						character.localCostModifiers.Remove(localCostModifier.ID())
+					}
+				}
+
+				if changeModifiersResult.RemoveLocalDefenceModifiers() != nullDefenceModifiers {
+					localDefenceModifiers := changeModifiersResult.RemoveLocalDefenceModifiers().Get(character.id)
+					for _, localDefenceModifier := range localDefenceModifiers {
+						character.localDefenceModifiers.Remove(localDefenceModifier.ID())
+					}
+				}
+
+				if changeModifiersResult.RemoveLocalDirectAttackModifiers() != nullDirectAttackModifiers {
+					localDirectAttackModifiers := changeModifiersResult.RemoveLocalDirectAttackModifiers().Get(character.id)
+					for _, localDirectAttackModifier := range localDirectAttackModifiers {
+						character.localDirectAttackModifiers.Remove(localDirectAttackModifier.ID())
+					}
+				}
+
+				if changeModifiersResult.RemoveLocalFinalAttackModifiers() != nullFinalAttackModifiers {
+					localFinalAttackModifiers := changeModifiersResult.RemoveLocalFinalAttackModifiers().Get(character.id)
+					for _, localFinalAttackModifier := range localFinalAttackModifiers {
+						character.localFinalAttackModifiers.Remove(localFinalAttackModifier.ID())
+					}
+				}
+			}
+		}
+	}
+
+	// 执行活动状态更改
+	{
+		if needChangeOperated, result := ctx.ChangeOperatedResult(); needChangeOperated {
+			p.operated = result
+		}
+	}
+
+	// 执行角色切换结果
+	{
+		if needSwitchCharacter, result := ctx.SwitchCharacterResult(); needSwitchCharacter {
+			if p.characters[result].status == enum.CharacterStatusBackground {
+				if p.characters[p.activeCharacter].status != enum.CharacterStatusDefeated {
+					// 当前前台角色不是被击败，将其更改为后台角色
+					p.characters[p.activeCharacter].status = enum.CharacterStatusBackground
+				}
+
+				// 需要切换的角色是后台角色，将其更改为前台角色
+				p.characters[result].status = enum.CharacterStatusActive
+				p.activeCharacter = result
+			}
+		}
+	}
+
+	// 执行获取卡牌效果
+	{
+		if needGetCard, result := ctx.GetCardsResult(); needGetCard && result > 0 {
+			for i := uint(0); i < result; i++ {
+				if card, success := p.cardDeck.GetOne(); success {
+					// 卡牌足够的话，将卡牌加入手牌
+					p.holdingCards[card.ID()] = card
+				} else {
+					// 卡牌不够的话，下次一定
+					break
+				}
+			}
+		}
+	}
+
+	// 执行获取特定卡牌效果
+	{
+		if needFindCard, target := ctx.GetFindCardResult(); needFindCard {
+			if card, success := p.cardDeck.FindOne(target); success {
+				// 可以获取卡牌的话，将卡牌添加进手牌
+				p.holdingCards[card.ID()] = card
+			}
+		}
+	}
+
+	// 执行元素附着
+	{
+		if needAttachElement, attachment := ctx.AttachElementResult(); needAttachElement {
+			for target, element := range attachment {
+				targetCharacter := p.characters[target]
+				tempElements := c.ruleSet.ReactionCalculator.Attach(targetCharacter.elements, element)
+				reaction, remainElement := c.ruleSet.ReactionCalculator.ReactionCalculate(tempElements)
+				if reaction != enum.ReactionNone {
+					c.executeReactionEffect(reaction)
+				} else {
+					targetCharacter.elements = remainElement
+				}
+			}
+		}
+	}
+}
+
 // executeAttack 执行攻击行动
 func (c *Core) executeAttack(action message.AttackAction) {
 	senderPlayerContext, targetPlayerContext := c.room[action.Sender], c.room[action.Target]
@@ -569,6 +870,7 @@ func (c *Core) executeAttack(action message.AttackAction) {
 					targetPlayer.characters[targetCharacter].localDefenceModifiers.Execute(baseDamage)
 				} else {
 					// 穿透伤害不享受角色防御减伤
+					continue
 				}
 			} else {
 				// 前台角色享受角色防御减伤
@@ -591,8 +893,8 @@ func (c *Core) executeAttack(action message.AttackAction) {
 			}
 		}
 
-		// todo: 执行元素反应效果
-		//eventContext := c.ruleSet.ReactionCalculator.EffectCalculate(baseDamage.GetTargetCharacterReaction(), targetPlayer)
+		// 执行元素反应效果
+		c.executeReactionEffect(baseDamage.GetTargetCharacterReaction())
 
 	}
 
@@ -606,7 +908,8 @@ func (c *Core) executeAttack(action message.AttackAction) {
 	attackCallbackContext, defenceCallbackContext := context.NewCallbackContext(), context.NewCallbackContext()
 	senderPlayer.callbackEvents.Call(enum.AfterAttack, attackCallbackContext)
 	targetPlayer.callbackEvents.Call(enum.AfterDefence, defenceCallbackContext)
-	// todo 具体执行callbackContext
+	c.executeCallbackModify(senderPlayer, attackCallbackContext)
+	c.executeCallbackModify(targetPlayer, defenceCallbackContext)
 }
 
 func (c *Core) executeSwitch(action message.SwitchAction) {

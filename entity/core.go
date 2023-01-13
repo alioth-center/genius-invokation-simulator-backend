@@ -556,33 +556,33 @@ func generateSelfMessage(c *Core, player *player) (selfMessage message.Self) {
 		}
 
 		var modifierList []message.Modifier
-		for _, modifier := range character.GetLocalModifiers(enum.ModifierTypeAttack) {
+		for _, mdf := range character.GetLocalModifiers(enum.ModifierTypeAttack) {
 			modifierList = append(modifierList, message.Modifier{
-				ID:   modifier,
+				ID:   mdf,
 				Type: enum.ModifierTypeAttack,
 			})
 		}
-		for _, modifier := range character.GetLocalModifiers(enum.ModifierTypeCharge) {
+		for _, mdf := range character.GetLocalModifiers(enum.ModifierTypeCharge) {
 			modifierList = append(modifierList, message.Modifier{
-				ID:   modifier,
+				ID:   mdf,
 				Type: enum.ModifierTypeCharge,
 			})
 		}
-		for _, modifier := range character.GetLocalModifiers(enum.ModifierTypeCost) {
+		for _, mdf := range character.GetLocalModifiers(enum.ModifierTypeCost) {
 			modifierList = append(modifierList, message.Modifier{
-				ID:   modifier,
+				ID:   mdf,
 				Type: enum.ModifierTypeCost,
 			})
 		}
-		for _, modifier := range character.GetLocalModifiers(enum.ModifierTypeDefence) {
+		for _, mdf := range character.GetLocalModifiers(enum.ModifierTypeDefence) {
 			modifierList = append(modifierList, message.Modifier{
-				ID:   modifier,
+				ID:   mdf,
 				Type: enum.ModifierTypeDefence,
 			})
 		}
-		for _, modifier := range character.GetLocalModifiers(enum.ModifierTypeHeal) {
+		for _, mdf := range character.GetLocalModifiers(enum.ModifierTypeHeal) {
 			modifierList = append(modifierList, message.Modifier{
-				ID:   modifier,
+				ID:   mdf,
 				Type: enum.ModifierTypeHeal,
 			})
 		}
@@ -680,33 +680,33 @@ func generateOtherMessage(c *Core, player *player) (othersMessage []message.Othe
 			}
 
 			var modifierList []message.Modifier
-			for _, modifier := range character.GetLocalModifiers(enum.ModifierTypeAttack) {
+			for _, mdf := range character.GetLocalModifiers(enum.ModifierTypeAttack) {
 				modifierList = append(modifierList, message.Modifier{
-					ID:   modifier,
+					ID:   mdf,
 					Type: enum.ModifierTypeAttack,
 				})
 			}
-			for _, modifier := range character.GetLocalModifiers(enum.ModifierTypeCharge) {
+			for _, mdf := range character.GetLocalModifiers(enum.ModifierTypeCharge) {
 				modifierList = append(modifierList, message.Modifier{
-					ID:   modifier,
+					ID:   mdf,
 					Type: enum.ModifierTypeCharge,
 				})
 			}
-			for _, modifier := range character.GetLocalModifiers(enum.ModifierTypeCost) {
+			for _, mdf := range character.GetLocalModifiers(enum.ModifierTypeCost) {
 				modifierList = append(modifierList, message.Modifier{
-					ID:   modifier,
+					ID:   mdf,
 					Type: enum.ModifierTypeCost,
 				})
 			}
-			for _, modifier := range character.GetLocalModifiers(enum.ModifierTypeDefence) {
+			for _, mdf := range character.GetLocalModifiers(enum.ModifierTypeDefence) {
 				modifierList = append(modifierList, message.Modifier{
-					ID:   modifier,
+					ID:   mdf,
 					Type: enum.ModifierTypeDefence,
 				})
 			}
-			for _, modifier := range character.GetLocalModifiers(enum.ModifierTypeHeal) {
+			for _, mdf := range character.GetLocalModifiers(enum.ModifierTypeHeal) {
 				modifierList = append(modifierList, message.Modifier{
-					ID:   modifier,
+					ID:   mdf,
 					Type: enum.ModifierTypeHeal,
 				})
 			}

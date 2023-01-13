@@ -11,6 +11,7 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 	"github.com/sunist-c/genius-invokation-simulator-backend/persistence"
 	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/websocket"
+	"github.com/sunist-c/genius-invokation-simulator-backend/util"
 )
 
 // filter 玩家行动过滤器
@@ -187,6 +188,7 @@ type playerContext struct {
 }
 
 type Core struct {
+	errorHandler util.ErrorHandler                 // errorHandler 处理错误的日志器
 	room         map[uint]*playerContext           // room 房间信息，包括玩家、合法操作
 	viewers      map[uint]*websocket.Connection    // viewers 观战者的连接集合
 	guests       []*websocket.Connection           // guests 匿名观战者的连接集合
@@ -202,7 +204,6 @@ type Core struct {
 	operatedChan chan struct{}                     // operatedChan 玩家结束操作时，会往此管道写信息
 	readChan     chan message.ActionMessage        // readChan 有网络信息传入时，向此管道写入信息
 	exitChan     chan struct{}                     // exitChan 当结束服务时，向此管道写入信息
-	errChan      chan error                        // errChan 错误管道，发生错误时向此管道写入信息，可能被其他结构共用
 }
 
 // updatePlayerStatusAndCoreFilter 更新玩家状态与玩家可操作列表，没有做校验，请在调用前校验player不为nil且在filter中有记录
@@ -277,7 +278,7 @@ func (c *Core) handleMessage(msg message.ActionMessage) {
 		}
 	default:
 		// 没有解析到messageType，理论上不可能，当作恶意网络包拦截
-		c.errChan <- fmt.Errorf("unknown action %d, sent by %v", msg.Type, msg.Sender)
+		c.errorHandler.Handle(fmt.Errorf("unknown action %d, sent by %v", msg.Type, msg.Sender))
 	}
 
 	// 处理完毕，需要向所有玩家同步信息
@@ -344,7 +345,7 @@ func (c *Core) sendSyncMessage() {
 	for _, playerContext := range c.room {
 		syncMessage := c.generateSyncMessage(playerContext.player.uid)
 		if jsonBytes, err := json.Marshal(syncMessage); err != nil {
-			c.errChan <- err
+
 		} else {
 			playerContext.connection.Write(jsonBytes)
 		}
@@ -354,7 +355,7 @@ func (c *Core) sendSyncMessage() {
 	for viewerID, viewerConnection := range c.viewers {
 		syncMessage := c.generateSyncMessage(viewerID)
 		if jsonBytes, err := json.Marshal(syncMessage); err != nil {
-			c.errChan <- err
+			c.errorHandler.Handle(err)
 		} else {
 			viewerConnection.Write(jsonBytes)
 		}
@@ -364,7 +365,7 @@ func (c *Core) sendSyncMessage() {
 	for _, conn := range c.guests {
 		syncMessage := c.generateSyncMessage(0)
 		if jsonBytes, err := json.Marshal(syncMessage); err != nil {
-			c.errChan <- err
+			c.errorHandler.Handle(err)
 		} else {
 			conn.Write(jsonBytes)
 		}
@@ -412,7 +413,7 @@ func (c *Core) filterUpdater() {
 			}
 		} else {
 			// 下一个玩家没有被框架托管，理论上不可能，致命错误
-			c.errChan <- fmt.Errorf("error occurred while handling player %v, does not exist", actingPlayer)
+			c.errorHandler.Handle(fmt.Errorf("error occurred while handling player %v, does not exist", actingPlayer))
 			c.Close()
 		}
 	}
@@ -426,7 +427,7 @@ func (c *Core) networkListener(conn *websocket.Connection) {
 			var actionMessage message.ActionMessage
 			if err := json.Unmarshal(iStream, &actionMessage); err != nil {
 				// 收到错误数据包，不理会
-				c.errChan <- err
+				c.errorHandler.Handle(err)
 			} else {
 				// 将网络消息写入消息缓冲管道
 				c.readChan <- actionMessage

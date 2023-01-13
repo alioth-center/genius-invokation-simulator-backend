@@ -279,25 +279,30 @@ func (c *Core) handleMessage(msg message.ActionMessage) {
 		// 没有解析到messageType，理论上不可能，当作恶意网络包拦截
 		c.errChan <- fmt.Errorf("unknown action %d, sent by %v", msg.Type, msg.Sender)
 	}
+
+	// 处理完毕，需要向所有玩家同步信息
+	c.sendSyncMessage()
 }
 
 // generateSyncMessage 生成某玩家收到的同步信息
-func (c *Core) generateSyncMessage(player *player) (syncMessage message.SyncMessage) {
+func (c *Core) generateSyncMessage(player uint) (syncMessage message.SyncMessage) {
 	dictionary := generateDictionary(c)
 	background := generateBackgroundMessage(c)
-	if c.room[player.uid] != nil {
+	if c.room[player] != nil {
 		// 是参与对战玩家，需要开战争迷雾
+		playerEntity := c.room[player].player
 		playerMessage := message.PlayerMessage{
-			Self:   generateSelfMessage(c, player),
-			Others: generateOtherMessage(c, player),
+			Self:   generateSelfMessage(c, playerEntity),
+			Others: generateOtherMessage(c, playerEntity),
 			Append: dictionary,
 		}
 
-		return message.NewSyncMessage(player.uid, playerMessage, background)
-	} else {
-		if player != nil {
+		return message.NewSyncMessage(player, playerMessage, background)
+	} else if player != 0 {
+		if c.viewers[player] != nil {
 			// 不是参与对战玩家，但是认证了，开上帝视野
 			var playerList []message.Self
+
 			for _, playerContext := range c.room {
 				playerList = append(playerList, generateSelfMessage(c, playerContext.player))
 			}
@@ -307,9 +312,9 @@ func (c *Core) generateSyncMessage(player *player) (syncMessage message.SyncMess
 				Append:  dictionary,
 			}
 
-			return message.NewSyncMessage(player.uid, viewerMessage, background)
+			return message.NewSyncMessage(player, viewerMessage, background)
 		} else {
-			// 三无小号，全局战争迷雾
+			// 不是参与对战玩家，且没有认证，理论上不可能，返回默认的战争迷雾视角
 			playerList := generateOtherMessage(c, nil)
 
 			guestMessage := message.GuestMessage{
@@ -319,17 +324,49 @@ func (c *Core) generateSyncMessage(player *player) (syncMessage message.SyncMess
 
 			return message.NewSyncMessage(0, guestMessage, background)
 		}
+	} else {
+		// 三无小号，全局战争迷雾
+		playerList := generateOtherMessage(c, nil)
+
+		guestMessage := message.GuestMessage{
+			Players: playerList,
+			Append:  dictionary,
+		}
+
+		return message.NewSyncMessage(0, guestMessage, background)
 	}
+
 }
 
 // sendSyncMessage 立即向所有玩家发送同步信息
 func (c *Core) sendSyncMessage() {
+	// 向所有参与战斗的玩家发送信息
 	for _, playerContext := range c.room {
-		syncMessage := c.generateSyncMessage(playerContext.player)
+		syncMessage := c.generateSyncMessage(playerContext.player.uid)
 		if jsonBytes, err := json.Marshal(syncMessage); err != nil {
 			c.errChan <- err
 		} else {
 			playerContext.connection.Write(jsonBytes)
+		}
+	}
+
+	// 向所有观战的玩家发送信息
+	for viewerID, viewerConnection := range c.viewers {
+		syncMessage := c.generateSyncMessage(viewerID)
+		if jsonBytes, err := json.Marshal(syncMessage); err != nil {
+			c.errChan <- err
+		} else {
+			viewerConnection.Write(jsonBytes)
+		}
+	}
+
+	// 向所有观战的游客发送信息
+	for _, conn := range c.guests {
+		syncMessage := c.generateSyncMessage(0)
+		if jsonBytes, err := json.Marshal(syncMessage); err != nil {
+			c.errChan <- err
+		} else {
+			conn.Write(jsonBytes)
 		}
 	}
 }

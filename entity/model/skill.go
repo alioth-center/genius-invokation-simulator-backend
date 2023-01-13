@@ -13,10 +13,11 @@ type Skill interface {
 type AttackSkill interface {
 	Skill
 	Cost() Cost
-	BaseDamage(target, self uint, background []uint) *context.DamageContext
+	BaseDamage(targetCharacter, senderCharacter uint, backgroundCharacters []uint) *context.DamageContext
 }
 
 type CooperativeSkill interface {
+	Skill
 	BaseDamage() *context.DamageContext
 	EffectLeft() uint
 	Effective() bool

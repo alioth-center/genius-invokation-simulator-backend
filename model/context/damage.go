@@ -43,7 +43,7 @@ func (d Damage) Reaction() enum.Reaction {
 
 type DamageContext struct {
 	skillID              uint
-	sendPlayer           uint
+	sendCharacter        uint
 	targetCharacter      uint
 	backgroundCharacters []uint
 	damages              map[uint]*Damage
@@ -116,7 +116,7 @@ func (d DamageContext) Damage() map[uint]Damage {
 func NewEmptyDamageContext(skill, from, target uint, backgrounds []uint) *DamageContext {
 	return &DamageContext{
 		skillID:              skill,
-		sendPlayer:           from,
+		sendCharacter:        from,
 		targetCharacter:      target,
 		backgroundCharacters: backgrounds,
 		damages:              map[uint]*Damage{},
@@ -127,7 +127,7 @@ func NewEmptyDamageContext(skill, from, target uint, backgrounds []uint) *Damage
 func NewDamageContext(skill, from, target uint, backgrounds []uint, elementType enum.ElementType, damageAmount uint) *DamageContext {
 	return &DamageContext{
 		skillID:              skill,
-		sendPlayer:           from,
+		sendCharacter:        from,
 		targetCharacter:      target,
 		backgroundCharacters: backgrounds,
 		damages:              map[uint]*Damage{target: {elementType: elementType, amount: damageAmount, reaction: enum.ReactionNone}},

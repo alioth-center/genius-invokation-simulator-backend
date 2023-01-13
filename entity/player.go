@@ -39,8 +39,8 @@ type player struct {
 	globalChargeModifiers       ChargeModifiers  // globalChargeModifiers 全局充能修正
 	globalCostModifiers         CostModifiers    // globalCostModifiers 全局费用修正
 
-	cooperativeAttacks []model.CooperativeSkill // cooperativeAttacks 协同攻击技能
-	callbackEvents     *event.Map               // callbackEvents 回调事件集合
+	cooperativeAttacks map[enum.TriggerType]model.CooperativeSkill // cooperativeAttacks 协同攻击技能
+	callbackEvents     *event.Map                                  // callbackEvents 回调事件集合
 }
 
 func (p player) GetUID() (uid uint) {
@@ -77,14 +77,14 @@ func (p player) GetActiveCharacter() (character uint) {
 }
 
 func (p player) GetBackgroundCharacters() (characters []uint) {
-	index := 0
-	for i, id := range p.characterList {
-		if id == p.activeCharacter {
-			index = i
+	characters = []uint{}
+	for _, character := range p.characters {
+		if character.status != enum.CharacterStatusDefeated && character.id != p.activeCharacter {
+			characters = append(characters, character.id)
 		}
 	}
 
-	return append(p.characterList[:index], p.characterList[index+1:]...)
+	return characters
 }
 
 func (p player) GetCharacter(character uint) (has bool, entity model.Character) {

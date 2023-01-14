@@ -22,6 +22,12 @@ type RuleSet struct {
 	Rule model.RuleSet
 }
 
+// Summon 被持久化模块托管的Summon工厂的产品
+type Summon struct{}
+
+// Event 被持久化模块托管的Event工厂的产品
+type Event struct{}
+
 // Character 被持久化模块托管的CharacterInfo工厂的产品
 type Character struct {
 	ID          uint
@@ -65,4 +71,14 @@ type RoomInfo struct {
 	Viewers          uint                `json:"viewers"`
 	RequiredPackages []string            `json:"required_packages"`
 	GameOptions      message.GameOptions `json:"game_options"`
+}
+
+// ModInfo 被持久化模块托管的ModInfo缓存
+type ModInfo struct {
+	PackageName string `json:"package_name"`
+	Events      []uint `json:"events"`
+	Characters  []uint `json:"characters"`
+	Cards       []uint `json:"cards"`
+	Skills      []uint `json:"skills"`
+	Summons     []uint `json:"summons"`
 }

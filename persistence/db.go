@@ -16,6 +16,8 @@ const (
 	cardPersistenceFileName      = "card-persistence.psc"
 	characterPersistenceFileName = "character-persistence.psc"
 	skillPersistenceFileName     = "skill-persistence.psc"
+	summonPersistenceFileName    = "summon-persistence.psc"
+	eventPersistenceFileName     = "event-persistence.psc"
 	sqlite3DBFileName            = "gisb-sqlite3.db"
 )
 
@@ -29,10 +31,14 @@ var (
 	CardPersistence      = newFactoryPersistence[Card]()
 	CharacterPersistence = newFactoryPersistence[Character]()
 	SkillPersistence     = newFactoryPersistence[Skill]()
+	SummonPersistence    = newFactoryPersistence[Summon]()
+	EventPersistence     = newFactoryPersistence[Event]()
 
 	LocalizationPersistence = newMemoryCache[string, localization.LanguagePack]()
+	ModInfoPersistence      = newMemoryCache[string, ModInfo]()
 	RoomInfoPersistence     = newMemoryCache[uint, RoomInfo]()
-	TokenPersistence        = newTimingMemoryCache[string, Token]()
+
+	TokenPersistence = newTimingMemoryCache[string, Token]()
 
 	CardDeckPersistence DatabasePersistence[uint, CardDeck]
 	PlayerPersistence   DatabasePersistence[uint, Player]
@@ -54,6 +60,8 @@ func Serve(flushFeq time.Duration, errChan chan error) {
 	CardPersistence.Serve(flushFeq, storagePath, cardPersistenceFileName, errChan)
 	CharacterPersistence.Serve(flushFeq, storagePath, characterPersistenceFileName, errChan)
 	SkillPersistence.Serve(flushFeq, storagePath, skillPersistenceFileName, errChan)
+	SummonPersistence.Serve(flushFeq, storagePath, summonPersistenceFileName, errChan)
+	EventPersistence.Serve(flushFeq, storagePath, eventPersistenceFileName, errChan)
 	TokenPersistence.Serve(time.Second*time.Duration(300), 0.5)
 }
 
@@ -95,6 +103,14 @@ func Load(errChan chan error) {
 			if err = SkillPersistence.Load(path.Join(storagePath, skillPersistenceFileName)); err != nil {
 				errChan <- err
 			}
+
+			if err = SummonPersistence.Load(path.Join(storagePath, summonPersistenceFileName)); err != nil {
+				errChan <- err
+			}
+
+			if err = EventPersistence.Load(path.Join(storagePath, eventPersistenceFileName)); err != nil {
+				errChan <- err
+			}
 		}
 
 		loaded = true
@@ -107,5 +123,7 @@ func Quit() {
 	CardPersistence.Exit()
 	CharacterPersistence.Exit()
 	SkillPersistence.Exit()
+	SummonPersistence.Exit()
+	EventPersistence.Exit()
 	TokenPersistence.Exit()
 }

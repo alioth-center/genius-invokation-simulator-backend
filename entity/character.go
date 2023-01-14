@@ -28,8 +28,6 @@ type character struct {
 	localChargeModifiers       ChargeModifiers  // localChargeModifiers 本地充能修正
 	localHealModifiers         HealModifiers    // localHealModifiers 本地治疗修正
 	localCostModifiers         CostModifiers    // localCostModifiers 本地费用修正
-
-	ruleSet model.RuleSet // ruleSet 用于结算的规则集合
 }
 
 func (c character) GetID() (id uint) {

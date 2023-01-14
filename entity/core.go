@@ -354,6 +354,7 @@ func (c *Core) generateSyncMessage(player uint) (syncMessage message.SyncMessage
 
 }
 
+// calculateReactions 计算元素反应并根据元素反应类型对伤害做出修正
 func (c *Core) calculateReactions(damageCtx *context.DamageContext, targetPlayer *player) {
 	for targetCharacter, damage := range damageCtx.Damage() {
 		character := targetPlayer.characters[targetCharacter]
@@ -370,10 +371,13 @@ func (c *Core) calculateReactions(damageCtx *context.DamageContext, targetPlayer
 	}
 }
 
-func (c *Core) executeReactionEffect(reaction enum.Reaction) {
-
+// executeReactionEffect 执行元素反应的效果
+func (c *Core) executeReactionEffect(reaction enum.Reaction, targetPlayer *player) {
+	effect := c.ruleSet.ReactionCalculator.EffectCalculate(reaction, targetPlayer)
+	c.executeCallbackModify(targetPlayer, effect)
 }
 
+// paymentCheck 检查支付费用和需求费用是否一致且玩家是否有能力支付费用
 func (c *Core) paymentCheck(need, paid model.Cost, sender *player) bool {
 	if !need.Equals(paid) {
 		return false
@@ -783,7 +787,7 @@ func (c *Core) executeCallbackModify(p *player, ctx *context.CallbackContext) {
 				tempElements := c.ruleSet.ReactionCalculator.Attach(targetCharacter.elements, element)
 				reaction, remainElement := c.ruleSet.ReactionCalculator.ReactionCalculate(tempElements)
 				if reaction != enum.ReactionNone {
-					c.executeReactionEffect(reaction)
+					c.executeReactionEffect(reaction, p)
 				} else {
 					targetCharacter.elements = remainElement
 				}
@@ -792,7 +796,7 @@ func (c *Core) executeCallbackModify(p *player, ctx *context.CallbackContext) {
 	}
 }
 
-// executeAttack 执行攻击行动
+// executeAttack 执行玩家的攻击指令
 func (c *Core) executeAttack(action message.AttackAction) {
 	senderPlayerContext, targetPlayerContext := c.room[action.Sender], c.room[action.Target]
 	var senderPlayer, targetPlayer *player = nil, nil
@@ -897,7 +901,7 @@ func (c *Core) executeAttack(action message.AttackAction) {
 		}
 
 		// 执行元素反应效果
-		c.executeReactionEffect(baseDamage.GetTargetCharacterReaction())
+		c.executeReactionEffect(baseDamage.GetTargetCharacterReaction(), targetPlayer)
 
 	}
 
@@ -915,16 +919,14 @@ func (c *Core) executeAttack(action message.AttackAction) {
 	c.executeCallbackModify(targetPlayer, defenceCallbackContext)
 }
 
+// executeSwitch 执行玩家的切换角色指令
 func (c *Core) executeSwitch(action message.SwitchAction) {
 	switchPlayerContext, hasSwitchPlayer := c.room[action.Sender]
 	paidCost := *model.NewCostFromMap(action.Paid)
 	if !hasSwitchPlayer || switchPlayerContext == nil {
 		// 玩家没被托管，不处理
 		return
-	} else if !model.NewCostFromMap(c.ruleSet.GameOptions.SwitchCost).Equals(paidCost) {
-		// 玩家支付的切换角色费用不合法，不处理
-		return
-	} else if switchPlayerContext.player.holdingCost.Contains(*model.NewCostFromMap(action.Paid)) {
+	} else if c.paymentCheck(*model.NewCostFromMap(c.ruleSet.GameOptions.SwitchCost), paidCost, switchPlayerContext.player) {
 		// 玩家无法支付切换角色的费用，不处理
 		return
 	} else if _, hasTargetCharacter := switchPlayerContext.player.characters[action.Target]; !hasTargetCharacter {
@@ -950,6 +952,7 @@ func (c *Core) executeSwitch(action message.SwitchAction) {
 	// todo: callback
 }
 
+// executeBurnCard 执行玩家元素转换指令
 func (c *Core) executeBurnCard(action message.BurnCardAction) {
 	executePlayerContext, hasExecutePlayer := c.room[action.Sender]
 	if !hasExecutePlayer || executePlayerContext == nil {
@@ -978,10 +981,12 @@ func (c *Core) executeBurnCard(action message.BurnCardAction) {
 	}
 }
 
+// executeUseCard 执行玩家使用卡牌指令
 func (c *Core) executeUseCard(action message.UseCardAction) {
 
 }
 
+// executeReRoll 执行玩家重掷骰子指令
 func (c *Core) executeReRoll(action message.ReRollAction) {
 	reRollPlayerContext, hasExecutePlayer := c.room[action.Sender]
 	if !hasExecutePlayer || reRollPlayerContext == nil {
@@ -1001,6 +1006,7 @@ func (c *Core) executeReRoll(action message.ReRollAction) {
 	}
 }
 
+// executeSkipRound 执行玩家跳过回合指令
 func (c *Core) executeSkipRound(action message.SkipRoundAction) {
 	if action.Sender == c.actingPlayer && action.Sender != 0 {
 		// 正常请求，正常处理
@@ -1011,6 +1017,7 @@ func (c *Core) executeSkipRound(action message.SkipRoundAction) {
 	}
 }
 
+// executeConcede 执行玩家弃权指令
 func (c *Core) executeConcede(actionMessage message.ConcedeAction) {
 	concedePlayerContext, hasConcedePlayer := c.room[actionMessage.Sender]
 	if !hasConcedePlayer || concedePlayerContext == nil {
@@ -1022,6 +1029,7 @@ func (c *Core) executeConcede(actionMessage message.ConcedeAction) {
 	}
 }
 
+// injectPlayers 根据初始化消息将实体注入到框架中
 func (c *Core) injectPlayers(initializeMessage message.InitializeMessage) (success bool) {
 	exist, ruleSetPersistence := persistence.RuleSetPersistence.QueryByID(initializeMessage.Options.RuleSet)
 	if !exist {
@@ -1081,6 +1089,7 @@ func (c *Core) Serve() {
 	}
 }
 
+// generateSelfMessage 根据core当前的状态生成一个对player发送的其自己的同步信息
 func generateSelfMessage(c *Core, player *player) (selfMessage message.Self) {
 	var characterList []message.Character
 	for _, character := range player.characters {
@@ -1194,6 +1203,7 @@ func generateSelfMessage(c *Core, player *player) (selfMessage message.Self) {
 	}
 }
 
+// generateOtherMessage 根据core当前的状态生成一个除player外发送给其他人的同步信息
 func generateOtherMessage(c *Core, player *player) (othersMessage []message.Other) {
 	othersMessage = []message.Other{}
 
@@ -1318,6 +1328,7 @@ func generateOtherMessage(c *Core, player *player) (othersMessage []message.Othe
 	return othersMessage
 }
 
+// generateBackgroundMessage 根据core当前的状态生成游戏当前的状态信息
 func generateBackgroundMessage(c *Core) (gameMessage message.Game) {
 	return message.Game{
 		ActingPlayer: c.actingPlayer,
@@ -1326,6 +1337,7 @@ func generateBackgroundMessage(c *Core) (gameMessage message.Game) {
 	}
 }
 
+// generateDictionary 根据core当前的状态生成EntityID-TypeID的字典
 func generateDictionary(c *Core) (dictionary []message.DictionaryPair) {
 	dictionary = []message.DictionaryPair{}
 	for id, typeID := range c.entities {
@@ -1337,7 +1349,8 @@ func generateDictionary(c *Core) (dictionary []message.DictionaryPair) {
 	return dictionary
 }
 
-func initCharacter(characterID, ownerID uint, ruleSet model.RuleSet) (success bool, result *character) {
+// initCharacter 新建并初始化一个character实体
+func initCharacter(characterID, ownerID uint) (success bool, result *character) {
 	exist, characterPersistence := persistence.CharacterPersistence.QueryByID(characterID)
 	if !exist {
 		// 找不到角色实现，初始化失败
@@ -1377,12 +1390,12 @@ func initCharacter(characterID, ownerID uint, ruleSet model.RuleSet) (success bo
 		localChargeModifiers:       modifier.NewChain[context.ChargeContext](),
 		localHealModifiers:         modifier.NewChain[context.HealContext](),
 		localCostModifiers:         modifier.NewChain[context.CostContext](),
-		ruleSet:                    ruleSet,
 	}
 
 	return true, character
 }
 
+// initPlayer 新建并初始化一个player实体
 func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) (success bool, result *player) {
 	if existPlayer, _ := persistence.PlayerPersistence.QueryByID(matchingMessage.UID); !existPlayer {
 		// 不存在玩家信息，初始化失败
@@ -1392,7 +1405,7 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 	var characterList []uint
 	characterMap := map[uint]*character{}
 	for _, characterID := range matchingMessage.Characters {
-		if initCharacterSuccess, character := initCharacter(characterID, matchingMessage.UID, ruleSet); !initCharacterSuccess {
+		if initCharacterSuccess, character := initCharacter(characterID, matchingMessage.UID); !initCharacterSuccess {
 			// 初始化角色失败
 			return false, nil
 		} else {

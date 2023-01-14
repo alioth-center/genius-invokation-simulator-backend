@@ -807,6 +807,9 @@ func (c *Core) executeAttack(action message.AttackAction) {
 		} else if senderPlayer, targetPlayer = senderPlayerContext.player, targetPlayerContext.player; senderPlayer == nil || targetPlayer == nil {
 			// 玩家的对战信息未被托管，不处理 todo add traces
 			return
+		} else if senderPlayer.characters[senderPlayer.activeCharacter].status != enum.CharacterStatusActive {
+			// 发起玩家的前台角色状态无法发起攻击，不处理
+			return
 		}
 
 		// 校验技能信息
@@ -913,11 +916,66 @@ func (c *Core) executeAttack(action message.AttackAction) {
 }
 
 func (c *Core) executeSwitch(action message.SwitchAction) {
+	switchPlayerContext, hasSwitchPlayer := c.room[action.Sender]
+	paidCost := *model.NewCostFromMap(action.Paid)
+	if !hasSwitchPlayer || switchPlayerContext == nil {
+		// 玩家没被托管，不处理
+		return
+	} else if !model.NewCostFromMap(c.ruleSet.GameOptions.SwitchCost).Equals(paidCost) {
+		// 玩家支付的切换角色费用不合法，不处理
+		return
+	} else if switchPlayerContext.player.holdingCost.Contains(*model.NewCostFromMap(action.Paid)) {
+		// 玩家无法支付切换角色的费用，不处理
+		return
+	} else if _, hasTargetCharacter := switchPlayerContext.player.characters[action.Target]; !hasTargetCharacter {
+		// 玩家没有被切换的目标角色，不处理
+		return
+	} else if switchPlayerContext.player.characters[action.Target].status == enum.CharacterStatusDefeated {
+		// 目标角色已经被击败无法切换，不处理
+		return
+	}
 
+	// 执行切换角色操作
+	switchPlayer := switchPlayerContext.player
+	if activeStatus := switchPlayer.characters[switchPlayer.activeCharacter].status; activeStatus != enum.CharacterStatusDefeated && activeStatus != enum.CharacterStatusDisabled {
+		// 不是被击败状态和无法操作状态的角色就将其切换为后台状态，否则保持原有状态
+		switchPlayer.characters[switchPlayer.activeCharacter].status = enum.CharacterStatusBackground
+	}
+	switchPlayer.activeCharacter = action.Target
+	if targetStatus := switchPlayer.characters[switchPlayer.activeCharacter].status; targetStatus != enum.CharacterStatusDisabled {
+		// 不是无法操作状态的角色就将其切换为前台状态，否则保持原有状态
+		switchPlayer.characters[switchPlayer.activeCharacter].status = enum.CharacterStatusActive
+	}
+
+	// todo: callback
 }
 
 func (c *Core) executeBurnCard(action message.BurnCardAction) {
+	executePlayerContext, hasExecutePlayer := c.room[action.Sender]
+	if !hasExecutePlayer || executePlayerContext == nil {
+		// 玩家没被托管，不处理
+		return
+	} else if action.Paid < enum.ElementStartIndex || action.Paid > enum.ElementEndIndex {
+		// 支付的被转化元素非七元素，不处理
+		return
+	}
 
+	executePlayer := executePlayerContext.player
+	if paidElementCount, hasPaidElement := executePlayer.holdingCost.Costs()[action.Paid]; !hasPaidElement || paidElementCount == 0 {
+		// 玩家不持有被转化元素，不处理
+		return
+	} else if _, hasCard := executePlayer.holdingCards[action.Card]; !hasCard {
+		// 玩家不持有支付卡牌，不处理
+		return
+	} else {
+		// 执行元素转化
+		delete(executePlayer.holdingCards, action.Card)
+
+		paidCost := *model.NewCostFromMap(map[enum.ElementType]uint{action.Paid: 1})
+		obtainedCost := *model.NewCostFromMap(map[enum.ElementType]uint{executePlayer.characters[executePlayer.activeCharacter].vision: 1})
+		executePlayer.holdingCost.Pay(paidCost)
+		executePlayer.holdingCost.Add(obtainedCost)
+	}
 }
 
 func (c *Core) executeUseCard(action message.UseCardAction) {
@@ -925,7 +983,13 @@ func (c *Core) executeUseCard(action message.UseCardAction) {
 }
 
 func (c *Core) executeReRoll(action message.ReRollAction) {
-	executePlayer, droppedCost := c.room[action.Sender].player, model.NewCostFromMap(action.Dropped)
+	reRollPlayerContext, hasExecutePlayer := c.room[action.Sender]
+	if !hasExecutePlayer || reRollPlayerContext == nil {
+		// 玩家没被托管，不处理
+		return
+	}
+
+	executePlayer, droppedCost := reRollPlayerContext.player, model.NewCostFromMap(action.Dropped)
 	if executePlayer.holdingCost.Contains(*droppedCost) {
 		// 正常请求，正常处理
 		executePlayer.holdingCost.Pay(*droppedCost)
@@ -948,7 +1012,14 @@ func (c *Core) executeSkipRound(action message.SkipRoundAction) {
 }
 
 func (c *Core) executeConcede(actionMessage message.ConcedeAction) {
-
+	concedePlayerContext, hasConcedePlayer := c.room[actionMessage.Sender]
+	if !hasConcedePlayer || concedePlayerContext == nil {
+		// 弃权玩家状态没有被托管，不处理
+		return
+	} else {
+		// 将弃权玩家的状态设置为被击败
+		c.updatePlayerStatusAndCoreFilter(concedePlayerContext.player, enum.PlayerStatusDefeated)
+	}
 }
 
 func (c *Core) injectPlayers(initializeMessage message.InitializeMessage) (success bool) {

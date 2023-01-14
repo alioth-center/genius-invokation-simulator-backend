@@ -22,3 +22,8 @@ type EquipmentCard interface {
 	EquipmentType() enum.EquipmentType
 	Modify() Event
 }
+
+type WeaponCard interface {
+	EquipmentCard
+	WeaponType() enum.WeaponType
+}

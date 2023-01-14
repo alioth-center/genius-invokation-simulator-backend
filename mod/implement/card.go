@@ -1,81 +1,97 @@
 package implement
 
 import (
-	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
+	definition "github.com/sunist-c/genius-invokation-simulator-backend/mod/definition"
 )
 
-type BaseCardImplement struct {
-	BaseEntityImplement
+type BaseCardImpl struct {
 }
 
-type EventCardImplement struct {
-	BaseCardImplement
+func (b *BaseCardImpl) CardType() enum.CardType {
+	return enum.CardUnknown
 }
 
-func (implement *EventCardImplement) Type() enum.CardType {
+func (b *BaseCardImpl) Cost() map[enum.ElementType]uint {
+	return nil
+}
+
+type EventCardImpl struct {
+	BaseCardImpl
+}
+
+func (e *EventCardImpl) CardType() enum.CardType {
 	return enum.CardEvent
 }
 
-type FoodCardImplement struct {
-	EventCardImplement
+func (e *EventCardImpl) Event() definition.Event {
+	return nil
 }
 
-func (implement *FoodCardImplement) Type() enum.CardType {
+type FoodCardImpl struct {
+	EventCardImpl
+}
+
+func (e *FoodCardImpl) CardType() enum.CardType {
 	return enum.CardFood
 }
 
-type ElementalResonanceCardImplement struct {
-	EventCardImplement
+type ElementalResonanceCardImpl struct {
+	EventCardImpl
 }
 
-func (implement *ElementalResonanceCardImplement) Type() enum.CardType {
+func (e *ElementalResonanceCardImpl) CardType() enum.CardType {
 	return enum.CardElementalResonance
 }
 
-type EquipmentCardImplement struct {
-	BaseCardImplement
+type EquipmentCardImpl struct {
+	BaseCardImpl
 }
 
-func (implement *EquipmentCardImplement) Cost() map[enum.ElementType]uint {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (implement *EquipmentCardImplement) EquipmentType() enum.EquipmentType {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (implement *EquipmentCardImplement) Modify() (event model.Event) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (implement *EquipmentCardImplement) Type() enum.CardType {
+func (e *EquipmentCardImpl) CardType() enum.CardType {
 	return enum.CardEquipment
 }
 
-type TalentCardImplement struct {
-	EquipmentCardImplement
+func (e *EquipmentCardImpl) EquipmentType() enum.EquipmentType {
+	return enum.EquipmentNone
 }
 
-func (implement *TalentCardImplement) Type() enum.CardType {
+func (e *EquipmentCardImpl) Modify() definition.Event {
+	return nil
+}
+
+type ArtifactCardImpl struct {
+	EquipmentCardImpl
+}
+
+func (e *ArtifactCardImpl) CardType() enum.CardType {
+	return enum.CardArtifact
+}
+
+func (e *ArtifactCardImpl) EquipmentType() enum.EquipmentType {
+	return enum.EquipmentArtifact
+}
+
+type TalentCardImpl struct {
+	EquipmentCardImpl
+}
+
+func (e *TalentCardImpl) CardType() enum.CardType {
 	return enum.CardTalent
 }
 
-type WeaponCardImplement struct {
-	EquipmentCardImplement
+func (e *TalentCardImpl) EquipmentType() enum.EquipmentType {
+	return enum.EquipmentTalent
 }
 
-func (implement *WeaponCardImplement) Type() enum.CardType {
+type WeaponCardImpl struct {
+	EquipmentCardImpl
+}
+
+func (e *WeaponCardImpl) CardType() enum.CardType {
 	return enum.CardWeapon
 }
 
-type ArtifactCardImplement struct {
-	EquipmentCardImplement
-}
-
-func (implement *ArtifactCardImplement) Type() enum.CardType {
-	return enum.CardArtifact
+func (e *WeaponCardImpl) EquipmentType() enum.EquipmentType {
+	return enum.EquipmentWeapon
 }

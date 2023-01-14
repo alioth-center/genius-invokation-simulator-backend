@@ -26,6 +26,11 @@ type EquipmentCard interface {
 	Modify() (event Event)
 }
 
+type WeaponCard interface {
+	EquipmentCard
+	WeaponType() enum.WeaponType
+}
+
 func ConvertToEventCard(original Card) (success bool, result EventCard) {
 	cardType := original.Type()
 	if cardType != enum.CardEvent && cardType != enum.CardElementalResonance && cardType != enum.CardFood {

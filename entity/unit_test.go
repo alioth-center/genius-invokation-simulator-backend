@@ -425,17 +425,17 @@ type testEvent struct {
 	handler func(*context.CallbackContext)
 }
 
-func (t testEvent) TypeID() uint { return t.id }
+func (t *testEvent) TypeID() uint { return t.id }
 
-func (t testEvent) InjectTypeID(id uint) { t.id = id }
+func (t *testEvent) InjectTypeID(id uint) { t.id = id }
 
-func (t testEvent) TriggerAt() enum.TriggerType { return t.trigger }
+func (t *testEvent) TriggerAt() enum.TriggerType { return t.trigger }
 
-func (t testEvent) CanTriggered(callbackContext context.CallbackContext) bool { return t.enable }
+func (t *testEvent) CanTriggered(callbackContext context.CallbackContext) bool { return t.enable }
 
-func (t testEvent) NeedClear() bool { return true }
+func (t *testEvent) NeedClear() bool { return true }
 
-func (t testEvent) Callback(ctx *context.CallbackContext) { t.handler(ctx) }
+func (t *testEvent) Callback(ctx *context.CallbackContext) { t.handler(ctx) }
 
 func newTestEvent(id uint, trigger enum.TriggerType, enable bool, handler func(callbackContext *context.CallbackContext)) model.Event {
 	return &testEvent{id: id, trigger: trigger, enable: enable, handler: handler}

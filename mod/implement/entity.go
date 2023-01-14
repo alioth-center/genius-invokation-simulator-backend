@@ -1,13 +1,13 @@
 package implement
 
-type BaseEntityImplement struct {
+type BaseEntityImpl struct {
 	typeID uint
 }
 
-func (b *BaseEntityImplement) TypeID() uint {
+func (b *BaseEntityImpl) TypeID() uint {
 	return b.typeID
 }
 
-func (b *BaseEntityImplement) InjectTypeID(id uint) {
+func (b *BaseEntityImpl) InjectTypeID(id uint) {
 	b.typeID = id
 }

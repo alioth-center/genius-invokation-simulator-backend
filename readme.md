@@ -70,8 +70,6 @@
 
 如果您想为项目贡献代码，您可以转到[gisb's feature development](https://github.com/users/sunist-c/projects/2)查看这个项目目前在干什么，标有`help wanted`的内容可能需要一些帮助，处于`design`阶段的内容目前还没有进行开发，您可以直接在GitHub Projects/Project Issue页面与我们交流
 
-本项目有意向从Jetbrains申请开源项目的All Products License，将会提供给Code Contributors
-
 ## 7. 功能特性
 
 - [x] 游戏基本玩法
@@ -110,3 +108,9 @@
 ## 8. 开源许可
 
 [MIT License](license)
+
+## 9. 鸣谢
+
+感谢 [JetBrains](https://www.jetbrains.com) 为本项目提供的 [Open Source development license(s)](https://www.jetbrains.com/community/opensource/#support)
+
+<img width="50%" src="https://resources.jetbrains.com/storage/products/company/brand/logos/GoLand.png" alt="GoLand logo."/>

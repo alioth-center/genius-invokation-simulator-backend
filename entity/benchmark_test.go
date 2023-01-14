@@ -58,7 +58,7 @@ func BenchmarkTestPlayerChainNextWithComplete(b *testing.B) {
 }
 
 func BenchmarkTestEventMapPreview(b *testing.B) {
-	m := model.NewEventMap()
+	m := NewEventMap()
 	for i := 0; i < 128; i++ {
 		m.AddEvent(newTestEvent(uint(i), enum.AfterAttack, true, func(ctx *context.CallbackContext) { ctx.SwitchCharacter(114514) }))
 	}
@@ -72,7 +72,7 @@ func BenchmarkTestEventMapPreview(b *testing.B) {
 }
 
 func BenchmarkTestEventMapExecute(b *testing.B) {
-	m := model.NewEventMap()
+	m := NewEventMap()
 	for i := 0; i < 128; i++ {
 		m.AddEvent(newTestEvent(uint(i), enum.AfterAttack, true, func(ctx *context.CallbackContext) { ctx.SwitchCharacter(114514) }))
 	}
@@ -86,7 +86,7 @@ func BenchmarkTestEventMapExecute(b *testing.B) {
 }
 
 func BenchmarkTestEventMapAdd(b *testing.B) {
-	m := model.NewEventMap()
+	m := NewEventMap()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -95,7 +95,7 @@ func BenchmarkTestEventMapAdd(b *testing.B) {
 }
 
 func BenchmarkTestEventMapRemove(b *testing.B) {
-	m := model.NewEventMap()
+	m := NewEventMap()
 	event := newTestEvent(uint(1), enum.AfterSwitch, true, func(ctx *context.CallbackContext) { ctx.ChangeOperated(false) })
 	m.AddEvent(event)
 	b.ResetTimer()

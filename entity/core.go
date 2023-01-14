@@ -1423,6 +1423,7 @@ func initCharacter(characterID, ownerID uint) (success bool, result *character) 
 			return false, nil
 		} else {
 			skill := skillPersistence.Ctor()().Skill
+			skill.InjectTypeID(skillPersistence.ID())
 			characterSkill[skillID] = skill
 		}
 	}
@@ -1478,7 +1479,9 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 			// 不存在卡牌，初始化失败
 			return false, nil
 		} else {
-			cardList = append(cardList, cardPersistence.Ctor()().Card)
+			cardEntity := cardPersistence.Ctor()().Card
+			cardEntity.InjectTypeID(cardPersistence.ID())
+			cardList = append(cardList, cardEntity)
 		}
 	}
 
@@ -1505,7 +1508,7 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 		globalHealModifiers:         modifier.NewChain[context.HealContext](),
 		globalCostModifiers:         modifier.NewChain[context.CostContext](),
 		cooperativeAttacks:          map[enum.TriggerType]model.CooperativeSkill{},
-		callbackEvents:              model.NewEventMap(),
+		callbackEvents:              NewEventMap(),
 	}
 
 	return true, player

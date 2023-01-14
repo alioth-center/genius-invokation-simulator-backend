@@ -7,22 +7,22 @@ import (
 	"time"
 )
 
-// Card 被持久化模块托管的Card工厂
+// Card 被持久化模块托管的Card工厂的产品
 type Card struct {
 	Card model.Card
 }
 
-// Skill 被持久化模块托管的Skill工厂
+// Skill 被持久化模块托管的Skill工厂的产品
 type Skill struct {
 	Skill model.Skill
 }
 
-// RuleSet 被持久化模块托管的RuleSet工厂
+// RuleSet 被持久化模块托管的RuleSet工厂的产品
 type RuleSet struct {
 	Rule model.RuleSet
 }
 
-// Character 被持久化模块托管的CharacterInfo工厂
+// Character 被持久化模块托管的CharacterInfo工厂的产品
 type Character struct {
 	ID          uint
 	Affiliation enum.Affiliation

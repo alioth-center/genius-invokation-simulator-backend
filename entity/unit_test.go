@@ -478,7 +478,7 @@ func TestEventMapExecute(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			m := model.NewEventMap()
+			m := NewEventMap()
 			for _, trigger := range tt.triggers {
 				m.AddEvent(trigger)
 			}

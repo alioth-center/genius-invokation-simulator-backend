@@ -39,7 +39,7 @@ type player struct {
 	globalCostModifiers         CostModifiers    // globalCostModifiers 全局费用修正
 
 	cooperativeAttacks map[enum.TriggerType]model.CooperativeSkill // cooperativeAttacks 协同攻击技能
-	callbackEvents     *model.Map                                  // callbackEvents 回调事件集合
+	callbackEvents     *Map                                        // callbackEvents 回调事件集合
 }
 
 func (p player) GetUID() (uid uint) {

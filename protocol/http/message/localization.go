@@ -1,4 +1,4 @@
-package model
+package message
 
 import "github.com/sunist-c/genius-invokation-simulator-backend/model/localization"
 

@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"testing"
 )
@@ -69,8 +70,8 @@ func TestCostEquals(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			originCost := NewCostFromMap(tt.origin)
-			otherCost := NewCostFromMap(tt.cost)
+			originCost := model.NewCostFromMap(tt.origin)
+			otherCost := model.NewCostFromMap(tt.cost)
 			if result := originCost.Equals(*otherCost); result != tt.want {
 				t.Errorf("incorrect result, want %v, got %v", tt.want, result)
 			}
@@ -101,10 +102,10 @@ func TestCostAdd(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cost := NewCostFromMap(tt.origin)
-			other := NewCostFromMap(tt.other)
+			cost := model.NewCostFromMap(tt.origin)
+			other := model.NewCostFromMap(tt.other)
 			cost.Add(*other)
-			for element, amount := range cost.costs {
+			for element, amount := range cost.Costs() {
 				if tt.want[element] != amount {
 					t.Errorf("incorrect result, want %v, got %v", tt.want[element], amount)
 				}
@@ -136,10 +137,10 @@ func TestCostSub(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cost := NewCostFromMap(tt.origin)
-			other := NewCostFromMap(tt.other)
+			cost := model.NewCostFromMap(tt.origin)
+			other := model.NewCostFromMap(tt.other)
 			cost.Pay(*other)
-			for element, amount := range cost.costs {
+			for element, amount := range cost.Costs() {
 				if tt.want[element] != amount {
 					t.Errorf("incorrect result, want %v, got %v", tt.want[element], amount)
 				}
@@ -157,7 +158,7 @@ func (t testCard) ID() uint { return t.id }
 
 func (t testCard) Type() enum.CardType { return t.t }
 
-func newTestCard(id uint, t enum.CardType) Card { return testCard{id: id, t: t} }
+func newTestCard(id uint, t enum.CardType) model.Card { return testCard{id: id, t: t} }
 
 func TestCardDeckGet(t *testing.T) {
 	food := newTestCard(1, enum.CardFood)
@@ -165,28 +166,28 @@ func TestCardDeckGet(t *testing.T) {
 	item := newTestCard(3, enum.CardItem)
 	tests := []struct {
 		name       string
-		cards      []Card
+		cards      []model.Card
 		got        int
-		wantCard   Card
+		wantCard   model.Card
 		wantResult bool
 	}{
 		{
 			name:       "TestCardDeckGet-1",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        2,
 			wantCard:   item,
 			wantResult: true,
 		},
 		{
 			name:       "TestCardDeckGet-2",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        3,
 			wantCard:   nil,
 			wantResult: false,
 		},
 		{
 			name:       "TestCardDeckGet-3",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        0,
 			wantCard:   food,
 			wantResult: true,
@@ -214,15 +215,15 @@ func TestCardDeckFind(t *testing.T) {
 	item := newTestCard(3, enum.CardItem)
 	tests := []struct {
 		name       string
-		cards      []Card
+		cards      []model.Card
 		got        int
 		find       enum.CardType
-		wantCard   Card
+		wantCard   model.Card
 		wantResult bool
 	}{
 		{
 			name:       "TestCardDeckFind-1",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        2,
 			find:       enum.CardFood,
 			wantCard:   nil,
@@ -230,7 +231,7 @@ func TestCardDeckFind(t *testing.T) {
 		},
 		{
 			name:       "TestCardDeckFind-2",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        0,
 			find:       enum.CardArtifact,
 			wantCard:   nil,
@@ -238,7 +239,7 @@ func TestCardDeckFind(t *testing.T) {
 		},
 		{
 			name:       "TestCardDeckFind-3",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        0,
 			find:       enum.CardItem,
 			wantCard:   item,
@@ -267,15 +268,15 @@ func TestCardDeckReset(t *testing.T) {
 	item := newTestCard(3, enum.CardItem)
 	tests := []struct {
 		name       string
-		cards      []Card
+		cards      []model.Card
 		got        int
 		holdings   []uint
-		wantCard   Card
+		wantCard   model.Card
 		wantResult bool
 	}{
 		{
 			name:       "TestCardDeckReset-1",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        3,
 			holdings:   []uint{},
 			wantCard:   food,
@@ -283,7 +284,7 @@ func TestCardDeckReset(t *testing.T) {
 		},
 		{
 			name:       "TestCardDeckReset-2",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        3,
 			holdings:   []uint{1, 2, 3},
 			wantCard:   nil,
@@ -291,7 +292,7 @@ func TestCardDeckReset(t *testing.T) {
 		},
 		{
 			name:       "TestCardDeckReset-3",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        0,
 			holdings:   []uint{1, 2},
 			wantCard:   item,
@@ -321,28 +322,28 @@ func TestCardDeckShuffle(t *testing.T) {
 	item := newTestCard(3, enum.CardItem)
 	tests := []struct {
 		name       string
-		cards      []Card
+		cards      []model.Card
 		got        int
-		wontCard   Card
+		wontCard   model.Card
 		wontResult bool
 	}{
 		{
 			name:       "TestCardDeckShuffle-1",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        1,
 			wontCard:   food,
 			wontResult: false,
 		},
 		{
 			name:       "TestCardDeckShuffle-2",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        0,
 			wontCard:   nil,
 			wontResult: false,
 		},
 		{
 			name:       "TestCardDeckShuffle-3",
-			cards:      []Card{food, companion, item},
+			cards:      []model.Card{food, companion, item},
 			got:        3,
 			wontCard:   food,
 			wontResult: true,
@@ -365,4 +366,49 @@ func TestCardDeckShuffle(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPlayerChainNext(t *testing.T) {
+	pc := newPlayerChain()
+	for i := 0; i < 3; i++ {
+		pc.add(uint(i))
+	}
+
+	t.Run("TestPlayerChainNext-1", func(t *testing.T) {
+		for i := uint(0); i < 30; i++ {
+			if exist, gotten := pc.next(); !exist || gotten != i%3 {
+				t.Errorf("failed in TestPlayerChainNext")
+			}
+		}
+	})
+
+	t.Run("TestPlayerChainNext-2", func(t *testing.T) {
+		pc.complete(0)
+		tag := uint(1)
+		for i := uint(0); i < 30; i++ {
+			if exist, gotten := pc.next(); !exist || gotten != tag {
+				t.Errorf("failed in TestPlayerChainNext")
+			} else {
+				tag = tag%2 + 1
+			}
+		}
+	})
+
+	t.Run("TestPlayerChainNext-3", func(t *testing.T) {
+		pc.complete(2)
+		for i := uint(0); i < 30; i++ {
+			if exist, gotten := pc.next(); !exist || gotten != 1 {
+				t.Errorf("failed in TestPlayerChainNext")
+			}
+		}
+	})
+
+	t.Run("TestPlayerChainNext-4", func(t *testing.T) {
+		pc.complete(1)
+		for i := uint(0); i < 30; i++ {
+			if exist, gotten := pc.next(); exist && gotten != 0 {
+				t.Errorf("failed in TestPlayerChainNext: %v, %v", exist, gotten)
+			}
+		}
+	})
 }

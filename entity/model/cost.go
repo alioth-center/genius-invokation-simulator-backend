@@ -1,4 +1,4 @@
-package entity
+package model
 
 import (
 	"math/rand"
@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	random *rand.Rand = rand.New(rand.NewSource(time.Now().UnixMilli()))
+	random = rand.New(rand.NewSource(time.Now().UnixMilli()))
 )
 
 func init() {
@@ -85,6 +85,14 @@ func (c Cost) Contains(other Cost) bool {
 // Equals 判断Cost中的元素是否和other中的元素完全等价
 func (c Cost) Equals(other Cost) bool {
 	return c.Contains(other) && c.total == other.total
+}
+
+func (c Cost) Costs() map[enum.ElementType]uint {
+	return c.costs
+}
+
+func (c Cost) Total() uint {
+	return c.total
 }
 
 // NewCost 创建一个空Cost

@@ -1,25 +1,25 @@
 package persistence
 
 import (
-	"github.com/sunist-c/genius-invokation-simulator-backend/entity"
+	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/message"
+	"github.com/sunist-c/genius-invokation-simulator-backend/protocol/websocket/message"
 	"time"
 )
 
 // Card 被持久化模块托管的Card工厂
 type Card struct {
-	Card entity.Card
+	Card model.Card
 }
 
 // Skill 被持久化模块托管的Skill工厂
 type Skill struct {
-	Skill entity.Skill
+	Skill model.Skill
 }
 
 // RuleSet 被持久化模块托管的RuleSet工厂
 type RuleSet struct {
-	Rule entity.RuleSet
+	Rule model.RuleSet
 }
 
 // Character 被持久化模块托管的CharacterInfo工厂

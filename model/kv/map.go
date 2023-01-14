@@ -16,11 +16,3 @@ type Map[key comparable, value any] interface {
 	Remove(key)
 	Range(func(key, value) bool)
 }
-
-// OrderedMap 有序Map的封装
-type OrderedMap[key comparable, value any] interface {
-	Map[key, value]
-	Length() uint
-	GetIndex(key) uint
-	GetKey(uint) key
-}

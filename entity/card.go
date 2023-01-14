@@ -1,24 +1,20 @@
 package entity
 
 import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
+	"math/rand"
+	"time"
 )
 
-type Card interface {
-	ID() uint
-	Type() enum.CardType
-}
-
-type FoodCard interface {
-	Card
-	ExecuteModify(ctx *context.ModifierContext)
-}
+var (
+	random = rand.New(rand.NewSource(time.Now().UnixMilli()))
+)
 
 // CardDeck 牌堆，记录顺序的是一个数组，正常情况下已取出的牌永远在队列的一端
 type CardDeck struct {
-	cards  kv.Map[uint, Card]
+	cards  kv.Map[uint, model.Card]
 	used   kv.Map[uint, bool]
 	queue  []uint
 	offset int
@@ -52,7 +48,7 @@ func (c *CardDeck) Shuffle() {
 }
 
 // GetOne 从CardDeck中取出一张牌
-func (c *CardDeck) GetOne() (result Card, success bool) {
+func (c *CardDeck) GetOne() (result model.Card, success bool) {
 	if c.remain != 0 {
 		for i := c.offset; i < len(c.queue); i++ {
 			if !c.used.Get(c.queue[i]) {
@@ -67,7 +63,7 @@ func (c *CardDeck) GetOne() (result Card, success bool) {
 }
 
 // FindOne 从CardDeck中取出一张指定类型的牌
-func (c *CardDeck) FindOne(cardType enum.CardType) (result Card, success bool) {
+func (c *CardDeck) FindOne(cardType enum.CardType) (result model.Card, success bool) {
 	for i := c.offset; i < len(c.queue); i++ {
 		if !c.used.Get(c.queue[i]) && c.cards.Get(c.queue[i]).Type() == cardType {
 			result = c.cards.Get(c.queue[i])
@@ -100,9 +96,9 @@ func (c CardDeck) Remain() uint {
 	return c.remain
 }
 
-func NewCardDeck(cards []Card) *CardDeck {
+func NewCardDeck(cards []model.Card) *CardDeck {
 	cardDeck := &CardDeck{
-		cards:  kv.NewSimpleMap[Card](),
+		cards:  kv.NewSimpleMap[model.Card](),
 		used:   kv.NewSimpleMap[bool](),
 		queue:  []uint{},
 		offset: 0,

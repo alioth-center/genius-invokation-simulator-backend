@@ -217,6 +217,15 @@ func (c Chain[data]) Effective() bool {
 	return c.size != 0
 }
 
+// Expose 将ModifierChain中的所有Modifier的ID导出
+func (c Chain[data]) Expose() (modifiers []uint) {
+	modifiers = make([]uint, c.size)
+	for i := byte(0); i < c.size; i++ {
+		modifiers[i] = c.index(i).modifier.ID()
+	}
+	return modifiers
+}
+
 func NewChain[data any]() Chain[data] {
 	return Chain[data]{
 		size:         0,

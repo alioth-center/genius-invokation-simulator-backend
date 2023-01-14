@@ -9,9 +9,8 @@ type SyncMessageInterface interface {
 
 // DictionaryPair 追加字典，将同步信息中给的实体ID与它们的类型ID相联系
 type DictionaryPair struct {
-	TypeName string `json:"type_name" yaml:"type_name" xml:"type_name"` // TypeName 类型的名称
-	TypeID   uint   `json:"type_id" yaml:"type_id" xml:"type_id"`       // TypeID 类型的ID
-	EntityID uint   `json:"entity_id" yaml:"entity_id" xml:"entity_id"` // EntityID 实体的ID
+	TypeID   uint `json:"type_id" yaml:"type_id" xml:"type_id"`       // TypeID 类型的ID
+	EntityID uint `json:"entity_id" yaml:"entity_id" xml:"entity_id"` // EntityID 实体的ID
 }
 
 // Modifier 修正BUFF

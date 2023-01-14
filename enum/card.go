@@ -10,6 +10,7 @@ const (
 	CardEvent     CardType = iota << 4 // CardEvent 事件卡
 	CardSupport                        // CardSupport 支援卡
 	CardEquipment                      // CardEquipment 装备卡
+	CardUnknown   CardType = 1 << 7
 )
 
 // EventCardSubType

@@ -106,9 +106,9 @@ func NewCardDeck(cards []model.Card) *CardDeck {
 	}
 
 	for _, card := range cards {
-		cardDeck.cards.Set(card.ID(), card)
-		cardDeck.used.Set(card.ID(), false)
-		cardDeck.queue = append(cardDeck.queue, card.ID())
+		cardDeck.cards.Set(card.TypeID(), card)
+		cardDeck.used.Set(card.TypeID(), false)
+		cardDeck.queue = append(cardDeck.queue, card.TypeID())
 		cardDeck.remain++
 	}
 

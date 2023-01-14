@@ -3,7 +3,6 @@ package entity
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/event"
 )
 
 type PlayerInfo struct {
@@ -40,7 +39,7 @@ type player struct {
 	globalCostModifiers         CostModifiers    // globalCostModifiers 全局费用修正
 
 	cooperativeAttacks map[enum.TriggerType]model.CooperativeSkill // cooperativeAttacks 协同攻击技能
-	callbackEvents     *event.Map                                  // callbackEvents 回调事件集合
+	callbackEvents     *model.Map                                  // callbackEvents 回调事件集合
 }
 
 func (p player) GetUID() (uid uint) {

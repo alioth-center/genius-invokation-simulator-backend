@@ -425,7 +425,9 @@ type testEvent struct {
 	handler func(*context.CallbackContext)
 }
 
-func (t testEvent) ID() uint { return t.id }
+func (t testEvent) TypeID() uint { return t.id }
+
+func (t testEvent) InjectTypeID(id uint) { t.id = id }
 
 func (t testEvent) TriggerAt() enum.TriggerType { return t.trigger }
 

@@ -6,7 +6,7 @@ import (
 )
 
 type Skill interface {
-	ID() uint
+	BaseEntity
 	Type() enum.SkillType
 }
 

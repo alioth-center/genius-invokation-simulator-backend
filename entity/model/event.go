@@ -6,7 +6,7 @@ import (
 )
 
 type Event interface {
-	ID() uint
+	BaseEntity
 	TriggerAt() enum.TriggerType
 	CanTriggered(context.CallbackContext) bool
 	NeedClear() bool

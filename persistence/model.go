@@ -35,10 +35,9 @@ type Character struct {
 
 // Player 被持久化模块托管的Player信息
 type Player struct {
-	UID       uint   `xorm:"pk autoincr notnull unique index"` // UID Player的UID，主键
-	NickName  string `xorm:"notnull varchar(64)"`              // NickName Player的昵称
-	CardDecks []uint `xorm:"notnull json"`                     // CardDecks Player保存的卡组
-	Password  string `xorm:"notnull varchar(64)"`              // Password Player的密码Hash
+	UID      uint   `xorm:"pk autoincr notnull unique index"` // UID Player的UID，主键
+	NickName string `xorm:"notnull varchar(64)"`              // NickName Player的昵称
+	Password string `xorm:"notnull varchar(64)"`              // Password Player的密码Hash
 }
 
 // CardDeck 被持久化模块托管的CardDeck信息

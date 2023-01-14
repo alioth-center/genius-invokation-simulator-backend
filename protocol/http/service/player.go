@@ -69,17 +69,15 @@ func loginServiceHandler() func(ctx *gin.Context) {
 			ctx.JSON(500, message.LoginResponse{Success: false})
 		} else {
 			// 登录成功，获取玩家卡组信息后返回登录成功响应
+			wantDeck := persistence.CardDeck{OwnerUID: player.UID}
+			resultDeck := persistence.CardDeckPersistence.Find(wantDeck)
 			response := message.LoginResponse{
 				PlayerUID:       player.UID,
 				Success:         true,
 				PlayerNickName:  player.NickName,
-				PlayerCardDecks: []persistence.CardDeck{},
+				PlayerCardDecks: resultDeck,
 			}
-			for _, cardDeckID := range player.CardDecks {
-				if success, cardDeck := persistence.CardDeckPersistence.QueryByID(cardDeckID); success {
-					response.PlayerCardDecks = append(response.PlayerCardDecks, cardDeck)
-				}
-			}
+
 			ctx.JSON(200, response)
 		}
 	}
@@ -145,10 +143,9 @@ func updatePasswordServiceHandler() func(ctx *gin.Context) {
 		} else if updated := persistence.PlayerPersistence.UpdateByID(
 			uint(id),
 			persistence.Player{
-				UID:       player.UID,
-				NickName:  player.NickName,
-				CardDecks: player.CardDecks,
-				Password:  string(encodedNewPassword),
+				UID:      player.UID,
+				NickName: player.NickName,
+				Password: string(encodedNewPassword),
 			}); !updated {
 			// 更新新密码失败，InternalError
 			ctx.AbortWithStatus(500)
@@ -180,10 +177,9 @@ func updateNickNameServiceHandler() func(ctx *gin.Context) {
 			ctx.AbortWithStatus(403)
 		} else if updated := persistence.PlayerPersistence.UpdateByID(uint(id),
 			persistence.Player{
-				UID:       player.UID,
-				NickName:  request.NewNickName,
-				CardDecks: player.CardDecks,
-				Password:  player.Password,
+				UID:      player.UID,
+				NickName: request.NewNickName,
+				Password: player.Password,
 			},
 		); !updated {
 			// 更新新昵称失败，InternalError

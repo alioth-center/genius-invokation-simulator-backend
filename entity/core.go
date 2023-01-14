@@ -6,7 +6,6 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/event"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 	"github.com/sunist-c/genius-invokation-simulator-backend/persistence"
@@ -213,6 +212,7 @@ type Core struct {
 	operatedChan chan struct{}                     // operatedChan 玩家结束操作时，会往此管道写信息
 	readChan     chan message.ActionMessage        // readChan 有网络信息传入时，向此管道写入信息
 	exitChan     chan struct{}                     // exitChan 当结束服务时，向此管道写入信息
+	entityIndex  uint                              // entityIndex 用于分配实体ID的序号
 	updateMutex  sync.RWMutex                      // updateMutex 更新锁，用于避免并发更新玩家状态以引发并发问题
 }
 
@@ -241,6 +241,15 @@ func (c *Core) messageFilter(msg message.ActionMessage) (legal bool) {
 		// 玩家不存在
 		return false
 	}
+}
+
+// appendEntity 将一个实体托管到框架，并返回其EntityID
+func (c *Core) appendEntity(typeID uint) (entityID uint) {
+	c.updateMutex.Lock()
+	defer c.updateMutex.Unlock()
+	c.entityIndex += 1
+	c.entities[c.entityIndex] = typeID
+	return c.entityIndex
 }
 
 // handleMessage 处理玩家的信息
@@ -302,6 +311,8 @@ func (c *Core) handleMessage(msg message.ActionMessage) {
 
 // generateSyncMessage 生成某玩家收到的同步信息，playerID为0则生成匿名访客的观战信息
 func (c *Core) generateSyncMessage(player uint) (syncMessage message.SyncMessage) {
+	c.updateMutex.RLock()
+	defer c.updateMutex.RUnlock()
 	dictionary := generateDictionary(c)
 	background := generateBackgroundMessage(c)
 	if c.room[player] != nil {
@@ -760,7 +771,7 @@ func (c *Core) executeCallbackModify(p *player, ctx *context.CallbackContext) {
 			for i := uint(0); i < result; i++ {
 				if card, success := p.cardDeck.GetOne(); success {
 					// 卡牌足够的话，将卡牌加入手牌
-					p.holdingCards[card.ID()] = card
+					p.holdingCards[card.TypeID()] = card
 				} else {
 					// 卡牌不够的话，下次一定
 					break
@@ -774,7 +785,7 @@ func (c *Core) executeCallbackModify(p *player, ctx *context.CallbackContext) {
 		if needFindCard, target := ctx.GetFindCardResult(); needFindCard {
 			if card, success := p.cardDeck.FindOne(target); success {
 				// 可以获取卡牌的话，将卡牌添加进手牌
-				p.holdingCards[card.ID()] = card
+				p.holdingCards[card.TypeID()] = card
 			}
 		}
 	}
@@ -821,7 +832,7 @@ func (c *Core) executeAttack(action message.AttackAction) {
 			// 在协同技能中查找该技能是否存在
 			existCooperativeSkill := false
 			for _, cooperativeSkill := range senderPlayer.cooperativeAttacks {
-				if cooperativeSkill.ID() == action.Skill {
+				if cooperativeSkill.TypeID() == action.Skill {
 					existCooperativeSkill = true
 					break
 				}
@@ -983,7 +994,54 @@ func (c *Core) executeBurnCard(action message.BurnCardAction) {
 
 // executeUseCard 执行玩家使用卡牌指令
 func (c *Core) executeUseCard(action message.UseCardAction) {
+	cardType := enum.CardUnknown
+	var resultEventCard model.EventCard
+	var resultSupportCard model.SupportCard
+	var resultEquipmentCard model.EquipmentCard
 
+	executePlayerContext, hasExecutePlayer := c.room[action.Sender]
+	if !hasExecutePlayer || executePlayerContext == nil {
+		// 框架没有托管执行玩家，不处理
+		return
+	} else if card, hasCard := executePlayerContext.player.holdingCards[action.Card]; hasCard {
+		// 玩家不持有其要使用的卡，不处理
+		return
+	} else if !c.paymentCheck(*model.NewCostFromMap(card.Cost()), *model.NewCostFromMap(action.Paid), executePlayerContext.player) {
+		// 玩家无法承担此次费用或支付的费用不合法，不处理
+		return
+	} else {
+		// 尝试获取卡牌内容
+		switch card.Type() {
+		case enum.CardEvent, enum.CardElementalResonance, enum.CardFood:
+			if isEventCard, eventCard := model.ConvertToEventCard(card); isEventCard {
+				cardType, resultEventCard = enum.CardEvent, eventCard
+			}
+		case enum.CardSupport, enum.CardLocation, enum.CardCompanion, enum.CardItem:
+			if isSupportCard, supportCard := model.ConvertToSupportCard(card); isSupportCard {
+				cardType, resultSupportCard = enum.CardSupport, supportCard
+			}
+		case enum.CardEquipment, enum.CardTalent, enum.CardWeapon, enum.CardArtifact:
+			if isEquipmentCard, equipmentCard := model.ConvertToEquipmentCard(card); isEquipmentCard {
+				cardType, resultEquipmentCard = enum.CardEquipment, equipmentCard
+			}
+		}
+	}
+
+	// 执行卡牌内容 todo: 添加执行逻辑
+	switch cardType {
+	case enum.CardEvent:
+		event := resultEventCard.Event()
+		c.appendEntity(event.TypeID())
+	case enum.CardSupport:
+		event := resultSupportCard.Support()
+		c.appendEntity(event.TypeID())
+	case enum.CardEquipment:
+		event := resultEquipmentCard.Modify()
+		c.appendEntity(event.TypeID())
+	default:
+		// 没有解析或者解析错误，不处理
+		return
+	}
 }
 
 // executeReRoll 执行玩家重掷骰子指令
@@ -1447,7 +1505,7 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 		globalHealModifiers:         modifier.NewChain[context.HealContext](),
 		globalCostModifiers:         modifier.NewChain[context.CostContext](),
 		cooperativeAttacks:          map[enum.TriggerType]model.CooperativeSkill{},
-		callbackEvents:              event.NewEventMap(),
+		callbackEvents:              model.NewEventMap(),
 	}
 
 	return true, player

@@ -2,17 +2,23 @@ package adapter
 
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
-	definition "github.com/sunist-c/genius-invokation-simulator-backend/mod/definition"
+	"github.com/sunist-c/genius-invokation-simulator-backend/mod/definition"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/adapter"
 )
 
 var (
-	eventAdapter         = NewEventAdapter()
+	eventAdapter = NewEventAdapter()
+
 	cardAdapter          = NewCardAdapter()
 	eventCardAdapter     = NewEventCardAdapter()
 	supportCardAdapter   = NewSupportCardAdapter()
 	equipmentCardAdapter = NewEquipmentCardAdapter()
 	weaponCardAdapter    = NewWeaponCardAdapter()
+
+	attackModifierAdapter = NewAttackModifierAdapter()
+	costModifierAdapter   = NewCostModifierAdapter()
+	healModifierAdapter   = NewHealModifierAdapter()
+	chargeModifierAdapter = NewChargeModifierAdapter()
 )
 
 func GetEventAdapter() adapter.Adapter[definition.Event, model.Event] {

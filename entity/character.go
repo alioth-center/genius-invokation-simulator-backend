@@ -3,6 +3,7 @@ package entity
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
+	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier/definition"
 )
 
 type character struct {
@@ -22,12 +23,12 @@ type character struct {
 	satiety    bool                        // satiety 角色的饱腹状态
 	equipments map[enum.EquipmentType]uint // equipments 角色穿着的装备
 
-	localDirectAttackModifiers AttackModifiers  // localDirectAttackModifiers 本地直接攻击修正
-	localFinalAttackModifiers  AttackModifiers  // localFinalAttackModifiers 本地最终攻击修正
-	localDefenceModifiers      DefenceModifiers // localDefenceModifiers 本地防御修正
-	localChargeModifiers       ChargeModifiers  // localChargeModifiers 本地充能修正
-	localHealModifiers         HealModifiers    // localHealModifiers 本地治疗修正
-	localCostModifiers         CostModifiers    // localCostModifiers 本地费用修正
+	localDirectAttackModifiers definition.AttackModifiers  // localDirectAttackModifiers 本地直接攻击修正
+	localFinalAttackModifiers  definition.AttackModifiers  // localFinalAttackModifiers 本地最终攻击修正
+	localDefenceModifiers      definition.DefenceModifiers // localDefenceModifiers 本地防御修正
+	localChargeModifiers       definition.ChargeModifiers  // localChargeModifiers 本地充能修正
+	localHealModifiers         definition.HealModifiers    // localHealModifiers 本地治疗修正
+	localCostModifiers         definition.CostModifiers    // localCostModifiers 本地费用修正
 }
 
 func (c character) GetID() (id uint) {

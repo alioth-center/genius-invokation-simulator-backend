@@ -1,4 +1,4 @@
-package adapter
+package definition
 
 type Summon interface {
 }

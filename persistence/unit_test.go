@@ -7,13 +7,21 @@ import (
 
 type testProductInterface interface {
 	data() int
+	ID() uint
 }
 
-type emptyProductInterface = any
+type emptyProductInterface struct {
+}
+
+func (e emptyProductInterface) ID() uint {
+	return 0
+}
 
 type testIntType struct {
 	u int
 }
+
+func (t testIntType) ID() uint { return uint(t.u) }
 
 func (t testIntType) data() int { return t.u }
 
@@ -21,11 +29,15 @@ type testByteType struct {
 	u byte
 }
 
+func (t testByteType) ID() uint { return uint(t.u) }
+
 func (t testByteType) data() int { return int(t.u) }
 
 type testRuneType struct {
 	u rune
 }
+
+func (t testRuneType) ID() uint { return uint(t.u) }
 
 func (t testRuneType) data() int { return int(t.u) }
 

@@ -1,6 +1,7 @@
 package modifier
 
 import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"testing"
 )
 
@@ -9,6 +10,11 @@ type testModifier struct {
 	innerData *int
 	handler   func(ctx *Context[int])
 	effective bool
+}
+
+func (t testModifier) Type() enum.ModifierType {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (t testModifier) ID() uint { return t.info }

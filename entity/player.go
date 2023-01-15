@@ -3,6 +3,7 @@ package entity
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
+	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier/definition"
 )
 
 type PlayerInfo struct {
@@ -31,12 +32,12 @@ type player struct {
 	supports      map[uint]Support    // supports 玩家在场的支援
 	supportList   []uint              // supportList 玩家的支援物列表
 
-	globalDirectAttackModifiers AttackModifiers  // globalDirectAttackModifiers 全局直接攻击修正
-	globalFinalAttackModifiers  AttackModifiers  // globalFinalAttackModifiers 全局最终攻击修正
-	globalDefenceModifiers      DefenceModifiers // globalDefenceModifiers 全局防御修正
-	globalHealModifiers         HealModifiers    // globalHealModifiers 全局治疗修正
-	globalChargeModifiers       ChargeModifiers  // globalChargeModifiers 全局充能修正
-	globalCostModifiers         CostModifiers    // globalCostModifiers 全局费用修正
+	globalDirectAttackModifiers definition.AttackModifiers  // globalDirectAttackModifiers 全局直接攻击修正
+	globalFinalAttackModifiers  definition.AttackModifiers  // globalFinalAttackModifiers 全局最终攻击修正
+	globalDefenceModifiers      definition.DefenceModifiers // globalDefenceModifiers 全局防御修正
+	globalHealModifiers         definition.HealModifiers    // globalHealModifiers 全局治疗修正
+	globalChargeModifiers       definition.ChargeModifiers  // globalChargeModifiers 全局充能修正
+	globalCostModifiers         definition.CostModifiers    // globalCostModifiers 全局费用修正
 
 	cooperativeAttacks map[enum.TriggerType]model.CooperativeSkill // cooperativeAttacks 协同攻击技能
 	callbackEvents     *Map                                        // callbackEvents 回调事件集合

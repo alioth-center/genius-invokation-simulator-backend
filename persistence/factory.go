@@ -12,8 +12,12 @@ import (
 	"time"
 )
 
+type Cacheable interface {
+	ID() uint
+}
+
 // performanceMap 高性能的并发安全KV存储
-type performanceMap[T any] struct {
+type performanceMap[T Cacheable] struct {
 	slices    map[byte]*performanceMapSlice[uint, Factory[T]] // slices 存储Persistent的分表
 	indexes   map[byte]*performanceMapSlice[string, uint]     // indexes 存储索引的分表
 	subTables uint                                            // subTables 子表数量，不得大于256
@@ -146,7 +150,7 @@ func (p *performanceMap[T]) generateID() (id uint) {
 	return id
 }
 
-func newPerformanceMap[T any]() *performanceMap[T] {
+func newPerformanceMap[T Cacheable]() *performanceMap[T] {
 	entity := &performanceMap[T]{
 		slices:    map[byte]*performanceMapSlice[uint, Factory[T]]{},
 		indexes:   map[byte]*performanceMapSlice[string, uint]{},
@@ -164,7 +168,7 @@ func newPerformanceMap[T any]() *performanceMap[T] {
 }
 
 // newPerformanceMapWithOpts 使用指定的子表数量新建performanceMap，subTables的取值范围为[1,256]
-func newPerformanceMapWithOpts[T any](subTables uint) (success bool, entity *performanceMap[T]) {
+func newPerformanceMapWithOpts[T Cacheable](subTables uint) (success bool, entity *performanceMap[T]) {
 	if subTables > 256 || subTables == 0 {
 		return false, nil
 	}
@@ -311,7 +315,7 @@ func (p *factory[entity]) enable() {
 }
 
 // factoryPersistence 持久化接口的实现
-type factoryPersistence[T any] struct {
+type factoryPersistence[T Cacheable] struct {
 	impl *performanceMap[T]
 	exit chan struct{}
 }
@@ -389,7 +393,7 @@ func (p *factoryPersistence[T]) Flush(flushPath string, flushFile string) (err e
 	}
 }
 
-func newFactoryPersistence[T any]() FactoryPersistence[T] {
+func newFactoryPersistence[T Cacheable]() FactoryPersistence[T] {
 	return &factoryPersistence[T]{
 		impl: newPerformanceMap[T](),
 		exit: make(chan struct{}, 1),

@@ -9,28 +9,36 @@ import (
 
 // Card 被持久化模块托管的Card工厂的产品
 type Card struct {
+	Cacheable
 	Card model.Card
 }
 
 // Skill 被持久化模块托管的Skill工厂的产品
 type Skill struct {
+	Cacheable
 	Skill model.Skill
 }
 
 // RuleSet 被持久化模块托管的RuleSet工厂的产品
 type RuleSet struct {
+	Cacheable
 	Rule model.RuleSet
 }
 
 // Summon 被持久化模块托管的Summon工厂的产品
-type Summon struct{}
+type Summon struct {
+	Cacheable
+}
 
 // Event 被持久化模块托管的Event工厂的产品
-type Event struct{}
+type Event struct {
+	Cacheable
+}
 
 // Character 被持久化模块托管的CharacterInfo工厂的产品
 type Character struct {
-	ID          uint
+	Cacheable
+	EntityID    uint
 	Affiliation enum.Affiliation
 	Vision      enum.ElementType
 	Weapon      enum.WeaponType
@@ -38,6 +46,8 @@ type Character struct {
 	MaxMP       uint
 	Skills      []uint
 }
+
+func (c Character) ID() uint { return c.EntityID }
 
 // Player 被持久化模块托管的Player信息
 type Player struct {

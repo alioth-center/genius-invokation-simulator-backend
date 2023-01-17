@@ -21,24 +21,34 @@ func GenerateTypeID[T any](entity T) (uid string) {
 
 // GenerateHash 将任意结构进行哈希，使用SDBM算法作为实现
 func GenerateHash[Key any](key Key) (hash uint) {
+	return GenerateHashWithOpts[Key, uint](key)
+}
+
+// GeneratePrefixHash 将任意结构的前offset字节的内容进行哈希，越界部份不会被计算，使用SDBM算法作为实现
+func GeneratePrefixHash[Key any](key Key, offset uintptr) (hash uint) {
+	return GeneratePrefixHashWithOpts[Key, uint](key, offset)
+}
+
+// GenerateHashWithOpts 将任意结构进行哈希，生成一个指定类型(无符号整形)的哈希值，使用SDBM算法作为实现
+func GenerateHashWithOpts[Key any, Hash uint | uint16 | uint32 | uint64](key Key) (hash Hash) {
 	entityPtr := &key
-	hash = uint(0)
+	hash = Hash(0)
 	start := uintptr(unsafe.Pointer(entityPtr))
 	end := unsafe.Sizeof(key) + start
 	offset := unsafe.Sizeof(byte(0))
 
 	for i := start; i < end; i += offset {
-		b := *(*byte)(unsafe.Pointer(i))
-		hash = uint(b) + (hash << 6) + (hash << 16) - hash
+		byteData := *(*byte)(unsafe.Pointer(i))
+		hash = Hash(byteData) + (hash << 6) + (hash << 16) - hash
 	}
 
 	return hash
 }
 
-// GeneratePrefixHash 将任意结构的前offset字节的内容进行哈希，越界部份不会被计算，使用SDBM算法作为实现
-func GeneratePrefixHash[Key any](key Key, offset uintptr) (hash uint) {
+// GeneratePrefixHashWithOpts 将任意结构的前offset字节的内容进行哈希，生成一个指定类型(无符号整形)的哈希值，越界部份不会被计算，使用SDBM算法作为实现
+func GeneratePrefixHashWithOpts[Key any, Hash uint | uint16 | uint32 | uint64](key Key, offset uintptr) (hash Hash) {
 	entityPtr := &key
-	hash = uint(0)
+	hash = Hash(0)
 	start := uintptr(unsafe.Pointer(entityPtr))
 	end := start + offset
 	if end > unsafe.Sizeof(key)+start {
@@ -48,12 +58,13 @@ func GeneratePrefixHash[Key any](key Key, offset uintptr) (hash uint) {
 	byteOffset := unsafe.Sizeof(byte(0))
 	for i := start; i < end; i += byteOffset {
 		b := *(*byte)(unsafe.Pointer(i))
-		hash = uint(b) + (hash << 6) + (hash << 16) - hash
+		hash = Hash(b) + (hash << 6) + (hash << 16) - hash
 	}
 
 	return hash
 }
 
+// GenerateMD5 将给定的字符串使用MD5摘要算法生成摘要
 func GenerateMD5(source string) (md5CheckSum string) {
 	return fmt.Sprintf("%x", md5.Sum([]byte(source)))
 }

@@ -13,7 +13,7 @@ import (
 )
 
 type Cacheable interface {
-	ID() uint
+	ID() uint64
 }
 
 // performanceMap 高性能的并发安全KV存储

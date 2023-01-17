@@ -31,6 +31,14 @@ func convertToBool(source string) (success bool, result bool) {
 	}
 }
 
+func convertToUint64(source string) (success bool, result uint64) {
+	if uint64Result, err := strconv.ParseUint(source, 10, 64); err != nil {
+		return false, 0
+	} else {
+		return true, uint64Result
+	}
+}
+
 func convertToStruct[T any](source string) (success bool, result T) {
 	if err := json.Unmarshal([]byte(source), &result); err != nil {
 		return false, result
@@ -65,6 +73,14 @@ func QueryPathInt(ctx *gin.Context, key string) (has bool, result int) {
 		return false, 0
 	} else {
 		return convertToInt(stringResult)
+	}
+}
+
+func QueryPathUint64(ctx *gin.Context, key string) (has bool, result uint64) {
+	if gotten, stringResult := QueryPath(ctx, key); !gotten {
+		return false, 0
+	} else {
+		return convertToUint64(stringResult)
 	}
 }
 

@@ -6,7 +6,7 @@ type Chain[data any] struct {
 	currentPtr   *node[data]
 	head         *node[data]
 	rear         *node[data]
-	cache        map[uint]*node[data]
+	cache        map[uint64]*node[data]
 }
 
 // index 找出链表第index个元素，已针对遍历进行优化
@@ -51,7 +51,7 @@ func (c Chain[data]) clone() Chain[data] {
 
 // clear 清理掉ModifierChain中无效的Modifier
 func (c *Chain[data]) clear() {
-	removes, index := make([]uint, c.size), 0
+	removes, index := make([]uint64, c.size), 0
 	for ptr := c.head; ptr != nil; ptr = ptr.next {
 		if !ptr.modifier.Effective() {
 			removes[index] = ptr.modifier.ID()
@@ -94,7 +94,7 @@ func (c *Chain[data]) Append(modifier Modifier[data]) {
 	} else {
 		// 如果没有cache索引，建立索引
 		if c.cache == nil {
-			c.cache = map[uint]*node[data]{}
+			c.cache = map[uint64]*node[data]{}
 			for ptr := c.head; ptr != nil; ptr = ptr.next {
 				c.cache[ptr.modifier.ID()] = ptr
 			}
@@ -127,7 +127,7 @@ func (c *Chain[data]) Append(modifier Modifier[data]) {
 }
 
 // Remove 根据id删除ModifierChain中的某个Modifier
-func (c *Chain[data]) Remove(id uint) {
+func (c *Chain[data]) Remove(id uint64) {
 	if c.cache == nil {
 		if c.size == 1 {
 			// 只有一个node，直接判断
@@ -218,8 +218,8 @@ func (c Chain[data]) Effective() bool {
 }
 
 // Expose 将ModifierChain中的所有Modifier的ID导出
-func (c Chain[data]) Expose() (modifiers []uint) {
-	modifiers = make([]uint, c.size)
+func (c Chain[data]) Expose() (modifiers []uint64) {
+	modifiers = make([]uint64, c.size)
 	for i := byte(0); i < c.size; i++ {
 		modifiers[i] = c.index(i).modifier.ID()
 	}

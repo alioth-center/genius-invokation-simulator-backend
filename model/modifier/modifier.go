@@ -5,7 +5,7 @@ import (
 )
 
 type Modifier[data any] interface {
-	ID() uint
+	ID() uint64
 	Type() enum.ModifierType
 	Handler() func(ctx *Context[data])
 	Clone() Modifier[data]

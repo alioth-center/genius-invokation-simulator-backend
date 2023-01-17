@@ -1429,7 +1429,7 @@ func initCharacter(characterID, ownerID uint) (success bool, result *character) 
 	}
 
 	character := &character{
-		id:                         characterInfo.EntityID,
+		id:                         characterInfo.TypeID,
 		player:                     ownerID,
 		affiliation:                characterInfo.Affiliation,
 		vision:                     characterInfo.Vision,

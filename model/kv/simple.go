@@ -29,8 +29,8 @@ func (m *simpleMap[key, value]) Range(f func(key, value) bool) {
 	}
 }
 
-func NewSimpleMap[value any]() Map[uint, value] {
-	return &simpleMap[uint, value]{data: map[uint]value{}}
+func NewSimpleMap[value any]() Map[uint64, value] {
+	return &simpleMap[uint64, value]{data: map[uint64]value{}}
 }
 
 func NewCommonMap[key comparable, value any]() Map[key, value] {

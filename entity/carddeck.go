@@ -14,11 +14,11 @@ var (
 
 // CardDeck 牌堆，记录顺序的是一个数组，正常情况下已取出的牌永远在队列的一端
 type CardDeck struct {
-	cards  kv.Map[uint, model.Card]
-	used   kv.Map[uint, bool]
-	queue  []uint
+	cards  kv.Map[uint64, model.Card]
+	used   kv.Map[uint64, bool]
+	queue  []uint64
 	offset int
-	remain uint
+	remain uint64
 }
 
 // arrange 整理CardDeck中offset之后的部分
@@ -76,13 +76,13 @@ func (c *CardDeck) FindOne(cardType enum.CardType) (result model.Card, success b
 }
 
 // Reset 将牌堆中除了holding之外的牌全部标记为未取出，此方法没有洗牌逻辑
-func (c *CardDeck) Reset(holding []uint) {
-	c.used.Range(func(key uint, value bool) bool {
+func (c *CardDeck) Reset(holding []uint64) {
+	c.used.Range(func(key uint64, value bool) bool {
 		c.used.Set(key, false)
 		return true
 	})
 
-	c.remain = uint(len(c.queue))
+	c.remain = uint64(len(c.queue))
 	c.offset = 0
 	for _, id := range holding {
 		c.used.Set(id, true)
@@ -92,7 +92,7 @@ func (c *CardDeck) Reset(holding []uint) {
 }
 
 // Remain 获取CardDeck还可以获取多少张牌
-func (c CardDeck) Remain() uint {
+func (c CardDeck) Remain() uint64 {
 	return c.remain
 }
 

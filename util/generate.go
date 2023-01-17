@@ -8,6 +8,10 @@ import (
 	"unsafe"
 )
 
+type UintLike interface {
+	uint | uint8 | uint16 | uint32 | uint64
+}
+
 // GenerateUUID 生成一个UUID，长度为36
 func GenerateUUID() string {
 	return uuid.Must(uuid.NewV4(), nil).String()
@@ -17,6 +21,11 @@ func GenerateUUID() string {
 func GenerateTypeID[T any](entity T) (uid string) {
 	typesOfT := reflect.TypeOf(entity)
 	return fmt.Sprintf("%s@%s", typesOfT.PkgPath(), typesOfT.Name())
+}
+
+// GeneratePackageID 根据给定的包名，生成其Hash，不保证不会冲突
+func GeneratePackageID[ID UintLike](packageName string) (id ID) {
+	return GenerateHashWithOpts[string, ID](packageName)
 }
 
 // GenerateHash 将任意结构进行哈希，使用SDBM算法作为实现
@@ -30,7 +39,7 @@ func GeneratePrefixHash[Key any](key Key, offset uintptr) (hash uint) {
 }
 
 // GenerateHashWithOpts 将任意结构进行哈希，生成一个指定类型(无符号整形)的哈希值，使用SDBM算法作为实现
-func GenerateHashWithOpts[Key any, Hash uint | uint16 | uint32 | uint64](key Key) (hash Hash) {
+func GenerateHashWithOpts[Key any, Hash UintLike](key Key) (hash Hash) {
 	entityPtr := &key
 	hash = Hash(0)
 	start := uintptr(unsafe.Pointer(entityPtr))
@@ -46,7 +55,7 @@ func GenerateHashWithOpts[Key any, Hash uint | uint16 | uint32 | uint64](key Key
 }
 
 // GeneratePrefixHashWithOpts 将任意结构的前offset字节的内容进行哈希，生成一个指定类型(无符号整形)的哈希值，越界部份不会被计算，使用SDBM算法作为实现
-func GeneratePrefixHashWithOpts[Key any, Hash uint | uint16 | uint32 | uint64](key Key, offset uintptr) (hash Hash) {
+func GeneratePrefixHashWithOpts[Key any, Hash UintLike](key Key, offset uintptr) (hash Hash) {
 	entityPtr := &key
 	hash = Hash(0)
 	start := uintptr(unsafe.Pointer(entityPtr))

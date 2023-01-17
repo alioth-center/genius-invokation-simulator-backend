@@ -6,7 +6,7 @@ import (
 )
 
 type testModifier struct {
-	info      uint
+	info      uint64
 	innerData *int
 	handler   func(ctx *Context[int])
 	effective bool
@@ -17,7 +17,7 @@ func (t testModifier) Type() enum.ModifierType {
 	panic("implement me")
 }
 
-func (t testModifier) ID() uint { return t.info }
+func (t testModifier) ID() uint64 { return t.info }
 
 func (t *testModifier) Handler() func(ctx *Context[int]) {
 	return func(ctx *Context[int]) {
@@ -40,15 +40,15 @@ func (t testModifier) Effective() bool { return t.effective }
 
 func (t testModifier) EffectLeft() uint { return 0 }
 
-func newModifier(id uint, handler func(ctx *Context[int])) Modifier[int] {
+func newModifier(id uint64, handler func(ctx *Context[int])) Modifier[int] {
 	return &testModifier{info: id, handler: handler, innerData: new(int), effective: true}
 }
 
-func newModifierWithInnerData(id uint, handler func(ctx *Context[int]), data *int) Modifier[int] {
+func newModifierWithInnerData(id uint64, handler func(ctx *Context[int]), data *int) Modifier[int] {
 	return &testModifier{info: id, handler: handler, innerData: data, effective: true}
 }
 
-func newModifierWithEffective(id uint, handler func(ctx *Context[int]), effective bool) Modifier[int] {
+func newModifierWithEffective(id uint64, handler func(ctx *Context[int]), effective bool) Modifier[int] {
 	return &testModifier{info: id, handler: handler, innerData: new(int), effective: effective}
 }
 
@@ -110,7 +110,7 @@ func TestContextExecute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			handlers := NewChain[int]()
 			for i, f := range tt.handlers {
-				handlers.Append(newModifier(uint(i), f))
+				handlers.Append(newModifier(uint64(i), f))
 			}
 			data := 0
 			handlers.Execute(&data)
@@ -139,31 +139,31 @@ func TestContextRemove(t *testing.T) {
 	testCases := []struct {
 		name           string
 		addHandlers    []func(ctx *Context[int])
-		removeHandlers []uint
+		removeHandlers []uint64
 		want           int
 	}{
 		{
 			name:           "TestContextRemove-1",
 			addHandlers:    []func(ctx *Context[int]){add, addTwice, addBack},
-			removeHandlers: []uint{1},
+			removeHandlers: []uint64{1},
 			want:           2,
 		},
 		{
 			name:           "TestContextRemove-2",
 			addHandlers:    []func(ctx *Context[int]){add, addTwice, addTwice, addBack},
-			removeHandlers: []uint{1, 1, 1},
+			removeHandlers: []uint64{1, 1, 1},
 			want:           4,
 		},
 		{
 			name:           "TestContextRemove-3",
 			addHandlers:    []func(ctx *Context[int]){},
-			removeHandlers: []uint{1, 1, 4},
+			removeHandlers: []uint64{1, 1, 4},
 			want:           0,
 		},
 		{
 			name:           "TestContextRemove-4",
 			addHandlers:    []func(ctx *Context[int]){add, add, add, add, add},
-			removeHandlers: []uint{4, 2, 1, 3},
+			removeHandlers: []uint64{4, 2, 1, 3},
 			want:           1,
 		},
 	}
@@ -172,7 +172,7 @@ func TestContextRemove(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			handlers := NewChain[int]()
 			for i, f := range tt.addHandlers {
-				handlers.Append(newModifier(uint(i), f))
+				handlers.Append(newModifier(uint64(i), f))
 			}
 			for _, id := range tt.removeHandlers {
 				handlers.Remove(id)

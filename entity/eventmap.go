@@ -66,11 +66,11 @@ func (m *Map) RemoveEvents(filter enum.TriggerType) {
 	delete(m.sets, filter)
 }
 
-func (m Map) Expose(trigger enum.TriggerType) (events []uint) {
+func (m Map) Expose(trigger enum.TriggerType) (events []uint64) {
 	if set, exist := m.sets[trigger]; !exist {
-		return []uint{}
+		return []uint64{}
 	} else {
-		events = []uint{}
+		events = []uint64{}
 		for id := range set.events {
 			events = append(events, id)
 		}
@@ -83,7 +83,7 @@ func NewEventMap() *Map {
 }
 
 type set struct {
-	events map[uint]model.Event
+	events map[uint64]model.Event
 }
 
 // call 调用EventSet中的所有Event，并在调用完成后清理需要清理的Event
@@ -118,11 +118,11 @@ func (s *set) add(event model.Event) {
 }
 
 // remove 从EventSet中移除一个指定id的Event
-func (s *set) remove(id uint) {
+func (s *set) remove(id uint64) {
 	delete(s.events, id)
 }
 
 // newEventSet 创建一个空EventSet
 func newEventSet() *set {
-	return &set{events: map[uint]model.Event{}}
+	return &set{events: map[uint64]model.Event{}}
 }

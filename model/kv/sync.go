@@ -4,36 +4,36 @@ import "sync"
 
 type syncMap[value any] struct {
 	mutex *sync.RWMutex
-	data  map[uint64]value
+	data  map[uint]value
 }
 
-func (s *syncMap[value]) Exists(key uint64) bool {
+func (s *syncMap[value]) Exists(key uint) bool {
 	s.mutex.RLock()
 	_, ok := s.data[key]
 	s.mutex.RUnlock()
 	return ok
 }
 
-func (s *syncMap[value]) Get(key uint64) value {
+func (s *syncMap[value]) Get(key uint) value {
 	s.mutex.RLock()
 	result := s.data[key]
 	s.mutex.RUnlock()
 	return result
 }
 
-func (s *syncMap[value]) Set(key uint64, data value) {
+func (s *syncMap[value]) Set(key uint, data value) {
 	s.mutex.Lock()
 	s.data[key] = data
 	s.mutex.Unlock()
 }
 
-func (s *syncMap[value]) Remove(key uint64) {
+func (s *syncMap[value]) Remove(key uint) {
 	s.mutex.Lock()
 	delete(s.data, key)
 	s.mutex.Unlock()
 }
 
-func (s *syncMap[value]) Range(f func(uint64, value) bool) {
+func (s *syncMap[value]) Range(f func(uint, value) bool) {
 	s.mutex.RLock()
 	for k, v := range s.data {
 		if !f(k, v) {
@@ -43,9 +43,9 @@ func (s *syncMap[value]) Range(f func(uint64, value) bool) {
 	s.mutex.RUnlock()
 }
 
-func NewSyncMap[value any]() Map[uint64, value] {
+func NewSyncMap[value any]() Map[uint, value] {
 	return &syncMap[value]{
 		mutex: &sync.RWMutex{},
-		data:  map[uint64]value{},
+		data:  map[uint]value{},
 	}
 }

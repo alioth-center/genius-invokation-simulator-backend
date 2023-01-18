@@ -10,13 +10,13 @@ import (
 )
 
 type baseModifierAdapterLayer struct {
-	modifierID   uint
+	modifierID   uint64
 	modifierType enum.ModifierType
 	effective    func() bool
 	effectLeft   func() uint
 }
 
-func (b *baseModifierAdapterLayer) ID() uint {
+func (b *baseModifierAdapterLayer) ID() uint64 {
 	return b.modifierID
 }
 

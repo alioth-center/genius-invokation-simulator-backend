@@ -7,7 +7,7 @@ import (
 )
 
 type BaseModifier interface {
-	ModifierID() uint
+	ModifierID() uint64
 	ModifierType() enum.ModifierType
 	RoundStartReset()
 	Effective() bool

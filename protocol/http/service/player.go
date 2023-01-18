@@ -64,7 +64,7 @@ func loginServiceHandler() func(ctx *gin.Context) {
 			// 密码校验失败，Forbidden，登陆失败
 			middleware.Interdict(ctx, middlewareConfig)
 			ctx.JSON(403, message.LoginResponse{Success: false})
-		} else if !middleware.AttachToken(ctx, middlewareConfig, uint(id)) {
+		} else if !middleware.AttachToken(ctx, middlewareConfig, id) {
 			// 生成token失败，InternalError
 			ctx.JSON(500, message.LoginResponse{Success: false})
 		} else {

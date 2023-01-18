@@ -9,56 +9,56 @@ type SyncMessageInterface interface {
 
 // DictionaryPair 追加字典，将同步信息中给的实体ID与它们的类型ID相联系
 type DictionaryPair struct {
-	TypeID   uint `json:"type_id" yaml:"type_id" xml:"type_id"`       // TypeID 类型的ID
-	EntityID uint `json:"entity_id" yaml:"entity_id" xml:"entity_id"` // EntityID 实体的ID
+	TypeID   uint64 `json:"type_id" yaml:"type_id" xml:"type_id"`       // TypeID 类型的ID
+	EntityID uint64 `json:"entity_id" yaml:"entity_id" xml:"entity_id"` // EntityID 实体的ID
 }
 
 // Modifier 修正BUFF
 type Modifier struct {
-	ID   uint              `json:"id" yaml:"id" xml:"id"`       // ID 修正BUFF的实体ID
+	ID   uint64            `json:"id" yaml:"id" xml:"id"`       // ID 修正BUFF的实体ID
 	Type enum.ModifierType `json:"type" yaml:"type" xml:"type"` // Type 修正BUFF的类型
 }
 
 // Equipment 装备信息
 type Equipment struct {
-	ID   uint               `json:"id" yaml:"id" xml:"id"`       // ID 装备的实体ID
+	ID   uint64             `json:"id" yaml:"id" xml:"id"`       // ID 装备的实体ID
 	Type enum.EquipmentType `json:"type" yaml:"type" xml:"type"` // Type 装备的类型
 }
 
 // CooperativeSkill 协同攻击
 type CooperativeSkill struct {
-	ID      uint             `json:"id" yaml:"id" xml:"id"`                // ID 协同攻击的实体ID
+	ID      uint64           `json:"id" yaml:"id" xml:"id"`                // ID 协同攻击的实体ID
 	Trigger enum.TriggerType `json:"trigger" yaml:"trigger" xml:"trigger"` // Trigger 协同攻击的触发条件
 }
 
 // Summon 召唤物信息
 type Summon struct {
-	ID     uint `json:"id" yaml:"id" xml:"id"`             // ID 召唤物的ID
-	Remain uint `json:"remain" yaml:"remain" xml:"remain"` // Remain 召唤物剩余可生效次数
+	ID     uint64 `json:"id" yaml:"id" xml:"id"`             // ID 召唤物的ID
+	Remain uint   `json:"remain" yaml:"remain" xml:"remain"` // Remain 召唤物剩余可生效次数
 }
 
 // Support 支援物信息
 type Support struct {
-	ID     uint `json:"id" yaml:"id" xml:"id"`             // ID 支援物的ID
-	Remain uint `json:"remain" yaml:"remain" xml:"remain"` // Remain 支援物的剩余可生效次数
+	ID     uint64 `json:"id" yaml:"id" xml:"id"`             // ID 支援物的ID
+	Remain uint   `json:"remain" yaml:"remain" xml:"remain"` // Remain 支援物的剩余可生效次数
 }
 
 // Game 对局的信息
 type Game struct {
-	ActingPlayer uint            `json:"acting_player" yaml:"acting_player" xml:"acting_player"` // ActingPlayer 当前正在操作的玩家
+	ActingPlayer uint64          `json:"acting_player" yaml:"acting_player" xml:"acting_player"` // ActingPlayer 当前正在操作的玩家
 	RoundStage   enum.RoundStage `json:"round_stage" yaml:"round_stage" xml:"round_stage"`       // RoundStage 当前的回合阶段
 	RoundCount   uint            `json:"round_count" yaml:"round_count" xml:"round_count"`       // RoundCount 当前的回合数
 }
 
 // Event 事件信息
 type Event struct {
-	ID      uint             `json:"id" yaml:"id" xml:"id"`                // ID 事件的实体ID
+	ID      uint64           `json:"id" yaml:"id" xml:"id"`                // ID 事件的实体ID
 	Trigger enum.TriggerType `json:"trigger" yaml:"trigger" xml:"trigger"` // Trigger 事件的触发条件
 }
 
 // Character 角色信息
 type Character struct {
-	ID         uint                 `json:"id" yaml:"id" xml:"id"`                         // ID 角色的实体ID
+	ID         uint64               `json:"id" yaml:"id" xml:"id"`                         // ID 角色的实体ID
 	MP         uint                 `json:"mp" yaml:"mp" xml:"mp"`                         // MP 角色的当前充能
 	HP         uint                 `json:"hp" yaml:"hp" xml:"hp"`                         // HP 角色的当前生命
 	Equipments []Equipment          `json:"equipments" yaml:"equipments" xml:"equipments"` // Equipment 角色当前的装备
@@ -68,7 +68,7 @@ type Character struct {
 
 // Base 基础玩家信息
 type Base struct {
-	UID          uint               `json:"uid" yaml:"uid" xml:"uid"`                               // UID 玩家的UID
+	UID          uint64             `json:"uid" yaml:"uid" xml:"uid"`                               // UID 玩家的UID
 	Characters   []Character        `json:"characters" yaml:"characters" xml:"characters"`          // Characters 玩家的持有角色
 	CampEffect   []Modifier         `json:"camp_effect" yaml:"camp_effect" xml:"camp_effect"`       // CampEffect 玩家的阵营效果
 	Cooperatives []CooperativeSkill `json:"cooperatives" yaml:"cooperatives" xml:"cooperatives"`    // Cooperatives 玩家可进行的协同攻击
@@ -84,7 +84,7 @@ type Base struct {
 type Self struct {
 	Base
 	Cost  map[enum.ElementType]uint `json:"cost" yaml:"cost" xml:"cost"`    // Cost 玩家持有的元素骰子
-	Cards []uint                    `json:"cards" yaml:"cards" xml:"cards"` // Cards 玩家持有的卡牌
+	Cards []uint64                  `json:"cards" yaml:"cards" xml:"cards"` // Cards 玩家持有的卡牌
 }
 
 // Other 接收玩家所见的其他玩家信息
@@ -97,7 +97,7 @@ type Other struct {
 // SyncMessage 玩家接收到的同步消息
 type SyncMessage struct {
 	Game    Game        `json:"game" yaml:"game" xml:"game"`          // Game 对局信息
-	Target  uint        `json:"target"   yaml:"target" xml:"target"`  // Target 接收同步消息的玩家
+	Target  uint64      `json:"target"   yaml:"target" xml:"target"`  // Target 接收同步消息的玩家
 	Message interface{} `json:"message" yaml:"message" xml:"message"` // Message 同步消息
 }
 
@@ -121,7 +121,7 @@ type GuestMessage struct {
 }
 
 // NewSyncMessage 创建一个指定接收者的同步信息
-func NewSyncMessage[message SyncMessageInterface](target uint, msg message, game Game) SyncMessage {
+func NewSyncMessage[message SyncMessageInterface](target uint64, msg message, game Game) SyncMessage {
 	return SyncMessage{
 		Game:    game,
 		Target:  target,

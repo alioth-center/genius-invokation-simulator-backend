@@ -42,11 +42,11 @@ func (d Damage) Reaction() enum.Reaction {
 }
 
 type DamageContext struct {
-	skillID              uint
-	sendCharacter        uint
-	targetCharacter      uint
-	backgroundCharacters []uint
-	damages              map[uint]*Damage
+	skillID              uint64
+	sendCharacter        uint64
+	targetCharacter      uint64
+	backgroundCharacters []uint64
+	damages              map[uint64]*Damage
 }
 
 // AddActiveDamage 增加对目标玩家前台角色的伤害数值
@@ -79,17 +79,17 @@ func (d *DamageContext) ChangeElementType(element enum.ElementType) {
 }
 
 // SetReaction 目标角色身上发生的元素反应类型，仅供框架使用
-func (d *DamageContext) SetReaction(targetCharacter uint, reaction enum.Reaction) {
+func (d *DamageContext) SetReaction(targetCharacter uint64, reaction enum.Reaction) {
 	d.damages[targetCharacter].reaction = reaction
 }
 
 // GetTargetCharacter 获取伤害的目标角色ID
-func (d DamageContext) GetTargetCharacter() uint {
+func (d DamageContext) GetTargetCharacter() uint64 {
 	return d.targetCharacter
 }
 
 // GetBackgroundCharacters 获取伤害的目标后台角色ID
-func (d DamageContext) GetBackgroundCharacters() []uint {
+func (d DamageContext) GetBackgroundCharacters() []uint64 {
 	return d.backgroundCharacters
 }
 
@@ -99,8 +99,8 @@ func (d DamageContext) GetTargetCharacterReaction() enum.Reaction {
 }
 
 // Damage 返回DamageContext携带的伤害信息，只读
-func (d DamageContext) Damage() map[uint]Damage {
-	result := map[uint]Damage{}
+func (d DamageContext) Damage() map[uint64]Damage {
+	result := map[uint64]Damage{}
 	for _, id := range d.backgroundCharacters {
 		result[id] = Damage{elementType: enum.ElementNone, amount: 0}
 	}
@@ -113,23 +113,23 @@ func (d DamageContext) Damage() map[uint]Damage {
 }
 
 // NewEmptyDamageContext 新建一个空的DamageContext
-func NewEmptyDamageContext(skill, from, target uint, backgrounds []uint) *DamageContext {
+func NewEmptyDamageContext(skill, from, target uint64, backgrounds []uint64) *DamageContext {
 	return &DamageContext{
 		skillID:              skill,
 		sendCharacter:        from,
 		targetCharacter:      target,
 		backgroundCharacters: backgrounds,
-		damages:              map[uint]*Damage{},
+		damages:              map[uint64]*Damage{},
 	}
 }
 
 // NewDamageContext 新建一个带有基础伤害的DamageContext
-func NewDamageContext(skill, from, target uint, backgrounds []uint, elementType enum.ElementType, damageAmount uint) *DamageContext {
+func NewDamageContext(skill, from, target uint64, backgrounds []uint64, elementType enum.ElementType, damageAmount uint) *DamageContext {
 	return &DamageContext{
 		skillID:              skill,
 		sendCharacter:        from,
 		targetCharacter:      target,
 		backgroundCharacters: backgrounds,
-		damages:              map[uint]*Damage{target: {elementType: elementType, amount: damageAmount, reaction: enum.ReactionNone}},
+		damages:              map[uint64]*Damage{target: {elementType: elementType, amount: damageAmount, reaction: enum.ReactionNone}},
 	}
 }

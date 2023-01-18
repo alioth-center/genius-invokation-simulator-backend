@@ -10,7 +10,7 @@ import (
 )
 
 // AttachToken 将Token信息附加给响应
-func AttachToken(ctx *gin.Context, conf config.MiddlewareConfig, player uint) (success bool) {
+func AttachToken(ctx *gin.Context, conf config.MiddlewareConfig, player uint64) (success bool) {
 	uuid := GetUUID(ctx, conf)
 	ok, ip := GetIPTrace(ctx, conf)
 	if !ok {

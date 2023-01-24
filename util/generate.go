@@ -5,6 +5,7 @@ import (
 	"fmt"
 	uuid "github.com/satori/go.uuid"
 	"reflect"
+	"time"
 	"unsafe"
 )
 
@@ -76,4 +77,20 @@ func GeneratePrefixHashWithOpts[Key any, Hash UintLike](key Key, offset uintptr)
 // GenerateMD5 将给定的字符串使用MD5摘要算法生成摘要
 func GenerateMD5(source string) (md5CheckSum string) {
 	return fmt.Sprintf("%x", md5.Sum([]byte(source)))
+}
+
+// GenerateUID 根据时间戳生成一个UID，毫秒级，48位，其中前6位为设备序列号，后42位为毫秒时间戳，可使用138年
+func GenerateUID(mac uint64, timeStamp time.Time) (uid uint64) {
+	timeStampID := uint64(timeStamp.Sub(GetZeroTimeStamp()).Milliseconds())
+	timePartBits := uint64(1<<42) - 1
+	deviceID := GenerateHashWithOpts[uint64, uint8](mac)
+	devicePart := uint64(1<<6) - 1
+	return ((uint64(deviceID) & devicePart) << 42) + (timeStampID & timePartBits)
+}
+
+// GenerateRealID 根据MOD的ID和MOD中的ID，拼接出真实ID
+func GenerateRealID(uid uint64, sub uint16) (realID uint64) {
+	uidPartBits := uint64(1<<48) - 1
+	subPartBits := uint64(1<<16) - 1
+	return ((uid & uidPartBits) << 16) + (uint64(sub) & subPartBits)
 }

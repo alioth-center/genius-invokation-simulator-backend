@@ -42,23 +42,23 @@ func GeneratePrefixHash[Key any](key Key, offset uintptr) (hash uint) {
 // GenerateHashWithOpts 将任意结构进行哈希，生成一个指定类型(无符号整形)的哈希值，使用SDBM算法作为实现
 func GenerateHashWithOpts[Key any, Hash UintLike](key Key) (hash Hash) {
 	entityPtr := &key
-	hash = Hash(0)
+	sum := uint64(0)
 	start := uintptr(unsafe.Pointer(entityPtr))
 	end := unsafe.Sizeof(key) + start
 	offset := unsafe.Sizeof(byte(0))
 
 	for i := start; i < end; i += offset {
 		byteData := *(*byte)(unsafe.Pointer(i))
-		hash = Hash(byteData) + (hash << 6) + (hash << 16) - hash
+		sum = uint64(byteData) + (sum << 6) + (sum << 16) - sum
 	}
 
-	return hash
+	return Hash(sum)
 }
 
 // GeneratePrefixHashWithOpts 将任意结构的前offset字节的内容进行哈希，生成一个指定类型(无符号整形)的哈希值，越界部份不会被计算，使用SDBM算法作为实现
 func GeneratePrefixHashWithOpts[Key any, Hash UintLike](key Key, offset uintptr) (hash Hash) {
 	entityPtr := &key
-	hash = Hash(0)
+	sum := uint64(0)
 	start := uintptr(unsafe.Pointer(entityPtr))
 	end := start + offset
 	if end > unsafe.Sizeof(key)+start {
@@ -68,10 +68,10 @@ func GeneratePrefixHashWithOpts[Key any, Hash UintLike](key Key, offset uintptr)
 	byteOffset := unsafe.Sizeof(byte(0))
 	for i := start; i < end; i += byteOffset {
 		b := *(*byte)(unsafe.Pointer(i))
-		hash = Hash(b) + (hash << 6) + (hash << 16) - hash
+		sum = uint64(b) + (sum << 6) + (sum << 16) - sum
 	}
 
-	return hash
+	return Hash(sum)
 }
 
 // GenerateMD5 将给定的字符串使用MD5摘要算法生成摘要

@@ -76,7 +76,7 @@ func (c *CardDeck) FindOne(cardType enum.CardType) (result model.Card, success b
 
 // Reset 将牌堆中除了holding之外的牌全部标记为未取出，此方法没有洗牌逻辑
 func (c *CardDeck) Reset(holding []uint64) {
-	for card, _ := range c.used {
+	for card := range c.used {
 		c.used[card] = false
 	}
 

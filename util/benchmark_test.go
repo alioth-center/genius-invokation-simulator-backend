@@ -13,7 +13,6 @@ func BenchmarkTestGenerateID(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		GenerateUID(mac, time.Now())
 	}
-
 }
 
 func BenchmarkGenerateRealID(b *testing.B) {

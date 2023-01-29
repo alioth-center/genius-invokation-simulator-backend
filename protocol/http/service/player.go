@@ -28,7 +28,7 @@ func initPlayerService() {
 		middleware.NewInterdictor(middlewareConfig),
 		loginServiceHandler(),
 	)
-	playerRouter.POST("",
+	playerRouter.POST("/register",
 		registerServiceHandler(),
 	)
 	playerRouter.PATCH(":player_id/password",

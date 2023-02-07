@@ -51,7 +51,7 @@ func loginServiceHandler() func(ctx *gin.Context) {
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if has, player := persistence.PlayerPersistence.QueryByID(uint(request.PlayerUID)); !has {
+		} else if has, player := persistence.PlayerPersistence.QueryByID(request.PlayerUID); !has {
 			// 没找到请求玩家，NotFound，登陆失败
 			ctx.JSON(404, message.LoginResponse{Success: false})
 		} else if success, encodeResult := util2.EncodePassword([]byte(request.Password), uint(request.PlayerUID)); !success {
@@ -61,7 +61,7 @@ func loginServiceHandler() func(ctx *gin.Context) {
 			// 密码校验失败，Forbidden，登陆失败
 			middleware.Interdict(ctx, middlewareConfig)
 			ctx.JSON(403, message.LoginResponse{Success: false})
-		} else if !middleware.AttachToken(ctx, middlewareConfig, uint(request.PlayerUID)) {
+		} else if !middleware.AttachToken(ctx, middlewareConfig, request.PlayerUID) {
 			// 生成token失败，InternalError
 			ctx.JSON(500, message.LoginResponse{Success: false})
 		} else {

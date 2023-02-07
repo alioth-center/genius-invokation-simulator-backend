@@ -16,7 +16,7 @@ type LoginResponse struct {
 }
 
 type LoginRequest struct {
-	PlayerUID uint   `json:"player_uid"`
+	PlayerUID uint64 `json:"player_uid"`
 	Password  string `json:"password"`
 }
 

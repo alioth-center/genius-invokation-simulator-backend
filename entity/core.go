@@ -1108,17 +1108,17 @@ func (c *Core) injectPlayers(initializeMessage message.InitializeMessage) (succe
 		}
 	}
 
-	//for _, playerInfo := range initializeMessage.Players {
-	//	if success, playerEntity := initPlayer(playerInfo, ruleSet); !success {
-	//		return false
-	//	} else {
-	//		if _, exist := c.room[playerInfo.UID]; !exist {
-	//			return false
-	//		} else {
-	//			c.room[playerInfo.UID].player = playerEntity
-	//		}
-	//	}
-	//}
+	for _, playerInfo := range initializeMessage.Players {
+		if success, playerEntity := initPlayer(playerInfo, ruleSet); !success {
+			return false
+		} else {
+			if _, exist := c.room[playerInfo.UID]; !exist {
+				return false
+			} else {
+				c.room[playerInfo.UID].player = playerEntity
+			}
+		}
+	}
 
 	return true
 }
@@ -1407,109 +1407,109 @@ func generateDictionary(c *Core) (dictionary []message.DictionaryPair) {
 	return dictionary
 }
 
-//// initCharacter 新建并初始化一个character实体
-//func initCharacter(characterID, ownerID uint) (success bool, result *character) {
-//	exist, characterPersistence := persistence.CharacterPersistence.QueryByID(characterID)
-//	if !exist {
-//		// 找不到角色实现，初始化失败
-//		return false, nil
-//	}
-//
-//	characterInfo := characterPersistence.Ctor()()
-//	characterSkill := map[uint]model.Skill{}
-//	for _, skillID := range characterInfo.Skills {
-//		if existSkill, skillPersistence := persistence.SkillPersistence.QueryByID(skillID); !existSkill {
-//			// 找不到技能实现，初始化失败
-//			return false, nil
-//		} else {
-//			skill := skillPersistence.Ctor()().Skill
-//			skill.InjectTypeID(skillPersistence.ID())
-//			characterSkill[skillID] = skill
-//		}
-//	}
-//
-//	character := &character{
-//		id:                         characterInfo.TypeID,
-//		player:                     ownerID,
-//		affiliation:                characterInfo.Affiliation,
-//		vision:                     characterInfo.Vision,
-//		weapon:                     characterInfo.Weapon,
-//		skills:                     characterSkill,
-//		maxHP:                      characterInfo.MaxHP,
-//		currentHP:                  characterInfo.MaxHP,
-//		maxMP:                      characterInfo.MaxMP,
-//		currentMP:                  0,
-//		status:                     enum.CharacterStatusReady,
-//		elements:                   []enum.ElementType{},
-//		satiety:                    false,
-//		equipments:                 map[enum.EquipmentType]uint{},
-//		localDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
-//		localFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
-//		localDefenceModifiers:      modifier.NewChain[context.DamageContext](),
-//		localChargeModifiers:       modifier.NewChain[context.ChargeContext](),
-//		localHealModifiers:         modifier.NewChain[context.HealContext](),
-//		localCostModifiers:         modifier.NewChain[context.CostContext](),
-//	}
-//
-//	return true, character
-//}
+// initCharacter 新建并初始化一个character实体
+func initCharacter(characterID, ownerID uint64) (success bool, result *character) {
+	exist, characterPersistence := persistence.CharacterPersistence.QueryByID(characterID)
+	if !exist {
+		// 找不到角色实现，初始化失败
+		return false, nil
+	}
 
-//// initPlayer 新建并初始化一个player实体
-//func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) (success bool, result *player) {
-//	if existPlayer, _ := persistence.PlayerPersistence.QueryByID(matchingMessage.UID); !existPlayer {
-//		// 不存在玩家信息，初始化失败
-//		return false, nil
-//	}
-//
-//	var characterList []uint
-//	characterMap := map[uint]*character{}
-//	for _, characterID := range matchingMessage.Characters {
-//		if initCharacterSuccess, character := initCharacter(characterID, matchingMessage.UID); !initCharacterSuccess {
-//			// 初始化角色失败
-//			return false, nil
-//		} else {
-//			characterList = append(characterList, characterID)
-//			characterMap[characterID] = character
-//		}
-//	}
-//
-//	var cardList []model.Card
-//	for _, cardID := range matchingMessage.CardDeck {
-//		if existCard, cardPersistence := persistence.CardPersistence.QueryByID(cardID); !existCard {
-//			// 不存在卡牌，初始化失败
-//			return false, nil
-//		} else {
-//			cardEntity := cardPersistence.Ctor()().Card
-//			cardEntity.InjectTypeID(cardPersistence.ID())
-//			cardList = append(cardList, cardEntity)
-//		}
-//	}
-//
-//	player := &player{
-//		uid:                         matchingMessage.UID,
-//		status:                      enum.PlayerStatusInitialized,
-//		operated:                    false,
-//		reRollTimes:                 ruleSet.GameOptions.ReRollTimes,
-//		staticCost:                  model.NewCostFromMap(ruleSet.GameOptions.StaticCost),
-//		holdingCost:                 model.NewCost(),
-//		cardDeck:                    NewCardDeck(cardList),
-//		holdingCards:                map[uint]model.Card{},
-//		activeCharacter:             0,
-//		characters:                  characterMap,
-//		characterList:               characterList,
-//		summons:                     map[uint]Summon{},
-//		summonList:                  []uint{},
-//		supports:                    map[uint]Support{},
-//		supportList:                 []uint{},
-//		globalDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
-//		globalFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
-//		globalDefenceModifiers:      modifier.NewChain[context.DamageContext](),
-//		globalChargeModifiers:       modifier.NewChain[context.ChargeContext](),
-//		globalHealModifiers:         modifier.NewChain[context.HealContext](),
-//		globalCostModifiers:         modifier.NewChain[context.CostContext](),
-//		cooperativeAttacks:          map[enum.TriggerType]model.CooperativeSkill{},
-//		callbackEvents:              NewEventMap(),
-//	}
-//
-//	return true, player
-//}
+	characterInfo := characterPersistence.Ctor()()
+	characterSkill := map[uint64]model.Skill{}
+	for _, skillID := range characterInfo.Skills {
+		if existSkill, skillPersistence := persistence.SkillPersistence.QueryByID(skillID); !existSkill {
+			// 找不到技能实现，初始化失败
+			return false, nil
+		} else {
+			skill := skillPersistence.Ctor()().Skill
+			skill.InjectTypeID(skillPersistence.ID())
+			characterSkill[skillID] = skill
+		}
+	}
+
+	character := &character{
+		id:                         characterInfo.TypeID,
+		player:                     ownerID,
+		affiliation:                characterInfo.Affiliation,
+		vision:                     characterInfo.Vision,
+		weapon:                     characterInfo.Weapon,
+		skills:                     characterSkill,
+		maxHP:                      characterInfo.MaxHP,
+		currentHP:                  characterInfo.MaxHP,
+		maxMP:                      characterInfo.MaxMP,
+		currentMP:                  0,
+		status:                     enum.CharacterStatusReady,
+		elements:                   []enum.ElementType{},
+		satiety:                    false,
+		equipments:                 map[enum.EquipmentType]uint64{},
+		localDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
+		localFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
+		localDefenceModifiers:      modifier.NewChain[context.DamageContext](),
+		localChargeModifiers:       modifier.NewChain[context.ChargeContext](),
+		localHealModifiers:         modifier.NewChain[context.HealContext](),
+		localCostModifiers:         modifier.NewChain[context.CostContext](),
+	}
+
+	return true, character
+}
+
+// initPlayer 新建并初始化一个player实体
+func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) (success bool, result *player) {
+	if existPlayer, _ := persistence.PlayerPersistence.QueryByID(matchingMessage.UID); !existPlayer {
+		// 不存在玩家信息，初始化失败
+		return false, nil
+	}
+
+	var characterList []uint64
+	characterMap := map[uint64]*character{}
+	for _, characterID := range matchingMessage.Characters {
+		if initCharacterSuccess, character := initCharacter(characterID, matchingMessage.UID); !initCharacterSuccess {
+			// 初始化角色失败
+			return false, nil
+		} else {
+			characterList = append(characterList, characterID)
+			characterMap[characterID] = character
+		}
+	}
+
+	var cardList []model.Card
+	for _, cardID := range matchingMessage.CardDeck {
+		if existCard, cardPersistence := persistence.CardPersistence.QueryByID(cardID); !existCard {
+			// 不存在卡牌，初始化失败
+			return false, nil
+		} else {
+			cardEntity := cardPersistence.Ctor()().Card
+			cardEntity.InjectTypeID(cardPersistence.ID())
+			cardList = append(cardList, cardEntity)
+		}
+	}
+
+	player := &player{
+		uid:                         matchingMessage.UID,
+		status:                      enum.PlayerStatusInitialized,
+		operated:                    false,
+		reRollTimes:                 ruleSet.GameOptions.ReRollTimes,
+		staticCost:                  model.NewCostFromMap(ruleSet.GameOptions.StaticCost),
+		holdingCost:                 model.NewCost(),
+		cardDeck:                    NewCardDeck(cardList),
+		holdingCards:                map[uint64]model.Card{},
+		activeCharacter:             0,
+		characters:                  characterMap,
+		characterList:               characterList,
+		summons:                     map[uint64]Summon{},
+		summonList:                  []uint64{},
+		supports:                    map[uint64]Support{},
+		supportList:                 []uint64{},
+		globalDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
+		globalFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
+		globalDefenceModifiers:      modifier.NewChain[context.DamageContext](),
+		globalChargeModifiers:       modifier.NewChain[context.ChargeContext](),
+		globalHealModifiers:         modifier.NewChain[context.HealContext](),
+		globalCostModifiers:         modifier.NewChain[context.CostContext](),
+		cooperativeAttacks:          map[enum.TriggerType]model.CooperativeSkill{},
+		callbackEvents:              NewEventMap(),
+	}
+
+	return true, player
+}

@@ -10,7 +10,8 @@ type LoginResponse struct {
 }
 
 type LoginRequest struct {
-	Password string `json:"password"`
+	PlayerUID uint   `json:"player_uid"`
+	Password  string `json:"password"`
 }
 
 type RegisterRequest struct {

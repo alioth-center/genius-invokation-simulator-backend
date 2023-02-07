@@ -9,10 +9,10 @@ type CallbackContext struct {
 	changeElements  kv.Pair[bool, *CostContext]
 	changeCharge    kv.Pair[bool, *ChargeContext]
 	changeModifiers kv.Pair[bool, *ModifierContext]
-	attachElement   kv.Pair[bool, map[uint]enum.ElementType]
+	attachElement   kv.Pair[bool, map[uint64]enum.ElementType]
 	getCards        kv.Pair[bool, uint]
 	findCard        kv.Pair[bool, enum.CardType]
-	switchCharacter kv.Pair[bool, uint]
+	switchCharacter kv.Pair[bool, uint64]
 	operated        kv.Pair[bool, bool]
 }
 
@@ -37,7 +37,7 @@ func (c *CallbackContext) ChangeModifiers(f func(ctx *ModifierContext)) {
 	f(c.changeModifiers.Value())
 }
 
-func (c *CallbackContext) AttachElement(target uint, element enum.ElementType) {
+func (c *CallbackContext) AttachElement(target uint64, element enum.ElementType) {
 	if !c.attachElement.Key() {
 		c.attachElement.SetKey(true)
 	}
@@ -60,7 +60,7 @@ func (c *CallbackContext) FindCard(cardType enum.CardType) {
 	c.findCard.SetValue(cardType)
 }
 
-func (c *CallbackContext) SwitchCharacter(target uint) {
+func (c *CallbackContext) SwitchCharacter(target uint64) {
 	if !c.switchCharacter.Key() {
 		c.switchCharacter.SetKey(true)
 	}
@@ -86,7 +86,7 @@ func (c CallbackContext) ChangeModifiersResult() (changed bool, result *Modifier
 	return c.changeModifiers.Key(), c.changeModifiers.Value()
 }
 
-func (c CallbackContext) AttachElementResult() (changed bool, result map[uint]enum.ElementType) {
+func (c CallbackContext) AttachElementResult() (changed bool, result map[uint64]enum.ElementType) {
 	return c.attachElement.Key(), c.attachElement.Value()
 }
 
@@ -98,7 +98,7 @@ func (c CallbackContext) GetFindCardResult() (find bool, cardType enum.CardType)
 	return c.findCard.Key(), c.findCard.Value()
 }
 
-func (c CallbackContext) SwitchCharacterResult() (switched bool, target uint) {
+func (c CallbackContext) SwitchCharacterResult() (switched bool, target uint64) {
 	return c.switchCharacter.Key(), c.switchCharacter.Value()
 }
 
@@ -111,9 +111,9 @@ func NewCallbackContext() *CallbackContext {
 		changeElements:  kv.NewPair(false, NewCostContext()),
 		changeCharge:    kv.NewPair(false, NewChargeContext()),
 		changeModifiers: kv.NewPair(false, NewModifierContext()),
-		attachElement:   kv.NewPair(false, map[uint]enum.ElementType{}),
+		attachElement:   kv.NewPair(false, map[uint64]enum.ElementType{}),
 		getCards:        kv.NewPair(false, uint(0)),
-		switchCharacter: kv.NewPair(false, uint(0)),
+		switchCharacter: kv.NewPair(false, uint64(0)),
 		operated:        kv.NewPair(false, false),
 		findCard:        kv.NewPair(false, enum.CardType(0)),
 	}

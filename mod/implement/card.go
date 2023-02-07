@@ -3,6 +3,8 @@ package implement
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	definition "github.com/sunist-c/genius-invokation-simulator-backend/mod/definition"
+	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
+	definition2 "github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 )
 
 type BaseCardImpl struct {
@@ -88,10 +90,32 @@ type WeaponCardImpl struct {
 	EquipmentCardImpl
 }
 
+func (e *WeaponCardImpl) WeaponType() enum.WeaponType {
+	return enum.WeaponOthers
+}
+
 func (e *WeaponCardImpl) CardType() enum.CardType {
 	return enum.CardWeapon
 }
 
 func (e *WeaponCardImpl) EquipmentType() enum.EquipmentType {
 	return enum.EquipmentWeapon
+}
+
+type SkyBow struct {
+	EquipmentCardImpl
+}
+
+func (s *SkyBow) Cost() map[enum.ElementType]uint {
+	return map[enum.ElementType]uint{
+		enum.ElementSame: 3,
+	}
+}
+
+func (s *SkyBow) WeaponType() enum.WeaponType {
+	return enum.WeaponBow
+}
+
+func SkyBowModifier() definition2.Modifier[context.DamageContext] {
+	panic("")
 }

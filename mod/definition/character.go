@@ -1,4 +1,4 @@
-package adapter
+package definition
 
 type Character interface {
 }

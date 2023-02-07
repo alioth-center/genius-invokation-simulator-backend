@@ -4,7 +4,7 @@ import "time"
 
 // FactoryPersistenceRecord 抽象工厂的持久化结构记录
 type FactoryPersistenceRecord struct {
-	ID  uint   `json:"id"`
+	ID  uint64 `json:"id"`
 	UID string `json:"uid"`
 }
 
@@ -13,7 +13,7 @@ type FactoryPersistence[T any] interface {
 	Serve(flushFrequency time.Duration, flushPath, flushFile string, errChan chan error)
 	Exit()
 	Load(filePath string) (err error)
-	QueryByID(id uint) (has bool, result Factory[T])
+	QueryByID(id uint64) (has bool, result Factory[T])
 	QueryByUID(uid string) (has bool, result Factory[T])
 	Register(ctor func() T) (success bool)
 	Flush(flushPath string, flushFile string) (err error)

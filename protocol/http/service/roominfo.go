@@ -10,13 +10,13 @@ import (
 
 var (
 	roomInfoRouter *gin.RouterGroup
-	roomInfoCache  map[uint]bool
+	roomInfoCache  map[uint64]bool
 )
 
 func initRoomInfoService() {
 	roomInfoRouter = http.RegisterServices("/room")
-	roomInfoCache = map[uint]bool{}
-	for i := uint(0); i < serviceConfig.MaxRooms; i++ {
+	roomInfoCache = map[uint64]bool{}
+	for i := uint64(0); i < serviceConfig.MaxRooms; i++ {
 		roomInfoCache[i] = false
 	}
 
@@ -69,13 +69,13 @@ func listRoomServiceHandler() func(ctx *gin.Context) {
 
 func queryRoomServiceHandler() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		if existRoomID, roomID := util.QueryPathInt(ctx, ":room_id"); !existRoomID {
+		if existRoomID, roomID := util.QueryPathUint64(ctx, ":room_id"); !existRoomID {
 			// 缺少必要的URL参数，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if roomValid, existRoom := roomInfoCache[uint(roomID)]; !existRoom || !roomValid {
+		} else if roomValid, existRoom := roomInfoCache[roomID]; !existRoom || !roomValid {
 			// 请求的房间不存在或无效，NotFound
 			ctx.AbortWithStatus(404)
-		} else if existRoomInfo, roomInfo := persistence.RoomInfoPersistence.QueryByID(uint(roomID)); !existRoomInfo {
+		} else if existRoomInfo, roomInfo := persistence.RoomInfoPersistence.QueryByID(roomID); !existRoomInfo {
 			// 查询房间信息失败，InternalError
 			ctx.AbortWithStatus(500)
 		} else {

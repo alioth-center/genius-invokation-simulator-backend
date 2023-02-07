@@ -1,4 +1,4 @@
-package adapter
+package definition
 
 type Mod interface {
 	CharacterFactory

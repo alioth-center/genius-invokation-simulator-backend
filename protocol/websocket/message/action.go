@@ -11,53 +11,53 @@ type ActionMessageInterface interface {
 
 // AttackAction 玩家的攻击操作信息
 type AttackAction struct {
-	Sender uint                      `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
-	Target uint                      `json:"target" yaml:"target" xml:"target"` // Target 被攻击的玩家
-	Skill  uint                      `json:"skill" yaml:"skill" xml:"skill"`    // Skill 执行攻击的技能
+	Sender uint64                    `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
+	Target uint64                    `json:"target" yaml:"target" xml:"target"` // Target 被攻击的玩家
+	Skill  uint64                    `json:"skill" yaml:"skill" xml:"skill"`    // Skill 执行攻击的技能
 	Paid   map[enum.ElementType]uint `json:"paid" yaml:"paid" xml:"paid"`       // Paid 支付发起攻击的费用
 }
 
 // BurnCardAction 玩家的元素转换操作信息
 type BurnCardAction struct {
-	Sender uint             `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
-	Card   uint             `json:"card" yaml:"card" xml:"card"`       // Card 被操作的卡牌
+	Sender uint64           `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
+	Card   uint64           `json:"card" yaml:"card" xml:"card"`       // Card 被操作的卡牌
 	Paid   enum.ElementType `json:"paid" yaml:"paid" xml:"paid"`       // Paid 支付元素转换的费用
 }
 
 // ReRollAction 玩家的重掷元素骰子操作信息
 type ReRollAction struct {
-	Sender  uint                      `json:"sender" yaml:"sender" xml:"sender"`    // Sender 发起操作的玩家
+	Sender  uint64                    `json:"sender" yaml:"sender" xml:"sender"`    // Sender 发起操作的玩家
 	Dropped map[enum.ElementType]uint `json:"dropped" yaml:"dropped" xml:"dropped"` // Dropped 被舍弃的元素骰子
 }
 
 // UseCardAction 玩家的使用卡牌操作信息
 type UseCardAction struct {
-	Sender uint                      `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
-	Card   uint                      `json:"card" yaml:"card" xml:"card"`       // Card 玩家打出的卡牌
+	Sender uint64                    `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
+	Card   uint64                    `json:"card" yaml:"card" xml:"card"`       // Card 玩家打出的卡牌
 	Paid   map[enum.ElementType]uint `json:"paid" yaml:"paid" xml:"paid"`       // Paid 玩家打出卡牌支付的费用
 }
 
 // SkipRoundAction 玩家的跳过回合操作信息
 type SkipRoundAction struct {
-	Sender uint `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
+	Sender uint64 `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
 }
 
 // SwitchAction 玩家的切换前台角色操作信息
 type SwitchAction struct {
-	Sender uint                      `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
-	Target uint                      `json:"target" yaml:"target" xml:"target"` // Target 切换到的目标角色
+	Sender uint64                    `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
+	Target uint64                    `json:"target" yaml:"target" xml:"target"` // Target 切换到的目标角色
 	Paid   map[enum.ElementType]uint `json:"paid" yaml:"paid" xml:"paid"`       // Paid 玩家切换角色支付的费用
 }
 
 // ConcedeAction 玩家的弃权操作信息
 type ConcedeAction struct {
-	Sender uint `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
+	Sender uint64 `json:"sender" yaml:"sender" xml:"sender"` // Sender 发起操作的玩家
 }
 
 // ActionMessage 玩家的操作信息
 type ActionMessage struct {
 	Type   enum.ActionType `json:"type" yaml:"type" xml:"type"`       // Type 玩家的操作类型
-	Sender uint            `json:"sender" yaml:"sender" xml:"sender"` // Sender 发送操作的玩家
+	Sender uint64          `json:"sender" yaml:"sender" xml:"sender"` // Sender 发送操作的玩家
 	Args   interface{}     `json:"args" yaml:"args" xml:"args"`       // Args 玩家的操作信息
 }
 

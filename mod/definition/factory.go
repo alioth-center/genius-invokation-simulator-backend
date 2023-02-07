@@ -1,4 +1,4 @@
-package adapter
+package definition
 
 type CharacterFactory interface {
 	ProduceCharacters() []Character

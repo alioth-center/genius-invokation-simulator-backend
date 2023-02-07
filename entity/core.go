@@ -19,12 +19,12 @@ import (
 type filter = map[enum.ActionType]bool
 
 var (
-	nullDirectAttackModifiers kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
-	nullFinalAttackModifiers  kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
-	nullDefenceModifiers      kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
-	nullChargeModifiers       kv.Map[uint, []modifier.Modifier[context.ChargeContext]] = nil
-	nullHealModifiers         kv.Map[uint, []modifier.Modifier[context.HealContext]]   = nil
-	nullCostModifiers         kv.Map[uint, []modifier.Modifier[context.CostContext]]   = nil
+	nullDirectAttackModifiers kv.Map[uint64, []modifier.Modifier[context.DamageContext]] = nil
+	nullFinalAttackModifiers  kv.Map[uint64, []modifier.Modifier[context.DamageContext]] = nil
+	nullDefenceModifiers      kv.Map[uint64, []modifier.Modifier[context.DamageContext]] = nil
+	nullChargeModifiers       kv.Map[uint64, []modifier.Modifier[context.ChargeContext]] = nil
+	nullHealModifiers         kv.Map[uint64, []modifier.Modifier[context.HealContext]]   = nil
+	nullCostModifiers         kv.Map[uint64, []modifier.Modifier[context.CostContext]]   = nil
 
 	cachedFilter = map[enum.PlayerStatus]map[enum.ActionType]bool{
 		enum.PlayerStatusInitialized: {
@@ -116,13 +116,13 @@ var (
 
 // playerChain 玩家的行动顺序表
 type playerChain struct {
-	canOperated map[uint]bool
-	queue       []uint
+	canOperated map[uint64]bool
+	queue       []uint64
 	offset      int
 }
 
 // next 寻找下一个可以执行操作的玩家
-func (pc *playerChain) next() (has bool, player uint) {
+func (pc *playerChain) next() (has bool, player uint64) {
 	for i := pc.offset; i < len(pc.queue); i++ {
 		if pc.canOperated[pc.queue[i]] {
 			pc.offset = i + 1
@@ -140,7 +140,7 @@ func (pc *playerChain) next() (has bool, player uint) {
 }
 
 // complete 将player设置为不可执行操作
-func (pc *playerChain) complete(player uint) {
+func (pc *playerChain) complete(player uint64) {
 	if _, exist := pc.canOperated[player]; exist {
 		pc.canOperated[player] = false
 	}
@@ -148,13 +148,13 @@ func (pc *playerChain) complete(player uint) {
 
 // empty 将队列清空，为复用准备
 func (pc *playerChain) empty() {
-	pc.canOperated = map[uint]bool{}
-	pc.queue = []uint{}
+	pc.canOperated = map[uint64]bool{}
+	pc.queue = []uint64{}
 	pc.offset = 0
 }
 
 // add 向队列中加入一个玩家，并将其可执行状态设置为true
-func (pc *playerChain) add(player uint) {
+func (pc *playerChain) add(player uint64) {
 	if _, exist := pc.canOperated[player]; !exist {
 		pc.queue = append(pc.queue, player)
 		pc.canOperated[player] = true
@@ -162,8 +162,8 @@ func (pc *playerChain) add(player uint) {
 }
 
 // allActive 将队列中所有可执行状态为true的玩家导出
-func (pc *playerChain) allActive() []uint {
-	result := make([]uint, 0)
+func (pc *playerChain) allActive() []uint64 {
+	result := make([]uint64, 0)
 	for _, id := range pc.queue {
 		if pc.canOperated[id] {
 			result = append(result, id)
@@ -175,18 +175,18 @@ func (pc *playerChain) allActive() []uint {
 
 func newPlayerChain() *playerChain {
 	return &playerChain{
-		canOperated: map[uint]bool{},
-		queue:       []uint{},
+		canOperated: map[uint64]bool{},
+		queue:       []uint64{},
 		offset:      0,
 	}
 }
 
 type SyncDefeatedCharacterMessage struct {
-	DefeatedPlayerUID uint
+	DefeatedPlayerUID uint64
 }
 
 type SyncSwitchedCharacterMessage struct {
-	SwitchedPlayerUID uint
+	SwitchedPlayerUID uint64
 }
 
 type playerContext struct {
@@ -197,11 +197,11 @@ type playerContext struct {
 
 type Core struct {
 	errorHandler util.ErrorHandler                 // errorHandler 处理错误的日志器
-	room         map[uint]*playerContext           // room 房间信息，包括玩家、合法操作
-	viewers      map[uint]*websocket.Connection    // viewers 观战者的连接集合
+	room         map[uint64]*playerContext         // room 房间信息，包括玩家、合法操作
+	viewers      map[uint64]*websocket.Connection  // viewers 观战者的连接集合
 	guests       map[*websocket.Connection]bool    // guests 匿名观战者的连接集合
-	entities     map[uint]uint                     // entities 实体表
-	actingPlayer uint                              // actingPlayer 当前正在操作的玩家
+	entities     map[uint64]uint64                 // entities 实体表
+	actingPlayer uint64                            // actingPlayer 当前正在操作的玩家
 	roundCount   uint                              // roundCount 回合数
 	roundStage   enum.RoundStage                   // roundStage 当前回合阶段
 	ruleSet      model.RuleSet                     // ruleSet 当前战斗的规则
@@ -212,8 +212,8 @@ type Core struct {
 	operatedChan chan struct{}                     // operatedChan 玩家结束操作时，会往此管道写信息
 	readChan     chan message.ActionMessage        // readChan 有网络信息传入时，向此管道写入信息
 	exitChan     chan struct{}                     // exitChan 当结束服务时，向此管道写入信息
-	entityIndex  uint                              // entityIndex 用于分配实体ID的序号
-	updateMutex  sync.RWMutex                      // updateMutex 更新锁，用于避免并发更新玩家状态以引发并发问题
+	entityIndex  uint64
+	updateMutex  sync.RWMutex // updateMutex 更新锁，用于避免并发更新玩家状态以引发并发问题
 }
 
 // updatePlayerStatusAndCoreFilter 更新玩家状态与玩家可操作列表，没有做校验，请在调用前校验player不为nil且在filter中有记录
@@ -244,7 +244,7 @@ func (c *Core) messageFilter(msg message.ActionMessage) (legal bool) {
 }
 
 // appendEntity 将一个实体托管到框架，并返回其EntityID
-func (c *Core) appendEntity(typeID uint) (entityID uint) {
+func (c *Core) appendEntity(typeID uint64) (entityID uint64) {
 	c.updateMutex.Lock()
 	defer c.updateMutex.Unlock()
 	c.entityIndex += 1
@@ -310,7 +310,7 @@ func (c *Core) handleMessage(msg message.ActionMessage) {
 }
 
 // generateSyncMessage 生成某玩家收到的同步信息，playerID为0则生成匿名访客的观战信息
-func (c *Core) generateSyncMessage(player uint) (syncMessage message.SyncMessage) {
+func (c *Core) generateSyncMessage(player uint64) (syncMessage message.SyncMessage) {
 	c.updateMutex.RLock()
 	defer c.updateMutex.RUnlock()
 	dictionary := generateDictionary(c)
@@ -1231,7 +1231,7 @@ func generateSelfMessage(c *Core, player *player) (selfMessage message.Self) {
 		})
 	}
 
-	var cardList []uint
+	var cardList []uint64
 	for id := range player.holdingCards {
 		cardList = append(cardList, id)
 	}
@@ -1408,7 +1408,7 @@ func generateDictionary(c *Core) (dictionary []message.DictionaryPair) {
 }
 
 // initCharacter 新建并初始化一个character实体
-func initCharacter(characterID, ownerID uint) (success bool, result *character) {
+func initCharacter(characterID, ownerID uint64) (success bool, result *character) {
 	exist, characterPersistence := persistence.CharacterPersistence.QueryByID(characterID)
 	if !exist {
 		// 找不到角色实现，初始化失败
@@ -1416,7 +1416,7 @@ func initCharacter(characterID, ownerID uint) (success bool, result *character) 
 	}
 
 	characterInfo := characterPersistence.Ctor()()
-	characterSkill := map[uint]model.Skill{}
+	characterSkill := map[uint64]model.Skill{}
 	for _, skillID := range characterInfo.Skills {
 		if existSkill, skillPersistence := persistence.SkillPersistence.QueryByID(skillID); !existSkill {
 			// 找不到技能实现，初始化失败
@@ -1429,7 +1429,7 @@ func initCharacter(characterID, ownerID uint) (success bool, result *character) 
 	}
 
 	character := &character{
-		id:                         characterInfo.ID,
+		id:                         characterInfo.TypeID,
 		player:                     ownerID,
 		affiliation:                characterInfo.Affiliation,
 		vision:                     characterInfo.Vision,
@@ -1442,7 +1442,7 @@ func initCharacter(characterID, ownerID uint) (success bool, result *character) 
 		status:                     enum.CharacterStatusReady,
 		elements:                   []enum.ElementType{},
 		satiety:                    false,
-		equipments:                 map[enum.EquipmentType]uint{},
+		equipments:                 map[enum.EquipmentType]uint64{},
 		localDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
 		localFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
 		localDefenceModifiers:      modifier.NewChain[context.DamageContext](),
@@ -1461,8 +1461,8 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 		return false, nil
 	}
 
-	var characterList []uint
-	characterMap := map[uint]*character{}
+	var characterList []uint64
+	characterMap := map[uint64]*character{}
 	for _, characterID := range matchingMessage.Characters {
 		if initCharacterSuccess, character := initCharacter(characterID, matchingMessage.UID); !initCharacterSuccess {
 			// 初始化角色失败
@@ -1493,14 +1493,14 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 		staticCost:                  model.NewCostFromMap(ruleSet.GameOptions.StaticCost),
 		holdingCost:                 model.NewCost(),
 		cardDeck:                    NewCardDeck(cardList),
-		holdingCards:                map[uint]model.Card{},
+		holdingCards:                map[uint64]model.Card{},
 		activeCharacter:             0,
 		characters:                  characterMap,
 		characterList:               characterList,
-		summons:                     map[uint]Summon{},
-		summonList:                  []uint{},
-		supports:                    map[uint]Support{},
-		supportList:                 []uint{},
+		summons:                     map[uint64]Summon{},
+		summonList:                  []uint64{},
+		supports:                    map[uint64]Support{},
+		supportList:                 []uint64{},
 		globalDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
 		globalFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
 		globalDefenceModifiers:      modifier.NewChain[context.DamageContext](),

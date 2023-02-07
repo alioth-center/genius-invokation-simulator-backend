@@ -3,7 +3,6 @@ package entity
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
 	"math/rand"
 	"time"
 )
@@ -14,9 +13,9 @@ var (
 
 // CardDeck 牌堆，记录顺序的是一个数组，正常情况下已取出的牌永远在队列的一端
 type CardDeck struct {
-	cards  kv.Map[uint, model.Card]
-	used   kv.Map[uint, bool]
-	queue  []uint
+	cards  map[uint64]model.Card
+	used   map[uint64]bool
+	queue  []uint64
 	offset int
 	remain uint
 }
@@ -24,7 +23,7 @@ type CardDeck struct {
 // arrange 整理CardDeck中offset之后的部分
 func (c *CardDeck) arrange() {
 	for i := c.offset; i < len(c.queue); i++ {
-		if c.used.Get(c.queue[i]) {
+		if c.used[c.queue[i]] {
 			c.queue[c.offset], c.queue[i] = c.queue[i], c.queue[c.offset]
 			c.offset++
 			c.remain--
@@ -34,7 +33,7 @@ func (c *CardDeck) arrange() {
 
 // takeOne 将CardDeck的队列中第index张牌标记为已取出
 func (c *CardDeck) takeOne(index int) {
-	c.used.Set(c.queue[index], true)
+	c.used[c.queue[index]] = true
 	c.queue[index], c.queue[c.offset] = c.queue[c.offset], c.queue[index]
 	c.offset++
 	c.remain--
@@ -51,8 +50,8 @@ func (c *CardDeck) Shuffle() {
 func (c *CardDeck) GetOne() (result model.Card, success bool) {
 	if c.remain != 0 {
 		for i := c.offset; i < len(c.queue); i++ {
-			if !c.used.Get(c.queue[i]) {
-				result = c.cards.Get(c.queue[i])
+			if !c.used[c.queue[i]] {
+				result = c.cards[c.queue[i]]
 				c.takeOne(i)
 				return result, true
 			}
@@ -65,8 +64,8 @@ func (c *CardDeck) GetOne() (result model.Card, success bool) {
 // FindOne 从CardDeck中取出一张指定类型的牌
 func (c *CardDeck) FindOne(cardType enum.CardType) (result model.Card, success bool) {
 	for i := c.offset; i < len(c.queue); i++ {
-		if !c.used.Get(c.queue[i]) && c.cards.Get(c.queue[i]).Type() == cardType {
-			result = c.cards.Get(c.queue[i])
+		if !c.used[c.queue[i]] && c.cards[c.queue[i]].Type() == cardType {
+			result = c.cards[c.queue[i]]
 			c.takeOne(i)
 			return result, true
 		}
@@ -76,16 +75,15 @@ func (c *CardDeck) FindOne(cardType enum.CardType) (result model.Card, success b
 }
 
 // Reset 将牌堆中除了holding之外的牌全部标记为未取出，此方法没有洗牌逻辑
-func (c *CardDeck) Reset(holding []uint) {
-	c.used.Range(func(key uint, value bool) bool {
-		c.used.Set(key, false)
-		return true
-	})
+func (c *CardDeck) Reset(holding []uint64) {
+	for card := range c.used {
+		c.used[card] = false
+	}
 
 	c.remain = uint(len(c.queue))
 	c.offset = 0
 	for _, id := range holding {
-		c.used.Set(id, true)
+		c.used[id] = true
 	}
 
 	c.arrange()
@@ -98,16 +96,16 @@ func (c CardDeck) Remain() uint {
 
 func NewCardDeck(cards []model.Card) *CardDeck {
 	cardDeck := &CardDeck{
-		cards:  kv.NewSimpleMap[model.Card](),
-		used:   kv.NewSimpleMap[bool](),
-		queue:  []uint{},
+		cards:  map[uint64]model.Card{},
+		used:   map[uint64]bool{},
+		queue:  []uint64{},
 		offset: 0,
 		remain: 0,
 	}
 
 	for _, card := range cards {
-		cardDeck.cards.Set(card.TypeID(), card)
-		cardDeck.used.Set(card.TypeID(), false)
+		cardDeck.cards[card.TypeID()] = card
+		cardDeck.used[card.TypeID()] = false
 		cardDeck.queue = append(cardDeck.queue, card.TypeID())
 		cardDeck.remain++
 	}

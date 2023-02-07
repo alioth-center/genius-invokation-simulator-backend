@@ -36,12 +36,12 @@ var (
 
 	LocalizationPersistence = newMemoryCache[string, localization.LanguagePack]()
 	ModInfoPersistence      = newMemoryCache[string, ModInfo]()
-	RoomInfoPersistence     = newMemoryCache[uint, RoomInfo]()
+	RoomInfoPersistence     = newMemoryCache[uint64, RoomInfo]()
 
 	TokenPersistence = newTimingMemoryCache[string, Token]()
 
-	CardDeckPersistence DatabasePersistence[uint, CardDeck]
-	PlayerPersistence   DatabasePersistence[uint, Player]
+	CardDeckPersistence DatabasePersistence[uint64, CardDeck]
+	PlayerPersistence   DatabasePersistence[uint64, Player]
 )
 
 // SetStoragePath 设置持久化文件的存放位置
@@ -77,11 +77,11 @@ func Load(errChan chan error) {
 			sqlite3DB.SetMapper(core.SameMapper{})
 
 			var success bool
-			if success, CardDeckPersistence = newDatabasePersistence[uint, CardDeck](errChan); !success {
+			if success, CardDeckPersistence = newDatabasePersistence[uint64, CardDeck](errChan); !success {
 				errChan <- fmt.Errorf("failed to create database factoryPersistence with entity: %+v", CardDeck{})
 			}
 
-			if success, PlayerPersistence = newDatabasePersistence[uint, Player](errChan); !success {
+			if success, PlayerPersistence = newDatabasePersistence[uint64, Player](errChan); !success {
 				errChan <- fmt.Errorf("failed to create database factoryPersistence with entity: %+v", Player{})
 			}
 		}

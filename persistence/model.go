@@ -44,7 +44,7 @@ type Character struct {
 	Weapon      enum.WeaponType
 	MaxHP       uint
 	MaxMP       uint
-	Skills      []uint
+	Skills      []uint64
 }
 
 func (c Character) ID() uint64 { return c.TypeID }

@@ -13,7 +13,7 @@ type GameOptions struct {
 	ElementAmount uint
 	GetCards      uint
 	StaticElement map[enum.ElementType]uint
-	RuleSet       uint
+	RuleSet       uint64
 }
 
 type InitializeMessage struct {

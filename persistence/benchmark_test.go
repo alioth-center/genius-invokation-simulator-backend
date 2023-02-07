@@ -11,10 +11,10 @@ func BenchmarkTestPerformanceMapQueryByID(b *testing.B) {
 	performanceMap := newPerformanceMap[emptyProductInterface]()
 	var loadList []FactoryPersistenceRecord
 	for i := 0; i < 114514; i++ {
-		loadList = append(loadList, FactoryPersistenceRecord{ID: uint(i), UID: strconv.Itoa(i)})
+		loadList = append(loadList, FactoryPersistenceRecord{ID: uint64(i), UID: strconv.Itoa(i)})
 	}
 	performanceMap.Load(loadList)
-	randomX := uint(rand.Intn(114514))
+	randomX := uint64(rand.Intn(114514))
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -26,7 +26,7 @@ func BenchmarkTestPerformanceMapQueryByUID(b *testing.B) {
 	performanceMap := newPerformanceMap[emptyProductInterface]()
 	var loadList []FactoryPersistenceRecord
 	for i := 0; i < 114514; i++ {
-		loadList = append(loadList, FactoryPersistenceRecord{ID: uint(i), UID: strconv.Itoa(i)})
+		loadList = append(loadList, FactoryPersistenceRecord{ID: uint64(i), UID: strconv.Itoa(i)})
 	}
 	performanceMap.Load(loadList)
 	randomX := strconv.Itoa(rand.Intn(114514))
@@ -41,7 +41,7 @@ func BenchmarkTestPerformanceMapFlush(b *testing.B) {
 	performanceMap := newPerformanceMap[emptyProductInterface]()
 	var loadList []FactoryPersistenceRecord
 	for i := 0; i < 114514; i++ {
-		loadList = append(loadList, FactoryPersistenceRecord{ID: uint(i), UID: strconv.Itoa(i)})
+		loadList = append(loadList, FactoryPersistenceRecord{ID: uint64(i), UID: strconv.Itoa(i)})
 	}
 	performanceMap.Load(loadList)
 
@@ -55,7 +55,7 @@ func BenchmarkTestPerformanceMapLoad(b *testing.B) {
 	performanceMap := newPerformanceMap[emptyProductInterface]()
 	var loadList []FactoryPersistenceRecord
 	for i := 0; i < 114514; i++ {
-		loadList = append(loadList, FactoryPersistenceRecord{ID: uint(i), UID: strconv.Itoa(i)})
+		loadList = append(loadList, FactoryPersistenceRecord{ID: uint64(i), UID: strconv.Itoa(i)})
 	}
 
 	b.ResetTimer()
@@ -68,7 +68,7 @@ func BenchmarkTestPerformanceMapRegister(b *testing.B) {
 	performanceMap := newPerformanceMap[testProductInterface]()
 	var loadList []FactoryPersistenceRecord
 	for i := 0; i < 114514; i++ {
-		loadList = append(loadList, FactoryPersistenceRecord{ID: uint(i), UID: strconv.Itoa(i)})
+		loadList = append(loadList, FactoryPersistenceRecord{ID: uint64(i), UID: strconv.Itoa(i)})
 	}
 	performanceMap.Load(loadList)
 

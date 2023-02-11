@@ -26,7 +26,7 @@ func GetMacAddressFailedWithError(err error) GetMacAddressFailed {
 }
 
 func GetMacAddressFailedWithEmptyMac() GetMacAddressFailed {
-	return GetMacAddressFailed{baseError{errInfo: fmt.Sprintf("get mac address failed with empty mac address")}}
+	return GetMacAddressFailed{baseError{errInfo: "get mac address failed with empty mac address"}}
 }
 
 func GetMacAddressFailedWithIncorrectMacAddress(mac net.Interface, err error) GetMacAddressFailed {
@@ -38,5 +38,5 @@ type GetPackagePathFailed struct {
 }
 
 func GetPackagePathFunctionPointerFailed() GetPackagePathFailed {
-	return GetPackagePathFailed{baseError{errInfo: fmt.Sprintf("cannot get caller's function pointer")}}
+	return GetPackagePathFailed{baseError{errInfo: "cannot get caller's function pointer"}}
 }

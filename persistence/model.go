@@ -28,11 +28,13 @@ type RuleSet struct {
 // Summon 被持久化模块托管的Summon工厂的产品
 type Summon struct {
 	Cacheable
+	// todo: add summon interfaces
 }
 
 // Event 被持久化模块托管的Event工厂的产品
 type Event struct {
 	Cacheable
+	Event model.Event
 }
 
 // Character 被持久化模块托管的CharacterInfo工厂的产品

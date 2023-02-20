@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -53,6 +54,10 @@ func GetMacAddresses() (macAddr []net.Interface, err error) {
 func GetUintMacAddress(mac net.Interface) (addr uint64, err error) {
 	macAddrArr := strings.Split(mac.HardwareAddr.String(), ":")
 	macAddr := strings.Join(macAddrArr, "")
+	if macAddr == "" {
+		return 0, fmt.Errorf("nil mac address")
+	}
+
 	if addr, err = strconv.ParseUint(macAddr, 16, 64); err != nil {
 		return 0, err
 	} else {

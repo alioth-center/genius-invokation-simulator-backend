@@ -9,7 +9,7 @@ import (
 )
 
 type cardAdapterLayer struct {
-	implement.BaseEntityImpl
+	implement.EntityImpl
 	cardType enum.CardType
 	cost     map[enum.ElementType]uint
 }
@@ -26,9 +26,9 @@ type CardAdapter struct{}
 
 func (c CardAdapter) Convert(source definition.Card) (success bool, result model.Card) {
 	adapterLayer := &cardAdapterLayer{
-		BaseEntityImpl: implement.BaseEntityImpl{},
-		cardType:       source.CardType(),
-		cost:           source.Cost(),
+		EntityImpl: implement.EntityImpl{},
+		cardType:   source.CardType(),
+		cost:       source.Cost(),
 	}
 
 	return true, adapterLayer
@@ -53,9 +53,9 @@ type EventCardAdapter struct{}
 func (e EventCardAdapter) Convert(source definition.EventCard) (success bool, result model.EventCard) {
 	adapterLayer := &eventCardAdapterLayer{
 		cardAdapterLayer: cardAdapterLayer{
-			BaseEntityImpl: implement.BaseEntityImpl{},
-			cardType:       source.CardType(),
-			cost:           source.Cost(),
+			EntityImpl: implement.EntityImpl{},
+			cardType:   source.CardType(),
+			cost:       source.Cost(),
 		},
 		event: source.Event(),
 	}
@@ -82,9 +82,9 @@ type SupportCardAdapter struct{}
 func (s SupportCardAdapter) Convert(source definition.SupportCard) (success bool, result model.SupportCard) {
 	adapterLayer := &supportCardAdapterLayer{
 		cardAdapterLayer: cardAdapterLayer{
-			BaseEntityImpl: implement.BaseEntityImpl{},
-			cardType:       source.CardType(),
-			cost:           source.Cost(),
+			EntityImpl: implement.EntityImpl{},
+			cardType:   source.CardType(),
+			cost:       source.Cost(),
 		},
 		event: source.Support(),
 	}
@@ -116,9 +116,9 @@ type EquipmentCardAdapter struct{}
 func (e EquipmentCardAdapter) Convert(source definition.EquipmentCard) (success bool, result model.EquipmentCard) {
 	adapterLayer := &equipmentCardAdapterLayer{
 		cardAdapterLayer: cardAdapterLayer{
-			BaseEntityImpl: implement.BaseEntityImpl{},
-			cardType:       source.CardType(),
-			cost:           source.Cost(),
+			EntityImpl: implement.EntityImpl{},
+			cardType:   source.CardType(),
+			cost:       source.Cost(),
 		},
 		event:         source.Modify(),
 		equipmentType: source.EquipmentType(),
@@ -146,9 +146,9 @@ func (w WeaponCardAdapter) Convert(source definition.WeaponCard) (success bool, 
 	adapterLayer := &weaponCardAdapterLayer{
 		equipmentCardAdapterLayer: equipmentCardAdapterLayer{
 			cardAdapterLayer: cardAdapterLayer{
-				BaseEntityImpl: implement.BaseEntityImpl{},
-				cardType:       source.CardType(),
-				cost:           source.Cost(),
+				EntityImpl: implement.EntityImpl{},
+				cardType:   source.CardType(),
+				cost:       source.Cost(),
 			},
 			event:         source.Modify(),
 			equipmentType: source.EquipmentType(),

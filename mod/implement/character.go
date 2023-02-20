@@ -6,6 +6,7 @@ import (
 )
 
 type CharacterImpl struct {
+	EntityImpl
 	name        string
 	affiliation enum.Affiliation
 	vision      enum.ElementType
@@ -41,6 +42,12 @@ func (c CharacterImpl) HP() uint {
 
 func (c CharacterImpl) MP() uint {
 	return c.mp
+}
+
+func WithCharacterID(id uint16) CharacterOptions {
+	return func(option *CharacterImpl) {
+		option.InjectTypeID(uint64(id))
+	}
 }
 
 func WithCharacterName(name string) CharacterOptions {

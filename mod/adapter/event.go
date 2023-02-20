@@ -10,7 +10,7 @@ import (
 )
 
 type eventAdapterLayer struct {
-	implement.BaseEntityImpl
+	implement.EntityImpl
 	triggerAt    enum.TriggerType
 	canTriggered func(callbackContext context.CallbackContext) bool
 	needClear    func() bool
@@ -37,11 +37,11 @@ type EventAdapter struct{}
 
 func (e EventAdapter) Convert(source definition.Event) (success bool, result model.Event) {
 	adapterLayer := &eventAdapterLayer{
-		BaseEntityImpl: implement.BaseEntityImpl{},
-		triggerAt:      source.TriggerAt(),
-		canTriggered:   source.TriggeredNow,
-		needClear:      source.ClearNow,
-		callback:       source.CallBack,
+		EntityImpl:   implement.EntityImpl{},
+		triggerAt:    source.TriggerAt(),
+		canTriggered: source.TriggeredNow,
+		needClear:    source.ClearNow,
+		callback:     source.CallBack,
 	}
 
 	return true, adapterLayer

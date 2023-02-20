@@ -25,6 +25,12 @@ func (impl *CardImpl) Cost() map[enum.ElementType]uint {
 
 type CardOptions func(option *CardImpl)
 
+func WithCardID(id uint16) CardOptions {
+	return func(option *CardImpl) {
+		option.InjectTypeID(uint64(id))
+	}
+}
+
 func WithCardType(cardType enum.CardType) CardOptions {
 	return func(option *CardImpl) {
 		option.cardType = cardType
@@ -56,6 +62,13 @@ func (impl *EventCardImpl) Event() definition.Event {
 }
 
 type EventCardOptions func(option *EventCardImpl)
+
+func WithEventCardID(id uint16) EventCardOptions {
+	return func(option *EventCardImpl) {
+		opt := WithCardID(id)
+		opt(&option.CardImpl)
+	}
+}
 
 func WithEventCardCost(cost map[enum.ElementType]uint) EventCardOptions {
 	return func(option *EventCardImpl) {
@@ -95,6 +108,13 @@ type FoodCardImpl struct {
 
 type FoodCardOptions func(option *FoodCardImpl)
 
+func WithFoodCardID(id uint16) FoodCardOptions {
+	return func(option *FoodCardImpl) {
+		opt := WithEventCardID(id)
+		opt(&option.EventCardImpl)
+	}
+}
+
 func WithFoodCardCost(cost map[enum.ElementType]uint) FoodCardOptions {
 	return func(option *FoodCardImpl) {
 		opt := WithCardCost(cost)
@@ -126,6 +146,13 @@ type ElementalResonanceCardImpl struct {
 }
 
 type ElementalResonanceCardOptions func(option *ElementalResonanceCardImpl)
+
+func WithElementalResonanceCardID(id uint16) ElementalResonanceCardOptions {
+	return func(option *ElementalResonanceCardImpl) {
+		opt := WithEventCardID(id)
+		opt(&option.EventCardImpl)
+	}
+}
 
 func WithElementalResonanceCardCost(cost map[enum.ElementType]uint) ElementalResonanceCardOptions {
 	return func(option *ElementalResonanceCardImpl) {
@@ -168,6 +195,13 @@ func (impl *EquipmentCardImpl) Modify() definition.Event {
 }
 
 type EquipmentCardOptions func(option *EquipmentCardImpl)
+
+func WithEquipmentCardID(id uint16) EquipmentCardOptions {
+	return func(option *EquipmentCardImpl) {
+		opt := WithCardID(id)
+		opt(&option.CardImpl)
+	}
+}
 
 func WithEquipmentCardSubType(subType enum.CardSubType) EquipmentCardOptions {
 	return func(option *EquipmentCardImpl) {
@@ -213,6 +247,13 @@ type ArtifactCardImpl struct {
 
 type ArtifactCardOptions func(option *ArtifactCardImpl)
 
+func WithArtifactCardID(id uint16) ArtifactCardOptions {
+	return func(option *ArtifactCardImpl) {
+		opt := WithEquipmentCardID(id)
+		opt(&option.EquipmentCardImpl)
+	}
+}
+
 func WithArtifactCardCost(cost map[enum.ElementType]uint) ArtifactCardOptions {
 	return func(option *ArtifactCardImpl) {
 		opt := WithEquipmentCardCost(cost)
@@ -246,6 +287,13 @@ type TalentCardImpl struct {
 }
 
 type TalentCardOptions func(option *TalentCardImpl)
+
+func WithTalentCardID(id uint16) TalentCardOptions {
+	return func(option *TalentCardImpl) {
+		opt := WithEquipmentCardID(id)
+		opt(&option.EquipmentCardImpl)
+	}
+}
 
 func WithTalentCardCost(cost map[enum.ElementType]uint) TalentCardOptions {
 	return func(option *TalentCardImpl) {
@@ -285,6 +333,13 @@ func (impl *WeaponCardImpl) WeaponType() enum.WeaponType {
 }
 
 type WeaponCardOptions func(option *WeaponCardImpl)
+
+func WithWeaponCardID(id uint16) WeaponCardOptions {
+	return func(option *WeaponCardImpl) {
+		opt := WithEquipmentCardID(id)
+		opt(&option.EquipmentCardImpl)
+	}
+}
 
 func WithWeaponCardCardCost(cost map[enum.ElementType]uint) WeaponCardOptions {
 	return func(option *WeaponCardImpl) {

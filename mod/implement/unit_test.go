@@ -6,6 +6,35 @@ import (
 	"testing"
 )
 
+func TestNextID(t *testing.T) {
+	t.Run("TestNextID", func(t *testing.T) {
+		for i := 0; i < 65536; i++ {
+			if got := NextID(); got != uint16(i+1) {
+				t.Errorf("unexpected next id: %d, want: %d", got, i+1)
+			}
+		}
+	})
+
+	usedID = map[uint16]bool{}
+}
+
+func TestUseID(t *testing.T) {
+	t.Run("TestUseID", func(t *testing.T) {
+		UseID(2)
+		UseID(5)
+		NextID()
+		if got := NextID(); got != 3 {
+			t.Errorf("unexpected use id: %d, got %v", 2, got)
+		}
+		NextID()
+		if got := NextID(); got != 6 {
+			t.Errorf("unexpected use id: %d got %v", 5, got)
+		}
+	})
+
+	usedID = map[uint16]bool{}
+}
+
 func TestNewCharacterWithOpts(t *testing.T) {
 	SetDebugFlag(true)
 

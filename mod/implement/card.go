@@ -2,120 +2,320 @@ package implement
 
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
-	definition "github.com/sunist-c/genius-invokation-simulator-backend/mod/definition"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
-	definition2 "github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
+	"github.com/sunist-c/genius-invokation-simulator-backend/mod/definition"
 )
 
-type BaseCardImpl struct {
+type CardImpl struct {
+	EntityImpl
+	cardType enum.CardType
+	cost     map[enum.ElementType]uint
 }
 
-func (b *BaseCardImpl) CardType() enum.CardType {
-	return enum.CardUnknown
+func (impl *CardImpl) CardType() enum.CardType {
+	return impl.cardType
 }
 
-func (b *BaseCardImpl) Cost() map[enum.ElementType]uint {
-	return nil
+func (impl *CardImpl) Cost() map[enum.ElementType]uint {
+	if impl.cost == nil {
+		impl.cost = map[enum.ElementType]uint{}
+	}
+
+	return impl.cost
+}
+
+type CardOptions func(option *CardImpl)
+
+func WithCardType(cardType enum.CardType) CardOptions {
+	return func(option *CardImpl) {
+		option.cardType = cardType
+	}
+}
+
+func WithCardCost(cost map[enum.ElementType]uint) CardOptions {
+	return func(option *CardImpl) {
+		option.cost = cost
+	}
+}
+
+func NewCardWithOpts(options ...CardOptions) definition.Card {
+	impl := &CardImpl{}
+	for _, option := range options {
+		option(impl)
+	}
+
+	return impl
 }
 
 type EventCardImpl struct {
-	BaseCardImpl
+	CardImpl
+	event definition.Event
 }
 
-func (e *EventCardImpl) CardType() enum.CardType {
-	return enum.CardEvent
+func (impl *EventCardImpl) Event() definition.Event {
+	return impl.event
 }
 
-func (e *EventCardImpl) Event() definition.Event {
-	return nil
+type EventCardOptions func(option *EventCardImpl)
+
+func WithEventCardCost(cost map[enum.ElementType]uint) EventCardOptions {
+	return func(option *EventCardImpl) {
+		opt := WithCardCost(cost)
+		opt(&option.CardImpl)
+	}
+}
+
+func WithEventCardSubType(subType enum.CardSubType) EventCardOptions {
+	return func(option *EventCardImpl) {
+		opt := WithCardType(subType)
+		opt(&option.CardImpl)
+	}
+}
+
+func WithEventCardEvent(event definition.Event) EventCardOptions {
+	return func(option *EventCardImpl) {
+		option.event = event
+	}
+}
+
+func NewEventCardWithOpts(options ...EventCardOptions) definition.EventCard {
+	impl := &EventCardImpl{}
+	cardTypeOption := WithCardType(enum.CardEvent)
+	cardTypeOption(&impl.CardImpl)
+
+	for _, option := range options {
+		option(impl)
+	}
+
+	return impl
 }
 
 type FoodCardImpl struct {
 	EventCardImpl
 }
 
-func (e *FoodCardImpl) CardType() enum.CardType {
-	return enum.CardFood
+type FoodCardOptions func(option *FoodCardImpl)
+
+func WithFoodCardCost(cost map[enum.ElementType]uint) FoodCardOptions {
+	return func(option *FoodCardImpl) {
+		opt := WithCardCost(cost)
+		opt(&option.EventCardImpl.CardImpl)
+	}
+}
+
+func WithFoodCardEvent(event definition.Event) FoodCardOptions {
+	return func(option *FoodCardImpl) {
+		opt := WithEventCardEvent(event)
+		opt(&option.EventCardImpl)
+	}
+}
+
+func NewFoodCardWithOpts(options ...FoodCardOptions) definition.EventCard {
+	impl := &FoodCardImpl{}
+	cardTypeOption := WithEventCardSubType(enum.CardFood)
+	cardTypeOption(&impl.EventCardImpl)
+
+	for _, option := range options {
+		option(impl)
+	}
+
+	return impl
 }
 
 type ElementalResonanceCardImpl struct {
 	EventCardImpl
 }
 
-func (e *ElementalResonanceCardImpl) CardType() enum.CardType {
-	return enum.CardElementalResonance
+type ElementalResonanceCardOptions func(option *ElementalResonanceCardImpl)
+
+func WithElementalResonanceCardCost(cost map[enum.ElementType]uint) ElementalResonanceCardOptions {
+	return func(option *ElementalResonanceCardImpl) {
+		opt := WithEventCardCost(cost)
+		opt(&option.EventCardImpl)
+	}
+}
+
+func WithElementalResonanceCardEvent(event definition.Event) ElementalResonanceCardOptions {
+	return func(option *ElementalResonanceCardImpl) {
+		opt := WithEventCardEvent(event)
+		opt(&option.EventCardImpl)
+	}
+}
+
+func NewElementalResonanceCardWithOpts(options ...ElementalResonanceCardOptions) definition.EventCard {
+	impl := &ElementalResonanceCardImpl{}
+	cardTypeOption := WithEventCardSubType(enum.CardElementalResonance)
+	cardTypeOption(&impl.EventCardImpl)
+
+	for _, option := range options {
+		option(impl)
+	}
+
+	return impl
 }
 
 type EquipmentCardImpl struct {
-	BaseCardImpl
+	CardImpl
+	equipmentType enum.EquipmentType
+	modify        definition.Event
 }
 
-func (e *EquipmentCardImpl) CardType() enum.CardType {
-	return enum.CardEquipment
+func (impl *EquipmentCardImpl) EquipmentType() enum.EquipmentType {
+	return impl.equipmentType
 }
 
-func (e *EquipmentCardImpl) EquipmentType() enum.EquipmentType {
-	return enum.EquipmentNone
+func (impl *EquipmentCardImpl) Modify() definition.Event {
+	return impl.modify
 }
 
-func (e *EquipmentCardImpl) Modify() definition.Event {
-	return nil
+type EquipmentCardOptions func(option *EquipmentCardImpl)
+
+func WithEquipmentCardSubType(subType enum.CardSubType) EquipmentCardOptions {
+	return func(option *EquipmentCardImpl) {
+		opt := WithCardType(subType)
+		opt(&option.CardImpl)
+	}
+}
+
+func WithEquipmentCardCost(cost map[enum.ElementType]uint) EquipmentCardOptions {
+	return func(option *EquipmentCardImpl) {
+		opt := WithCardCost(cost)
+		opt(&option.CardImpl)
+	}
+}
+
+func WithEquipmentCardEquipmentType(equipmentType enum.EquipmentType) EquipmentCardOptions {
+	return func(option *EquipmentCardImpl) {
+		option.equipmentType = equipmentType
+	}
+}
+
+func WithEquipmentCardModify(modify definition.Event) EquipmentCardOptions {
+	return func(option *EquipmentCardImpl) {
+		option.modify = modify
+	}
+}
+
+func NewEquipmentCardWithOpts(options ...EquipmentCardOptions) definition.EquipmentCard {
+	impl := &EquipmentCardImpl{}
+	cardTypeOption := WithCardType(enum.CardEquipment)
+	cardTypeOption(&impl.CardImpl)
+
+	for _, option := range options {
+		option(impl)
+	}
+
+	return impl
 }
 
 type ArtifactCardImpl struct {
 	EquipmentCardImpl
 }
 
-func (e *ArtifactCardImpl) CardType() enum.CardType {
-	return enum.CardArtifact
+type ArtifactCardOptions func(option *ArtifactCardImpl)
+
+func WithArtifactCardCost(cost map[enum.ElementType]uint) ArtifactCardOptions {
+	return func(option *ArtifactCardImpl) {
+		opt := WithEquipmentCardCost(cost)
+		opt(&option.EquipmentCardImpl)
+	}
 }
 
-func (e *ArtifactCardImpl) EquipmentType() enum.EquipmentType {
-	return enum.EquipmentArtifact
+func WithArtifactCardModify(modify definition.Event) ArtifactCardOptions {
+	return func(option *ArtifactCardImpl) {
+		opt := WithEquipmentCardModify(modify)
+		opt(&option.EquipmentCardImpl)
+	}
+}
+
+func NewArtifactCardWithOpts(options ...ArtifactCardOptions) definition.EquipmentCard {
+	impl := &ArtifactCardImpl{}
+	cardTypeOption := WithCardType(enum.CardEquipment)
+	cardTypeOption(&impl.CardImpl)
+	equipmentTypeOption := WithEquipmentCardEquipmentType(enum.EquipmentArtifact)
+	equipmentTypeOption(&impl.EquipmentCardImpl)
+
+	for _, option := range options {
+		option(impl)
+	}
+
+	return impl
 }
 
 type TalentCardImpl struct {
 	EquipmentCardImpl
 }
 
-func (e *TalentCardImpl) CardType() enum.CardType {
-	return enum.CardTalent
+type TalentCardOptions func(option *TalentCardImpl)
+
+func WithTalentCardCost(cost map[enum.ElementType]uint) TalentCardOptions {
+	return func(option *TalentCardImpl) {
+		opt := WithEquipmentCardCost(cost)
+		opt(&option.EquipmentCardImpl)
+	}
 }
 
-func (e *TalentCardImpl) EquipmentType() enum.EquipmentType {
-	return enum.EquipmentTalent
+func WithTalentModify(modify definition.Event) TalentCardOptions {
+	return func(option *TalentCardImpl) {
+		opt := WithEquipmentCardModify(modify)
+		opt(&option.EquipmentCardImpl)
+	}
+}
+
+func NewTalentCardWithOpts(options ...TalentCardOptions) definition.EquipmentCard {
+	impl := &TalentCardImpl{}
+	cardTypeOption := WithCardType(enum.CardEquipment)
+	cardTypeOption(&impl.CardImpl)
+	equipmentTypeOption := WithEquipmentCardEquipmentType(enum.EquipmentTalent)
+	equipmentTypeOption(&impl.EquipmentCardImpl)
+
+	for _, option := range options {
+		option(impl)
+	}
+
+	return impl
 }
 
 type WeaponCardImpl struct {
 	EquipmentCardImpl
+	weaponType enum.WeaponType
 }
 
-func (e *WeaponCardImpl) WeaponType() enum.WeaponType {
-	return enum.WeaponOthers
+func (impl *WeaponCardImpl) WeaponType() enum.WeaponType {
+	return impl.weaponType
 }
 
-func (e *WeaponCardImpl) CardType() enum.CardType {
-	return enum.CardWeapon
-}
+type WeaponCardOptions func(option *WeaponCardImpl)
 
-func (e *WeaponCardImpl) EquipmentType() enum.EquipmentType {
-	return enum.EquipmentWeapon
-}
-
-type SkyBow struct {
-	EquipmentCardImpl
-}
-
-func (s *SkyBow) Cost() map[enum.ElementType]uint {
-	return map[enum.ElementType]uint{
-		enum.ElementSame: 3,
+func WithWeaponCardCardCost(cost map[enum.ElementType]uint) WeaponCardOptions {
+	return func(option *WeaponCardImpl) {
+		opt := WithEquipmentCardCost(cost)
+		opt(&option.EquipmentCardImpl)
 	}
 }
 
-func (s *SkyBow) WeaponType() enum.WeaponType {
-	return enum.WeaponBow
+func WithWeaponCardModify(modify definition.Event) WeaponCardOptions {
+	return func(option *WeaponCardImpl) {
+		opt := WithEquipmentCardModify(modify)
+		opt(&option.EquipmentCardImpl)
+	}
 }
 
-func SkyBowModifier() definition2.Modifier[context.DamageContext] {
-	panic("")
+func WithWeaponCardWeaponType(weaponType enum.WeaponType) WeaponCardOptions {
+	return func(option *WeaponCardImpl) {
+		option.weaponType = weaponType
+	}
+}
+
+func NewWeaponCardWithOpts(options ...WeaponCardOptions) definition.WeaponCard {
+	impl := &WeaponCardImpl{}
+	cardTypeOption := WithCardType(enum.CardEquipment)
+	cardTypeOption(&impl.CardImpl)
+	equipmentTypeOption := WithEquipmentCardEquipmentType(enum.EquipmentWeapon)
+	equipmentTypeOption(&impl.EquipmentCardImpl)
+
+	for _, option := range options {
+		option(impl)
+	}
+
+	return impl
 }

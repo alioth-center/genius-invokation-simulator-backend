@@ -59,9 +59,8 @@ func NewEventPersistenceAdapter() adapter.Adapter[model.Event, Event] {
 type RuleSetPersistenceAdapter struct{}
 
 func (r RuleSetPersistenceAdapter) Convert(source model.RuleSet) (success bool, result RuleSet) {
-	panic("not implemented")
 	return true, RuleSet{
-		Cacheable: newCacheableImpl(0),
+		Cacheable: newCacheableImpl(source.ID),
 		Rule:      source,
 	}
 }

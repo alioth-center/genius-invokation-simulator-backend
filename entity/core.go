@@ -205,6 +205,7 @@ type Core struct {
 	roundCount   uint                              // roundCount 回合数
 	roundStage   enum.RoundStage                   // roundStage 当前回合阶段
 	ruleSet      model.RuleSet                     // ruleSet 当前战斗的规则
+	gameOptions  model.GameOptions                 // gameOptions 游戏的可配置参数
 	activeChain  *playerChain                      // activeChain 当前回合的结算队列
 	nextChain    *playerChain                      // nextChain 下个回合的结算队列
 	defeatedChan chan SyncDefeatedCharacterMessage // defeatedChan 有玩家的前台角色被击败了，需要切换角色时，会往此管道写消息
@@ -937,7 +938,7 @@ func (c *Core) executeSwitch(action message.SwitchAction) {
 	if !hasSwitchPlayer || switchPlayerContext == nil {
 		// 玩家没被托管，不处理
 		return
-	} else if c.paymentCheck(*model.NewCostFromMap(c.ruleSet.GameOptions.SwitchCost), paidCost, switchPlayerContext.player) {
+	} else if c.paymentCheck(*model.NewCostFromMap(c.gameOptions.SwitchCost), paidCost, switchPlayerContext.player) {
 		// 玩家无法支付切换角色的费用，不处理
 		return
 	} else if _, hasTargetCharacter := switchPlayerContext.player.characters[action.Target]; !hasTargetCharacter {
@@ -1099,17 +1100,17 @@ func (c *Core) injectPlayers(initializeMessage message.InitializeMessage) (succe
 	if !ruleSet.ImplementationCheck() {
 		// 规则集合含有未实现接口，初始化失败
 		return false
-	} else {
-		ruleSet.GameOptions = &model.GameOptions{
-			ReRollTimes: initializeMessage.Options.ReRollTime,
-			StaticCost:  initializeMessage.Options.StaticElement,
-			RollAmount:  initializeMessage.Options.ElementAmount,
-			GetCards:    initializeMessage.Options.GetCards,
-		}
+	}
+
+	gameOptions := model.GameOptions{
+		ReRollTimes: initializeMessage.Options.ReRollTime,
+		StaticCost:  initializeMessage.Options.StaticElement,
+		RollAmount:  initializeMessage.Options.ElementAmount,
+		GetCards:    initializeMessage.Options.GetCards,
 	}
 
 	for _, playerInfo := range initializeMessage.Players {
-		if success, playerEntity := initPlayer(playerInfo, ruleSet); !success {
+		if success, playerEntity := initPlayer(playerInfo, gameOptions); !success {
 			return false
 		} else {
 			if _, exist := c.room[playerInfo.UID]; !exist {
@@ -1455,7 +1456,7 @@ func initCharacter(characterID, ownerID uint64) (success bool, result *character
 }
 
 // initPlayer 新建并初始化一个player实体
-func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) (success bool, result *player) {
+func initPlayer(matchingMessage message.MatchingMessage, options model.GameOptions) (success bool, result *player) {
 	if existPlayer, _ := persistence.PlayerPersistence.QueryByID(matchingMessage.UID); !existPlayer {
 		// 不存在玩家信息，初始化失败
 		return false, nil
@@ -1489,8 +1490,8 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 		uid:                         matchingMessage.UID,
 		status:                      enum.PlayerStatusInitialized,
 		operated:                    false,
-		reRollTimes:                 ruleSet.GameOptions.ReRollTimes,
-		staticCost:                  model.NewCostFromMap(ruleSet.GameOptions.StaticCost),
+		reRollTimes:                 options.ReRollTimes,
+		staticCost:                  model.NewCostFromMap(options.StaticCost),
 		holdingCost:                 model.NewCost(),
 		cardDeck:                    NewCardDeck(cardList),
 		holdingCards:                map[uint64]model.Card{},

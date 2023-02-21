@@ -1,6 +1,7 @@
 package implement
 
 import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/mod/definition"
 	"testing"
@@ -114,6 +115,96 @@ func TestNewCharacterWithOpts(t *testing.T) {
 			character := NewCharacterWithOpts(tt.options...)
 			if !tt.want(character) {
 				t.Errorf("unexpected character: %+v", character)
+			}
+		})
+	}
+}
+
+func TestNewRuleWithOpts(t *testing.T) {
+	SetDebugFlag(true)
+
+	var nilReactionCalculatorImpl model.ReactionCalculator
+	var nilVictorCalculatorImpl model.VictorCalculator
+	var defaultImpl = NewRuleWithOpts(WithRuleID(1), WithRuleImplement(enum.RuleTypeVictorCalculator, nilVictorCalculatorImpl))
+
+	tests := []struct {
+		name    string
+		options []RuleImplOptions
+		want    func(rule definition.Rule) bool
+	}{
+		{
+			name: "TestNewRuleWithOpts-Common-Success",
+			options: []RuleImplOptions{
+				WithRuleID(1),
+				WithRuleImplement(enum.RuleTypeReactionCalculator, nilReactionCalculatorImpl),
+				WithRuleImplement(enum.RuleTypeVictorCalculator, nilVictorCalculatorImpl),
+			},
+			want: func(rule definition.Rule) bool {
+				entityImpl := NewEntityWithOpts(WithEntityID(1))
+				if rule.TypeID() != entityImpl.TypeID() {
+					return false
+				}
+
+				if rule.Implements(enum.RuleTypeReactionCalculator) != nilReactionCalculatorImpl {
+					return false
+				}
+
+				if rule.Implements(enum.RuleTypeVictorCalculator) != nilVictorCalculatorImpl {
+					return false
+				}
+
+				return true
+			},
+		},
+		{
+			name: "TestNewRuleWithOpts-Common-CheckFailed",
+			options: []RuleImplOptions{
+				WithRuleID(1),
+			},
+			want: func(rule definition.Rule) bool {
+				entityImpl := NewEntityWithOpts(WithEntityID(1))
+				if rule.TypeID() != entityImpl.TypeID() {
+					return false
+				}
+
+				if rule.Implements(enum.RuleTypeReactionCalculator) != nil {
+					return false
+				}
+
+				if rule.Implements(enum.RuleTypeVictorCalculator) != nil {
+					return false
+				}
+
+				return true
+			},
+		},
+		{
+			name: "TestNewRuleWithOpts-CopyFrom-Success",
+			options: []RuleImplOptions{
+				WithRuleID(1),
+				WithRuleImplement(enum.RuleTypeReactionCalculator, nilReactionCalculatorImpl),
+				WithRuleCopyFrom(defaultImpl, enum.RuleTypeVictorCalculator),
+			},
+			want: func(rule definition.Rule) bool {
+				entityImpl := NewEntityWithOpts(WithEntityID(1))
+				if rule.TypeID() != entityImpl.TypeID() {
+					return false
+				}
+
+				if rule.Implements(enum.RuleTypeVictorCalculator) != nilVictorCalculatorImpl {
+					return false
+				}
+
+				return true
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			impl := NewRuleWithOpts(tt.options...)
+			if !tt.want(impl) {
+				t.Errorf("unexpected rule impl: %+v", impl)
 			}
 		})
 	}

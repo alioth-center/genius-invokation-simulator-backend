@@ -44,15 +44,15 @@ func (r *RuleImpl) CheckImplements() (success bool) {
 		return false
 	}
 
-	if reactionCalculator, has := r.ruleImpl[enum.RuleTypeReactionCalculator]; !has || reactionCalculator == nil {
+	if reactionCalculator := r.Implements(enum.RuleTypeReactionCalculator); !debugFlag && reactionCalculator == nil {
 		return false
-	} else if success, _ := RuleConvert[model.ReactionCalculator](reactionCalculator); !success {
+	} else if success, _ := RuleConvert[model.ReactionCalculator](reactionCalculator); !debugFlag && !success {
 		return false
 	}
 
-	if victorCalculator, has := r.ruleImpl[enum.RuleTypeVictorCalculator]; !has || victorCalculator == nil {
+	if victorCalculator := r.Implements(enum.RuleTypeVictorCalculator); !debugFlag && victorCalculator == nil {
 		return false
-	} else if success, _ := RuleConvert[model.VictorCalculator](victorCalculator); !success {
+	} else if success, _ := RuleConvert[model.VictorCalculator](victorCalculator); !debugFlag && !success {
 		return false
 	}
 
@@ -98,7 +98,7 @@ func NewRuleWithOpts(options ...RuleImplOptions) definition.Rule {
 		option(impl)
 	}
 
-	if !impl.CheckImplements() {
+	if !impl.CheckImplements() && !debugFlag {
 		// 未完全实现规则集合，避免在运行时抛出panic，在初始化时抛出
 		panic("implement check failed")
 	}

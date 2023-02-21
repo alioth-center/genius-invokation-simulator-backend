@@ -14,6 +14,7 @@ var (
 	supportCardAdapter   = NewSupportCardAdapter()
 	equipmentCardAdapter = NewEquipmentCardAdapter()
 	weaponCardAdapter    = NewWeaponCardAdapter()
+	ruleSetAdapter       = NewRuleSetAdapter()
 
 	attackModifierAdapter = NewAttackModifierAdapter()
 	costModifierAdapter   = NewCostModifierAdapter()
@@ -43,4 +44,8 @@ func GetEquipmentCardAdapter() adapter.Adapter[definition.EquipmentCard, model.E
 
 func GetWeaponCardAdapter() adapter.Adapter[definition.WeaponCard, model.WeaponCard] {
 	return weaponCardAdapter
+}
+
+func GetRuleSetAdapter() adapter.Adapter[definition.Rule, model.RuleSet] {
+	return ruleSetAdapter
 }

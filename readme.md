@@ -49,12 +49,15 @@
 - master 主要的分支，将在发生重要功能修改时与dev分支进行同步
 - dev 开发中的分支，将频繁地进行更改与新功能测试
 - release 稳定的分支，仅会在重大版本更新时进行功能合并
+- cli 脚手架分支，将提供一个代码生成脚手架，用于快速实现mod
 
 ## 4. 开发进度
 
 请转到[gisb's feature development](https://github.com/users/sunist-c/projects/2)查看项目进度
 
 ## 5. 开发文档
+
+您可以转到[genius-invokation-simulator-mod-template](https://github.com/sunist-c/genius-invokation-simulator-mod-template)查看我们的示例mod，并从该模板创建您的mod
 
 + 战斗框架： [Battle Framework of GISB](https://github.com/sunist-c/genius-invokation-simulator-backend/wiki/Battle-Framework)
 + 事件框架： Mkdir...

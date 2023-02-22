@@ -40,20 +40,20 @@ func NewSkillWithOpts(options ...SkillOptions) definition.Skill {
 type AttackSkillImpl struct {
 	SkillImpl
 	skillCost        map[enum.ElementType]uint
-	activeDamage     definition.Damage
-	backgroundDamage definition.Damage
+	activeDamage     func(ctx definition.Context) definition.Damage
+	backgroundDamage func(ctx definition.Context) definition.Damage
 }
 
 func (impl *AttackSkillImpl) SkillCost() map[enum.ElementType]uint {
 	return impl.skillCost
 }
 
-func (impl *AttackSkillImpl) ActiveDamage() definition.Damage {
-	return impl.activeDamage
+func (impl *AttackSkillImpl) ActiveDamage(ctx definition.Context) definition.Damage {
+	return impl.activeDamage(ctx)
 }
 
-func (impl *AttackSkillImpl) BackgroundDamage() definition.Damage {
-	return impl.backgroundDamage
+func (impl *AttackSkillImpl) BackgroundDamage(ctx definition.Context) definition.Damage {
+	return impl.backgroundDamage(ctx)
 }
 
 type AttackSkillOptions func(option *AttackSkillImpl)
@@ -65,27 +65,40 @@ func WithAttackSkillID(id uint16) AttackSkillOptions {
 	}
 }
 
+func WithAttackSkillType(skillType enum.SkillType) AttackSkillOptions {
+	return func(option *AttackSkillImpl) {
+		opt := WithSkillType(skillType)
+		opt(&option.SkillImpl)
+	}
+}
+
 func WithAttackSkillCost(skillCost map[enum.ElementType]uint) AttackSkillOptions {
 	return func(option *AttackSkillImpl) {
 		option.skillCost = skillCost
 	}
 }
 
-func WithAttackSkillActiveDamage(elementType enum.ElementType, damageAmount uint) AttackSkillOptions {
+func WithAttackSkillActiveDamageHandler(handler func(ctx definition.Context) (elementType enum.ElementType, damageAmount uint)) AttackSkillOptions {
 	return func(option *AttackSkillImpl) {
-		option.activeDamage = NewDamageWithOpts(
-			WithDamageElementType(elementType),
-			WithDamageAmount(damageAmount),
-		)
+		option.activeDamage = func(ctx definition.Context) definition.Damage {
+			elementType, damageAmount := handler(ctx)
+			return NewDamageWithOpts(
+				WithDamageElementType(elementType),
+				WithDamageAmount(damageAmount),
+			)
+		}
 	}
 }
 
-func WithAttackSkillBackgroundDamage(damageAmount uint) AttackSkillOptions {
+func WithAttackSkillBackgroundDamageHandler(handler func(ctx definition.Context) (damageAmount uint)) AttackSkillOptions {
 	return func(option *AttackSkillImpl) {
-		option.backgroundDamage = NewDamageWithOpts(
-			WithDamageElementType(enum.ElementNone),
-			WithDamageAmount(damageAmount),
-		)
+		option.backgroundDamage = func(ctx definition.Context) definition.Damage {
+			damageAmount := handler(ctx)
+			return NewDamageWithOpts(
+				WithDamageElementType(enum.ElementNone),
+				WithDamageAmount(damageAmount),
+			)
+		}
 	}
 }
 

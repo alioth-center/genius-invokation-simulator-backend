@@ -13,14 +13,14 @@ type Skill interface {
 type AttackSkill interface {
 	Skill
 	SkillCost() map[enum.ElementType]uint
-	ActiveDamage() Damage
-	BackgroundDamage() Damage
+	ActiveDamage(ctx Context) Damage
+	BackgroundDamage(ctx Context) Damage
 }
 
 type CooperativeSkill interface {
 	Skill
-	ActiveDamage() Damage
-	BackgroundDamage() Damage
-	EffectLeft() uint
-	Effective() bool
+	ActiveDamage(ctx Context) Damage
+	BackgroundDamage(ctx Context) Damage
+	EffectLeft(ctx Context) uint
+	Effective(ctx Context) bool
 }

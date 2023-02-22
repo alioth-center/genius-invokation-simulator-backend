@@ -54,6 +54,35 @@ func TestNewCharacterWithOpts(t *testing.T) {
 				WithCharacterMP(2),
 				WithCharacterVision(enum.ElementCryo),
 				WithCharacterWeapon(enum.WeaponBow),
+				WithCharacterSkills(
+					// 普通攻击
+					NewAttackSkillWithOpts(
+						WithAttackSkillID(101),
+						WithAttackSkillType(enum.SkillNormalAttack),
+						WithAttackSkillCost(map[enum.ElementType]uint{
+							enum.ElementCryo:     1,
+							enum.ElementCurrency: 2,
+						}),
+						WithAttackSkillActiveDamageHandler(func(ctx definition.Context) (elementType enum.ElementType, damageAmount uint) {
+							return enum.ElementNone, 2
+						}),
+					),
+
+					// 霜华矢
+					NewAttackSkillWithOpts(
+						WithAttackSkillID(101),
+						WithAttackSkillType(enum.SkillNormalAttack),
+						WithAttackSkillCost(map[enum.ElementType]uint{
+							enum.ElementCryo: 5,
+						}),
+						WithAttackSkillActiveDamageHandler(func(ctx definition.Context) (elementType enum.ElementType, damageAmount uint) {
+							return enum.ElementCryo, 2
+						}),
+						WithAttackSkillBackgroundDamageHandler(func(ctx definition.Context) (damageAmount uint) {
+							return 2
+						}),
+					),
+				),
 			},
 			want: func(character definition.Character) bool {
 				entity := NewEntityWithOpts(WithEntityID(1))

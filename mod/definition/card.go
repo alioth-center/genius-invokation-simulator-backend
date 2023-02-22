@@ -1,8 +1,12 @@
 package definition
 
-import "github.com/sunist-c/genius-invokation-simulator-backend/enum"
+import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
+	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
+)
 
 type Card interface {
+	model.BaseEntity
 	CardType() enum.CardType
 	Cost() map[enum.ElementType]uint
 }

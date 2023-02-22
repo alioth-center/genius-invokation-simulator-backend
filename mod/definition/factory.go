@@ -21,5 +21,5 @@ type CardFactory interface {
 }
 
 type RuleFactory interface {
-	ProduceRuleSet() []Rule
+	ProduceRule() []Rule
 }

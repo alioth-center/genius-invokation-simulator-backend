@@ -1,4 +1,4 @@
-package event
+package model
 
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
@@ -6,7 +6,7 @@ import (
 )
 
 type Event interface {
-	ID() uint
+	BaseEntity
 	TriggerAt() enum.TriggerType
 	CanTriggered(context.CallbackContext) bool
 	NeedClear() bool

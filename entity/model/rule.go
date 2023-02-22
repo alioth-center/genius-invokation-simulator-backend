@@ -41,16 +41,12 @@ var (
 )
 
 type RuleSet struct {
-	GameOptions        *GameOptions
+	ID                 uint64
 	ReactionCalculator ReactionCalculator
 	VictorCalculator   VictorCalculator
 }
 
 func (r RuleSet) ImplementationCheck() bool {
-	if r.GameOptions == nil {
-		return false
-	}
-
 	if r.ReactionCalculator == nullReactionCalculator {
 		return false
 	}

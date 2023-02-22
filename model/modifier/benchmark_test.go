@@ -17,7 +17,7 @@ func BenchmarkTestContextRemove(b *testing.B) {
 		*ctx.data += 1
 	}
 	handlers := NewChain[int]()
-	for j := uint(0); j <= 128; j++ {
+	for j := uint64(0); j <= 128; j++ {
 		switch j % 3 {
 		case 0:
 			handlers.Append(newModifier(j, add))
@@ -49,7 +49,7 @@ func BenchmarkTestContextAppend(b *testing.B) {
 		*ctx.data += 1
 	}
 	handlers := NewChain[int]()
-	for j := uint(0); j <= 128; j++ {
+	for j := uint64(0); j <= 128; j++ {
 		switch j % 3 {
 		case 0:
 			handlers.Append(newModifier(j, add))
@@ -80,7 +80,7 @@ func BenchmarkTestContextExecute(b *testing.B) {
 		*ctx.data += 1
 	}
 	handlers := NewChain[int]()
-	for j := uint(0); j < 1; j++ {
+	for j := uint64(0); j < 1; j++ {
 		switch j % 3 {
 		case 0:
 			handlers.Append(newModifier(j, add))

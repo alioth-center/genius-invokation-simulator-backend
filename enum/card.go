@@ -4,12 +4,13 @@ package enum
 type CardType byte
 
 // CardSubType 卡牌类型，小类
-type CardSubType byte
+type CardSubType = CardType
 
 const (
 	CardEvent     CardType = iota << 4 // CardEvent 事件卡
 	CardSupport                        // CardSupport 支援卡
 	CardEquipment                      // CardEquipment 装备卡
+	CardUnknown   CardType = 1 << 7
 )
 
 // EventCardSubType

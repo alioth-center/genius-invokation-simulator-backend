@@ -6,7 +6,6 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
-	"github.com/sunist-c/genius-invokation-simulator-backend/model/event"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/kv"
 	"github.com/sunist-c/genius-invokation-simulator-backend/model/modifier"
 	"github.com/sunist-c/genius-invokation-simulator-backend/persistence"
@@ -20,12 +19,12 @@ import (
 type filter = map[enum.ActionType]bool
 
 var (
-	nullDirectAttackModifiers kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
-	nullFinalAttackModifiers  kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
-	nullDefenceModifiers      kv.Map[uint, []modifier.Modifier[context.DamageContext]] = nil
-	nullChargeModifiers       kv.Map[uint, []modifier.Modifier[context.ChargeContext]] = nil
-	nullHealModifiers         kv.Map[uint, []modifier.Modifier[context.HealContext]]   = nil
-	nullCostModifiers         kv.Map[uint, []modifier.Modifier[context.CostContext]]   = nil
+	nullDirectAttackModifiers kv.Map[uint64, []modifier.Modifier[context.DamageContext]] = nil
+	nullFinalAttackModifiers  kv.Map[uint64, []modifier.Modifier[context.DamageContext]] = nil
+	nullDefenceModifiers      kv.Map[uint64, []modifier.Modifier[context.DamageContext]] = nil
+	nullChargeModifiers       kv.Map[uint64, []modifier.Modifier[context.ChargeContext]] = nil
+	nullHealModifiers         kv.Map[uint64, []modifier.Modifier[context.HealContext]]   = nil
+	nullCostModifiers         kv.Map[uint64, []modifier.Modifier[context.CostContext]]   = nil
 
 	cachedFilter = map[enum.PlayerStatus]map[enum.ActionType]bool{
 		enum.PlayerStatusInitialized: {
@@ -117,13 +116,13 @@ var (
 
 // playerChain 玩家的行动顺序表
 type playerChain struct {
-	canOperated map[uint]bool
-	queue       []uint
+	canOperated map[uint64]bool
+	queue       []uint64
 	offset      int
 }
 
 // next 寻找下一个可以执行操作的玩家
-func (pc *playerChain) next() (has bool, player uint) {
+func (pc *playerChain) next() (has bool, player uint64) {
 	for i := pc.offset; i < len(pc.queue); i++ {
 		if pc.canOperated[pc.queue[i]] {
 			pc.offset = i + 1
@@ -141,7 +140,7 @@ func (pc *playerChain) next() (has bool, player uint) {
 }
 
 // complete 将player设置为不可执行操作
-func (pc *playerChain) complete(player uint) {
+func (pc *playerChain) complete(player uint64) {
 	if _, exist := pc.canOperated[player]; exist {
 		pc.canOperated[player] = false
 	}
@@ -149,13 +148,13 @@ func (pc *playerChain) complete(player uint) {
 
 // empty 将队列清空，为复用准备
 func (pc *playerChain) empty() {
-	pc.canOperated = map[uint]bool{}
-	pc.queue = []uint{}
+	pc.canOperated = map[uint64]bool{}
+	pc.queue = []uint64{}
 	pc.offset = 0
 }
 
 // add 向队列中加入一个玩家，并将其可执行状态设置为true
-func (pc *playerChain) add(player uint) {
+func (pc *playerChain) add(player uint64) {
 	if _, exist := pc.canOperated[player]; !exist {
 		pc.queue = append(pc.queue, player)
 		pc.canOperated[player] = true
@@ -163,8 +162,8 @@ func (pc *playerChain) add(player uint) {
 }
 
 // allActive 将队列中所有可执行状态为true的玩家导出
-func (pc *playerChain) allActive() []uint {
-	result := make([]uint, 0)
+func (pc *playerChain) allActive() []uint64 {
+	result := make([]uint64, 0)
 	for _, id := range pc.queue {
 		if pc.canOperated[id] {
 			result = append(result, id)
@@ -176,18 +175,18 @@ func (pc *playerChain) allActive() []uint {
 
 func newPlayerChain() *playerChain {
 	return &playerChain{
-		canOperated: map[uint]bool{},
-		queue:       []uint{},
+		canOperated: map[uint64]bool{},
+		queue:       []uint64{},
 		offset:      0,
 	}
 }
 
 type SyncDefeatedCharacterMessage struct {
-	DefeatedPlayerUID uint
+	DefeatedPlayerUID uint64
 }
 
 type SyncSwitchedCharacterMessage struct {
-	SwitchedPlayerUID uint
+	SwitchedPlayerUID uint64
 }
 
 type playerContext struct {
@@ -198,14 +197,15 @@ type playerContext struct {
 
 type Core struct {
 	errorHandler util.ErrorHandler                 // errorHandler 处理错误的日志器
-	room         map[uint]*playerContext           // room 房间信息，包括玩家、合法操作
-	viewers      map[uint]*websocket.Connection    // viewers 观战者的连接集合
+	room         map[uint64]*playerContext         // room 房间信息，包括玩家、合法操作
+	viewers      map[uint64]*websocket.Connection  // viewers 观战者的连接集合
 	guests       map[*websocket.Connection]bool    // guests 匿名观战者的连接集合
-	entities     map[uint]uint                     // entities 实体表
-	actingPlayer uint                              // actingPlayer 当前正在操作的玩家
+	entities     map[uint64]uint64                 // entities 实体表
+	actingPlayer uint64                            // actingPlayer 当前正在操作的玩家
 	roundCount   uint                              // roundCount 回合数
 	roundStage   enum.RoundStage                   // roundStage 当前回合阶段
 	ruleSet      model.RuleSet                     // ruleSet 当前战斗的规则
+	gameOptions  model.GameOptions                 // gameOptions 游戏的可配置参数
 	activeChain  *playerChain                      // activeChain 当前回合的结算队列
 	nextChain    *playerChain                      // nextChain 下个回合的结算队列
 	defeatedChan chan SyncDefeatedCharacterMessage // defeatedChan 有玩家的前台角色被击败了，需要切换角色时，会往此管道写消息
@@ -213,7 +213,8 @@ type Core struct {
 	operatedChan chan struct{}                     // operatedChan 玩家结束操作时，会往此管道写信息
 	readChan     chan message.ActionMessage        // readChan 有网络信息传入时，向此管道写入信息
 	exitChan     chan struct{}                     // exitChan 当结束服务时，向此管道写入信息
-	updateMutex  sync.RWMutex                      // updateMutex 更新锁，用于避免并发更新玩家状态以引发并发问题
+	entityIndex  uint64
+	updateMutex  sync.RWMutex // updateMutex 更新锁，用于避免并发更新玩家状态以引发并发问题
 }
 
 // updatePlayerStatusAndCoreFilter 更新玩家状态与玩家可操作列表，没有做校验，请在调用前校验player不为nil且在filter中有记录
@@ -241,6 +242,15 @@ func (c *Core) messageFilter(msg message.ActionMessage) (legal bool) {
 		// 玩家不存在
 		return false
 	}
+}
+
+// appendEntity 将一个实体托管到框架，并返回其EntityID
+func (c *Core) appendEntity(typeID uint64) (entityID uint64) {
+	c.updateMutex.Lock()
+	defer c.updateMutex.Unlock()
+	c.entityIndex += 1
+	c.entities[c.entityIndex] = typeID
+	return c.entityIndex
 }
 
 // handleMessage 处理玩家的信息
@@ -301,7 +311,9 @@ func (c *Core) handleMessage(msg message.ActionMessage) {
 }
 
 // generateSyncMessage 生成某玩家收到的同步信息，playerID为0则生成匿名访客的观战信息
-func (c *Core) generateSyncMessage(player uint) (syncMessage message.SyncMessage) {
+func (c *Core) generateSyncMessage(player uint64) (syncMessage message.SyncMessage) {
+	c.updateMutex.RLock()
+	defer c.updateMutex.RUnlock()
 	dictionary := generateDictionary(c)
 	background := generateBackgroundMessage(c)
 	if c.room[player] != nil {
@@ -354,6 +366,7 @@ func (c *Core) generateSyncMessage(player uint) (syncMessage message.SyncMessage
 
 }
 
+// calculateReactions 计算元素反应并根据元素反应类型对伤害做出修正
 func (c *Core) calculateReactions(damageCtx *context.DamageContext, targetPlayer *player) {
 	for targetCharacter, damage := range damageCtx.Damage() {
 		character := targetPlayer.characters[targetCharacter]
@@ -370,10 +383,13 @@ func (c *Core) calculateReactions(damageCtx *context.DamageContext, targetPlayer
 	}
 }
 
-func (c *Core) executeReactionEffect(reaction enum.Reaction) {
-
+// executeReactionEffect 执行元素反应的效果
+func (c *Core) executeReactionEffect(reaction enum.Reaction, targetPlayer *player) {
+	effect := c.ruleSet.ReactionCalculator.EffectCalculate(reaction, targetPlayer)
+	c.executeCallbackModify(targetPlayer, effect)
 }
 
+// paymentCheck 检查支付费用和需求费用是否一致且玩家是否有能力支付费用
 func (c *Core) paymentCheck(need, paid model.Cost, sender *player) bool {
 	if !need.Equals(paid) {
 		return false
@@ -756,7 +772,7 @@ func (c *Core) executeCallbackModify(p *player, ctx *context.CallbackContext) {
 			for i := uint(0); i < result; i++ {
 				if card, success := p.cardDeck.GetOne(); success {
 					// 卡牌足够的话，将卡牌加入手牌
-					p.holdingCards[card.ID()] = card
+					p.holdingCards[card.TypeID()] = card
 				} else {
 					// 卡牌不够的话，下次一定
 					break
@@ -770,7 +786,7 @@ func (c *Core) executeCallbackModify(p *player, ctx *context.CallbackContext) {
 		if needFindCard, target := ctx.GetFindCardResult(); needFindCard {
 			if card, success := p.cardDeck.FindOne(target); success {
 				// 可以获取卡牌的话，将卡牌添加进手牌
-				p.holdingCards[card.ID()] = card
+				p.holdingCards[card.TypeID()] = card
 			}
 		}
 	}
@@ -783,7 +799,7 @@ func (c *Core) executeCallbackModify(p *player, ctx *context.CallbackContext) {
 				tempElements := c.ruleSet.ReactionCalculator.Attach(targetCharacter.elements, element)
 				reaction, remainElement := c.ruleSet.ReactionCalculator.ReactionCalculate(tempElements)
 				if reaction != enum.ReactionNone {
-					c.executeReactionEffect(reaction)
+					c.executeReactionEffect(reaction, p)
 				} else {
 					targetCharacter.elements = remainElement
 				}
@@ -792,7 +808,7 @@ func (c *Core) executeCallbackModify(p *player, ctx *context.CallbackContext) {
 	}
 }
 
-// executeAttack 执行攻击行动
+// executeAttack 执行玩家的攻击指令
 func (c *Core) executeAttack(action message.AttackAction) {
 	senderPlayerContext, targetPlayerContext := c.room[action.Sender], c.room[action.Target]
 	var senderPlayer, targetPlayer *player = nil, nil
@@ -817,7 +833,7 @@ func (c *Core) executeAttack(action message.AttackAction) {
 			// 在协同技能中查找该技能是否存在
 			existCooperativeSkill := false
 			for _, cooperativeSkill := range senderPlayer.cooperativeAttacks {
-				if cooperativeSkill.ID() == action.Skill {
+				if cooperativeSkill.TypeID() == action.Skill {
 					existCooperativeSkill = true
 					break
 				}
@@ -897,7 +913,7 @@ func (c *Core) executeAttack(action message.AttackAction) {
 		}
 
 		// 执行元素反应效果
-		c.executeReactionEffect(baseDamage.GetTargetCharacterReaction())
+		c.executeReactionEffect(baseDamage.GetTargetCharacterReaction(), targetPlayer)
 
 	}
 
@@ -915,16 +931,14 @@ func (c *Core) executeAttack(action message.AttackAction) {
 	c.executeCallbackModify(targetPlayer, defenceCallbackContext)
 }
 
+// executeSwitch 执行玩家的切换角色指令
 func (c *Core) executeSwitch(action message.SwitchAction) {
 	switchPlayerContext, hasSwitchPlayer := c.room[action.Sender]
 	paidCost := *model.NewCostFromMap(action.Paid)
 	if !hasSwitchPlayer || switchPlayerContext == nil {
 		// 玩家没被托管，不处理
 		return
-	} else if !model.NewCostFromMap(c.ruleSet.GameOptions.SwitchCost).Equals(paidCost) {
-		// 玩家支付的切换角色费用不合法，不处理
-		return
-	} else if switchPlayerContext.player.holdingCost.Contains(*model.NewCostFromMap(action.Paid)) {
+	} else if c.paymentCheck(*model.NewCostFromMap(c.gameOptions.SwitchCost), paidCost, switchPlayerContext.player) {
 		// 玩家无法支付切换角色的费用，不处理
 		return
 	} else if _, hasTargetCharacter := switchPlayerContext.player.characters[action.Target]; !hasTargetCharacter {
@@ -950,6 +964,7 @@ func (c *Core) executeSwitch(action message.SwitchAction) {
 	// todo: callback
 }
 
+// executeBurnCard 执行玩家元素转换指令
 func (c *Core) executeBurnCard(action message.BurnCardAction) {
 	executePlayerContext, hasExecutePlayer := c.room[action.Sender]
 	if !hasExecutePlayer || executePlayerContext == nil {
@@ -978,10 +993,59 @@ func (c *Core) executeBurnCard(action message.BurnCardAction) {
 	}
 }
 
+// executeUseCard 执行玩家使用卡牌指令
 func (c *Core) executeUseCard(action message.UseCardAction) {
+	cardType := enum.CardUnknown
+	var resultEventCard model.EventCard
+	var resultSupportCard model.SupportCard
+	var resultEquipmentCard model.EquipmentCard
 
+	executePlayerContext, hasExecutePlayer := c.room[action.Sender]
+	if !hasExecutePlayer || executePlayerContext == nil {
+		// 框架没有托管执行玩家，不处理
+		return
+	} else if card, hasCard := executePlayerContext.player.holdingCards[action.Card]; hasCard {
+		// 玩家不持有其要使用的卡，不处理
+		return
+	} else if !c.paymentCheck(*model.NewCostFromMap(card.Cost()), *model.NewCostFromMap(action.Paid), executePlayerContext.player) {
+		// 玩家无法承担此次费用或支付的费用不合法，不处理
+		return
+	} else {
+		// 尝试获取卡牌内容
+		switch card.Type() {
+		case enum.CardEvent, enum.CardElementalResonance, enum.CardFood:
+			if isEventCard, eventCard := model.ConvertToEventCard(card); isEventCard {
+				cardType, resultEventCard = enum.CardEvent, eventCard
+			}
+		case enum.CardSupport, enum.CardLocation, enum.CardCompanion, enum.CardItem:
+			if isSupportCard, supportCard := model.ConvertToSupportCard(card); isSupportCard {
+				cardType, resultSupportCard = enum.CardSupport, supportCard
+			}
+		case enum.CardEquipment, enum.CardTalent, enum.CardWeapon, enum.CardArtifact:
+			if isEquipmentCard, equipmentCard := model.ConvertToEquipmentCard(card); isEquipmentCard {
+				cardType, resultEquipmentCard = enum.CardEquipment, equipmentCard
+			}
+		}
+	}
+
+	// 执行卡牌内容 todo: 添加执行逻辑
+	switch cardType {
+	case enum.CardEvent:
+		event := resultEventCard.Event()
+		c.appendEntity(event.TypeID())
+	case enum.CardSupport:
+		event := resultSupportCard.Support()
+		c.appendEntity(event.TypeID())
+	case enum.CardEquipment:
+		event := resultEquipmentCard.Modify()
+		c.appendEntity(event.TypeID())
+	default:
+		// 没有解析或者解析错误，不处理
+		return
+	}
 }
 
+// executeReRoll 执行玩家重掷骰子指令
 func (c *Core) executeReRoll(action message.ReRollAction) {
 	reRollPlayerContext, hasExecutePlayer := c.room[action.Sender]
 	if !hasExecutePlayer || reRollPlayerContext == nil {
@@ -1001,6 +1065,7 @@ func (c *Core) executeReRoll(action message.ReRollAction) {
 	}
 }
 
+// executeSkipRound 执行玩家跳过回合指令
 func (c *Core) executeSkipRound(action message.SkipRoundAction) {
 	if action.Sender == c.actingPlayer && action.Sender != 0 {
 		// 正常请求，正常处理
@@ -1011,6 +1076,7 @@ func (c *Core) executeSkipRound(action message.SkipRoundAction) {
 	}
 }
 
+// executeConcede 执行玩家弃权指令
 func (c *Core) executeConcede(actionMessage message.ConcedeAction) {
 	concedePlayerContext, hasConcedePlayer := c.room[actionMessage.Sender]
 	if !hasConcedePlayer || concedePlayerContext == nil {
@@ -1022,6 +1088,7 @@ func (c *Core) executeConcede(actionMessage message.ConcedeAction) {
 	}
 }
 
+// injectPlayers 根据初始化消息将实体注入到框架中
 func (c *Core) injectPlayers(initializeMessage message.InitializeMessage) (success bool) {
 	exist, ruleSetPersistence := persistence.RuleSetPersistence.QueryByID(initializeMessage.Options.RuleSet)
 	if !exist {
@@ -1033,17 +1100,17 @@ func (c *Core) injectPlayers(initializeMessage message.InitializeMessage) (succe
 	if !ruleSet.ImplementationCheck() {
 		// 规则集合含有未实现接口，初始化失败
 		return false
-	} else {
-		ruleSet.GameOptions = &model.GameOptions{
-			ReRollTimes: initializeMessage.Options.ReRollTime,
-			StaticCost:  initializeMessage.Options.StaticElement,
-			RollAmount:  initializeMessage.Options.ElementAmount,
-			GetCards:    initializeMessage.Options.GetCards,
-		}
+	}
+
+	gameOptions := model.GameOptions{
+		ReRollTimes: initializeMessage.Options.ReRollTime,
+		StaticCost:  initializeMessage.Options.StaticElement,
+		RollAmount:  initializeMessage.Options.ElementAmount,
+		GetCards:    initializeMessage.Options.GetCards,
 	}
 
 	for _, playerInfo := range initializeMessage.Players {
-		if success, playerEntity := initPlayer(playerInfo, ruleSet); !success {
+		if success, playerEntity := initPlayer(playerInfo, gameOptions); !success {
 			return false
 		} else {
 			if _, exist := c.room[playerInfo.UID]; !exist {
@@ -1081,6 +1148,7 @@ func (c *Core) Serve() {
 	}
 }
 
+// generateSelfMessage 根据core当前的状态生成一个对player发送的其自己的同步信息
 func generateSelfMessage(c *Core, player *player) (selfMessage message.Self) {
 	var characterList []message.Character
 	for _, character := range player.characters {
@@ -1164,7 +1232,7 @@ func generateSelfMessage(c *Core, player *player) (selfMessage message.Self) {
 		})
 	}
 
-	var cardList []uint
+	var cardList []uint64
 	for id := range player.holdingCards {
 		cardList = append(cardList, id)
 	}
@@ -1194,6 +1262,7 @@ func generateSelfMessage(c *Core, player *player) (selfMessage message.Self) {
 	}
 }
 
+// generateOtherMessage 根据core当前的状态生成一个除player外发送给其他人的同步信息
 func generateOtherMessage(c *Core, player *player) (othersMessage []message.Other) {
 	othersMessage = []message.Other{}
 
@@ -1318,6 +1387,7 @@ func generateOtherMessage(c *Core, player *player) (othersMessage []message.Othe
 	return othersMessage
 }
 
+// generateBackgroundMessage 根据core当前的状态生成游戏当前的状态信息
 func generateBackgroundMessage(c *Core) (gameMessage message.Game) {
 	return message.Game{
 		ActingPlayer: c.actingPlayer,
@@ -1326,6 +1396,7 @@ func generateBackgroundMessage(c *Core) (gameMessage message.Game) {
 	}
 }
 
+// generateDictionary 根据core当前的状态生成EntityID-TypeID的字典
 func generateDictionary(c *Core) (dictionary []message.DictionaryPair) {
 	dictionary = []message.DictionaryPair{}
 	for id, typeID := range c.entities {
@@ -1337,7 +1408,8 @@ func generateDictionary(c *Core) (dictionary []message.DictionaryPair) {
 	return dictionary
 }
 
-func initCharacter(characterID, ownerID uint, ruleSet model.RuleSet) (success bool, result *character) {
+// initCharacter 新建并初始化一个character实体
+func initCharacter(characterID, ownerID uint64) (success bool, result *character) {
 	exist, characterPersistence := persistence.CharacterPersistence.QueryByID(characterID)
 	if !exist {
 		// 找不到角色实现，初始化失败
@@ -1345,19 +1417,20 @@ func initCharacter(characterID, ownerID uint, ruleSet model.RuleSet) (success bo
 	}
 
 	characterInfo := characterPersistence.Ctor()()
-	characterSkill := map[uint]model.Skill{}
+	characterSkill := map[uint64]model.Skill{}
 	for _, skillID := range characterInfo.Skills {
 		if existSkill, skillPersistence := persistence.SkillPersistence.QueryByID(skillID); !existSkill {
 			// 找不到技能实现，初始化失败
 			return false, nil
 		} else {
 			skill := skillPersistence.Ctor()().Skill
+			skill.InjectTypeID(skillPersistence.ID())
 			characterSkill[skillID] = skill
 		}
 	}
 
 	character := &character{
-		id:                         characterInfo.ID,
+		id:                         characterInfo.TypeID,
 		player:                     ownerID,
 		affiliation:                characterInfo.Affiliation,
 		vision:                     characterInfo.Vision,
@@ -1370,29 +1443,29 @@ func initCharacter(characterID, ownerID uint, ruleSet model.RuleSet) (success bo
 		status:                     enum.CharacterStatusReady,
 		elements:                   []enum.ElementType{},
 		satiety:                    false,
-		equipments:                 map[enum.EquipmentType]uint{},
+		equipments:                 map[enum.EquipmentType]uint64{},
 		localDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
 		localFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
 		localDefenceModifiers:      modifier.NewChain[context.DamageContext](),
 		localChargeModifiers:       modifier.NewChain[context.ChargeContext](),
 		localHealModifiers:         modifier.NewChain[context.HealContext](),
 		localCostModifiers:         modifier.NewChain[context.CostContext](),
-		ruleSet:                    ruleSet,
 	}
 
 	return true, character
 }
 
-func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) (success bool, result *player) {
+// initPlayer 新建并初始化一个player实体
+func initPlayer(matchingMessage message.MatchingMessage, options model.GameOptions) (success bool, result *player) {
 	if existPlayer, _ := persistence.PlayerPersistence.QueryByID(matchingMessage.UID); !existPlayer {
 		// 不存在玩家信息，初始化失败
 		return false, nil
 	}
 
-	var characterList []uint
-	characterMap := map[uint]*character{}
+	var characterList []uint64
+	characterMap := map[uint64]*character{}
 	for _, characterID := range matchingMessage.Characters {
-		if initCharacterSuccess, character := initCharacter(characterID, matchingMessage.UID, ruleSet); !initCharacterSuccess {
+		if initCharacterSuccess, character := initCharacter(characterID, matchingMessage.UID); !initCharacterSuccess {
 			// 初始化角色失败
 			return false, nil
 		} else {
@@ -1407,7 +1480,9 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 			// 不存在卡牌，初始化失败
 			return false, nil
 		} else {
-			cardList = append(cardList, cardPersistence.Ctor()().Card)
+			cardEntity := cardPersistence.Ctor()().Card
+			cardEntity.InjectTypeID(cardPersistence.ID())
+			cardList = append(cardList, cardEntity)
 		}
 	}
 
@@ -1415,18 +1490,18 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 		uid:                         matchingMessage.UID,
 		status:                      enum.PlayerStatusInitialized,
 		operated:                    false,
-		reRollTimes:                 ruleSet.GameOptions.ReRollTimes,
-		staticCost:                  model.NewCostFromMap(ruleSet.GameOptions.StaticCost),
+		reRollTimes:                 options.ReRollTimes,
+		staticCost:                  model.NewCostFromMap(options.StaticCost),
 		holdingCost:                 model.NewCost(),
 		cardDeck:                    NewCardDeck(cardList),
-		holdingCards:                map[uint]model.Card{},
+		holdingCards:                map[uint64]model.Card{},
 		activeCharacter:             0,
 		characters:                  characterMap,
 		characterList:               characterList,
-		summons:                     map[uint]Summon{},
-		summonList:                  []uint{},
-		supports:                    map[uint]Support{},
-		supportList:                 []uint{},
+		summons:                     map[uint64]Summon{},
+		summonList:                  []uint64{},
+		supports:                    map[uint64]Support{},
+		supportList:                 []uint64{},
 		globalDirectAttackModifiers: modifier.NewChain[context.DamageContext](),
 		globalFinalAttackModifiers:  modifier.NewChain[context.DamageContext](),
 		globalDefenceModifiers:      modifier.NewChain[context.DamageContext](),
@@ -1434,7 +1509,7 @@ func initPlayer(matchingMessage message.MatchingMessage, ruleSet model.RuleSet) 
 		globalHealModifiers:         modifier.NewChain[context.HealContext](),
 		globalCostModifiers:         modifier.NewChain[context.CostContext](),
 		cooperativeAttacks:          map[enum.TriggerType]model.CooperativeSkill{},
-		callbackEvents:              event.NewEventMap(),
+		callbackEvents:              NewEventMap(),
 	}
 
 	return true, player

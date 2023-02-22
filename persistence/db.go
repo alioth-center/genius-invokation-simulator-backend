@@ -16,6 +16,8 @@ const (
 	cardPersistenceFileName      = "card-persistence.psc"
 	characterPersistenceFileName = "character-persistence.psc"
 	skillPersistenceFileName     = "skill-persistence.psc"
+	summonPersistenceFileName    = "summon-persistence.psc"
+	eventPersistenceFileName     = "event-persistence.psc"
 	sqlite3DBFileName            = "gisb-sqlite3.db"
 )
 
@@ -29,13 +31,17 @@ var (
 	CardPersistence      = newFactoryPersistence[Card]()
 	CharacterPersistence = newFactoryPersistence[Character]()
 	SkillPersistence     = newFactoryPersistence[Skill]()
+	SummonPersistence    = newFactoryPersistence[Summon]()
+	EventPersistence     = newFactoryPersistence[Event]()
 
 	LocalizationPersistence = newMemoryCache[string, localization.LanguagePack]()
-	RoomInfoPersistence     = newMemoryCache[uint, RoomInfo]()
-	TokenPersistence        = newTimingMemoryCache[string, Token]()
+	ModInfoPersistence      = newMemoryCache[string, ModInfo]()
+	RoomInfoPersistence     = newMemoryCache[uint64, RoomInfo]()
 
-	CardDeckPersistence DatabasePersistence[uint, CardDeck]
-	PlayerPersistence   DatabasePersistence[uint, Player]
+	TokenPersistence = newTimingMemoryCache[string, Token]()
+
+	CardDeckPersistence DatabasePersistence[uint64, CardDeck]
+	PlayerPersistence   DatabasePersistence[uint64, Player]
 )
 
 // SetStoragePath 设置持久化文件的存放位置
@@ -54,6 +60,8 @@ func Serve(flushFeq time.Duration, errChan chan error) {
 	CardPersistence.Serve(flushFeq, storagePath, cardPersistenceFileName, errChan)
 	CharacterPersistence.Serve(flushFeq, storagePath, characterPersistenceFileName, errChan)
 	SkillPersistence.Serve(flushFeq, storagePath, skillPersistenceFileName, errChan)
+	SummonPersistence.Serve(flushFeq, storagePath, summonPersistenceFileName, errChan)
+	EventPersistence.Serve(flushFeq, storagePath, eventPersistenceFileName, errChan)
 	TokenPersistence.Serve(time.Second*time.Duration(300), 0.5)
 }
 
@@ -69,11 +77,11 @@ func Load(errChan chan error) {
 			sqlite3DB.SetMapper(core.SameMapper{})
 
 			var success bool
-			if success, CardDeckPersistence = newDatabasePersistence[uint, CardDeck](errChan); !success {
+			if success, CardDeckPersistence = newDatabasePersistence[uint64, CardDeck](errChan); !success {
 				errChan <- fmt.Errorf("failed to create database factoryPersistence with entity: %+v", CardDeck{})
 			}
 
-			if success, PlayerPersistence = newDatabasePersistence[uint, Player](errChan); !success {
+			if success, PlayerPersistence = newDatabasePersistence[uint64, Player](errChan); !success {
 				errChan <- fmt.Errorf("failed to create database factoryPersistence with entity: %+v", Player{})
 			}
 		}
@@ -95,6 +103,14 @@ func Load(errChan chan error) {
 			if err = SkillPersistence.Load(path.Join(storagePath, skillPersistenceFileName)); err != nil {
 				errChan <- err
 			}
+
+			if err = SummonPersistence.Load(path.Join(storagePath, summonPersistenceFileName)); err != nil {
+				errChan <- err
+			}
+
+			if err = EventPersistence.Load(path.Join(storagePath, eventPersistenceFileName)); err != nil {
+				errChan <- err
+			}
 		}
 
 		loaded = true
@@ -107,5 +123,7 @@ func Quit() {
 	CardPersistence.Exit()
 	CharacterPersistence.Exit()
 	SkillPersistence.Exit()
+	SummonPersistence.Exit()
+	EventPersistence.Exit()
 	TokenPersistence.Exit()
 }

@@ -7,13 +7,21 @@ import (
 
 type testProductInterface interface {
 	data() int
+	ID() uint64
 }
 
-type emptyProductInterface = any
+type emptyProductInterface struct {
+}
+
+func (e emptyProductInterface) ID() uint64 {
+	return 0
+}
 
 type testIntType struct {
 	u int
 }
+
+func (t testIntType) ID() uint64 { return uint64(t.u) }
 
 func (t testIntType) data() int { return t.u }
 
@@ -21,11 +29,15 @@ type testByteType struct {
 	u byte
 }
 
+func (t testByteType) ID() uint64 { return uint64(t.u) }
+
 func (t testByteType) data() int { return int(t.u) }
 
 type testRuneType struct {
 	u rune
 }
+
+func (t testRuneType) ID() uint64 { return uint64(t.u) }
 
 func (t testRuneType) data() int { return int(t.u) }
 
@@ -39,14 +51,14 @@ func TestPerformanceMap(t *testing.T) {
 	tests := []struct {
 		name                string
 		factories           []func() testProductInterface
-		queries             []uint
-		wantQueryResult     map[uint]testProductInterface
-		wantQuerySuccess    map[uint]bool
+		queries             []uint64
+		wantQueryResult     map[uint64]testProductInterface
+		wantQuerySuccess    map[uint64]bool
 		queriesUID          []string
 		wantQueryUIDResult  map[string]testProductInterface
 		wantQueryUIDSuccess map[string]bool
-		flushResult         map[uint]string
-		load                map[uint]string
+		flushResult         map[uint64]string
+		load                map[uint64]string
 	}{
 		{
 			name: "TestPerformanceMap",
@@ -55,16 +67,16 @@ func TestPerformanceMap(t *testing.T) {
 				testByteTypeFactory,
 				testRuneTypeFactory,
 			},
-			queries: []uint{
+			queries: []uint64{
 				3334, 3335, 3336, 4,
 			},
-			wantQueryResult: map[uint]testProductInterface{
+			wantQueryResult: map[uint64]testProductInterface{
 				3334: testIntTypeFactory(),
 				3335: testByteTypeFactory(),
 				3336: testRuneTypeFactory(),
 				4:    nil,
 			},
-			wantQuerySuccess: map[uint]bool{
+			wantQuerySuccess: map[uint64]bool{
 				3334: true,
 				3335: true,
 				3336: true,
@@ -80,14 +92,14 @@ func TestPerformanceMap(t *testing.T) {
 			wantQueryUIDSuccess: map[string]bool{
 				"github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType": true,
 			},
-			flushResult: map[uint]string{
+			flushResult: map[uint64]string{
 				3334: "github.com/sunist-c/genius-invokation-simulator-backend/persistence@testIntType",
 				3335: "github.com/sunist-c/genius-invokation-simulator-backend/persistence@testByteType",
 				3336: "github.com/sunist-c/genius-invokation-simulator-backend/persistence@testRuneType",
 				2333: "2333",
 				3333: "3333",
 			},
-			load: map[uint]string{
+			load: map[uint64]string{
 				2333: "2333",
 				3333: "3333",
 			},

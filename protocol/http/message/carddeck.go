@@ -1,39 +1,39 @@
 package message
 
 type UploadCardDeckRequest struct {
-	Owner           uint     `json:"owner"`
+	Owner           uint64   `json:"owner"`
 	RequiredPackage []string `json:"required_package"`
-	Cards           []uint   `json:"cards"`
-	Characters      []uint   `json:"characters"`
+	Cards           []uint64 `json:"cards"`
+	Characters      []uint64 `json:"characters"`
 }
 
 type UploadCardDeckResponse struct {
-	ID              uint     `json:"id"`
-	Owner           uint     `json:"owner"`
+	ID              uint64   `json:"id"`
+	Owner           uint64   `json:"owner"`
 	RequiredPackage []string `json:"required_package"`
-	Cards           []uint   `json:"cards"`
-	Characters      []uint   `json:"characters"`
+	Cards           []uint64 `json:"cards"`
+	Characters      []uint64 `json:"characters"`
 }
 
 type UpdateCardDeckRequest struct {
-	Owner           uint     `json:"owner"`
+	Owner           uint64   `json:"owner"`
 	RequiredPackage []string `json:"required_package"`
-	Cards           []uint   `json:"cards"`
-	Characters      []uint   `json:"characters"`
+	Cards           []uint64 `json:"cards"`
+	Characters      []uint64 `json:"characters"`
 }
 
 type UpdateCardDeckResponse struct {
-	ID              uint     `json:"id"`
-	Owner           uint     `json:"owner"`
+	ID              uint64   `json:"id"`
+	Owner           uint64   `json:"owner"`
 	RequiredPackage []string `json:"required_package"`
-	Cards           []uint   `json:"cards"`
-	Characters      []uint   `json:"characters"`
+	Cards           []uint64 `json:"cards"`
+	Characters      []uint64 `json:"characters"`
 }
 
 type QueryCardDeckResponse struct {
-	ID              uint     `json:"id"`
-	Owner           uint     `json:"owner"`
+	ID              uint64   `json:"id"`
+	Owner           uint64   `json:"owner"`
 	RequiredPackage []string `json:"required_package"`
-	Cards           []uint   `json:"cards"`
-	Characters      []uint   `json:"characters"`
+	Cards           []uint64 `json:"cards"`
+	Characters      []uint64 `json:"characters"`
 }

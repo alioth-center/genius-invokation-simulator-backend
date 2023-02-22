@@ -24,7 +24,7 @@ func initPlayerService() {
 		)...,
 	)
 
-	playerRouter.GET("/login/:player_id",
+	playerRouter.POST("/login",
 		middleware.NewInterdictor(middlewareConfig),
 		loginServiceHandler(),
 	)
@@ -51,35 +51,40 @@ func loginServiceHandler() func(ctx *gin.Context) {
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if gotten, id := util.QueryPathInt(ctx, ":player_id"); !gotten {
-			// 找不到必要的URL路径参数，BadRequest
-			ctx.AbortWithStatus(400)
-		} else if has, player := persistence.PlayerPersistence.QueryByID(uint(id)); !has {
+		} else if has, player := persistence.PlayerPersistence.QueryByID(request.PlayerUID); !has {
 			// 没找到请求玩家，NotFound，登陆失败
 			ctx.JSON(404, message.LoginResponse{Success: false})
-		} else if success, encodeResult := util2.EncodePassword([]byte(request.Password), uint(id)); !success {
+		} else if success, encodeResult := util2.EncodePassword([]byte(request.Password), uint(request.PlayerUID)); !success {
 			// 编码密码失败，InternalError，登陆失败
 			ctx.JSON(500, message.LoginResponse{Success: false})
 		} else if string(encodeResult) != (player.Password) {
 			// 密码校验失败，Forbidden，登陆失败
 			middleware.Interdict(ctx, middlewareConfig)
 			ctx.JSON(403, message.LoginResponse{Success: false})
-		} else if !middleware.AttachToken(ctx, middlewareConfig, uint(id)) {
+		} else if !middleware.AttachToken(ctx, middlewareConfig, request.PlayerUID) {
 			// 生成token失败，InternalError
 			ctx.JSON(500, message.LoginResponse{Success: false})
 		} else {
 			// 登录成功，获取玩家卡组信息后返回登录成功响应
+			wantDeck := persistence.CardDeck{OwnerUID: player.UID}
+			resultDeck := persistence.CardDeckPersistence.Find(wantDeck)
 			response := message.LoginResponse{
 				PlayerUID:       player.UID,
 				Success:         true,
 				PlayerNickName:  player.NickName,
-				PlayerCardDecks: []persistence.CardDeck{},
+				PlayerCardDecks: make([]message.CardDeck, len(resultDeck)),
 			}
-			for _, cardDeckID := range player.CardDecks {
-				if success, cardDeck := persistence.CardDeckPersistence.QueryByID(cardDeckID); success {
-					response.PlayerCardDecks = append(response.PlayerCardDecks, cardDeck)
+
+			for i, deck := range resultDeck {
+				response.PlayerCardDecks[i] = message.CardDeck{
+					ID:               deck.ID,
+					OwnerUID:         deck.OwnerUID,
+					RequiredPackages: deck.RequiredPackages,
+					Cards:            deck.Cards,
+					Characters:       deck.Characters,
 				}
 			}
+
 			ctx.JSON(200, response)
 		}
 	}
@@ -126,10 +131,10 @@ func updatePasswordServiceHandler() func(ctx *gin.Context) {
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if hasID, id := util.QueryPathInt(ctx, ":player_id"); !hasID {
+		} else if hasID, id := util.QueryPathUint64(ctx, ":player_id"); !hasID {
 			// 没有必须的player_id字段，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if success, player := persistence.PlayerPersistence.QueryByID(uint(id)); !success {
+		} else if success, player := persistence.PlayerPersistence.QueryByID(id); !success {
 			// 没有找到玩家，NotFound
 			ctx.AbortWithStatus(404)
 		} else if encoded, encodedPassword := util2.EncodePassword([]byte(request.OriginalPassword), id); !encoded {
@@ -143,12 +148,11 @@ func updatePasswordServiceHandler() func(ctx *gin.Context) {
 			// 编码新密码失败，InternalError
 			ctx.AbortWithStatus(500)
 		} else if updated := persistence.PlayerPersistence.UpdateByID(
-			uint(id),
+			id,
 			persistence.Player{
-				UID:       player.UID,
-				NickName:  player.NickName,
-				CardDecks: player.CardDecks,
-				Password:  string(encodedNewPassword),
+				UID:      player.UID,
+				NickName: player.NickName,
+				Password: string(encodedNewPassword),
 			}); !updated {
 			// 更新新密码失败，InternalError
 			ctx.AbortWithStatus(500)
@@ -165,10 +169,10 @@ func updateNickNameServiceHandler() func(ctx *gin.Context) {
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if hasID, id := util.QueryPathInt(ctx, ":player_id"); !hasID {
+		} else if hasID, id := util.QueryPathUint64(ctx, ":player_id"); !hasID {
 			// 没有必须的player_id字段，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if success, player := persistence.PlayerPersistence.QueryByID(uint(id)); !success {
+		} else if success, player := persistence.PlayerPersistence.QueryByID(id); !success {
 			// 没有找到玩家，NotFound
 			ctx.AbortWithStatus(404)
 		} else if encoded, encodedPassword := util2.EncodePassword([]byte(request.Password), id); !encoded {
@@ -178,12 +182,12 @@ func updateNickNameServiceHandler() func(ctx *gin.Context) {
 			// 提供的原密码密码不匹配，失败，Forbidden
 			middleware.Interdict(ctx, middlewareConfig)
 			ctx.AbortWithStatus(403)
-		} else if updated := persistence.PlayerPersistence.UpdateByID(uint(id),
+		} else if updated := persistence.PlayerPersistence.UpdateByID(
+			id,
 			persistence.Player{
-				UID:       player.UID,
-				NickName:  request.NewNickName,
-				CardDecks: player.CardDecks,
-				Password:  player.Password,
+				UID:      player.UID,
+				NickName: request.NewNickName,
+				Password: player.Password,
 			},
 		); !updated {
 			// 更新新昵称失败，InternalError
@@ -201,7 +205,7 @@ func destroyServiceHandler() func(ctx *gin.Context) {
 		if !util.BindJson(ctx, &request) {
 			// RequestBody解析失败，BadRequest
 			ctx.AbortWithStatus(400)
-		} else if hasID, id := util.QueryPathInt(ctx, ":player_id"); !hasID {
+		} else if hasID, id := util.QueryPathUint64(ctx, ":player_id"); !hasID {
 			// 没有必须的player_id字段，BadRequest
 			ctx.AbortWithStatus(400)
 		} else if !request.Confirm {
@@ -209,7 +213,7 @@ func destroyServiceHandler() func(ctx *gin.Context) {
 			ctx.JSON(200, message.DestroyPlayerResponse{
 				Success: false,
 			})
-		} else if success, player := persistence.PlayerPersistence.QueryByID(uint(id)); !success {
+		} else if success, player := persistence.PlayerPersistence.QueryByID(id); !success {
 			// 没有找到玩家，NotFound
 			ctx.AbortWithStatus(404)
 		} else if encoded, encodedPassword := util2.EncodePassword([]byte(request.Password), id); !encoded {
@@ -219,7 +223,7 @@ func destroyServiceHandler() func(ctx *gin.Context) {
 			// 提供的原密码密码不匹配，失败，Forbidden
 			middleware.Interdict(ctx, middlewareConfig)
 			ctx.AbortWithStatus(403)
-		} else if destroyed := persistence.PlayerPersistence.DeleteOne(uint(id)); !destroyed {
+		} else if destroyed := persistence.PlayerPersistence.DeleteOne(id); !destroyed {
 			// 删除失败，InternalError
 			ctx.AbortWithStatus(500)
 		} else {

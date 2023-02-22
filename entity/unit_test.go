@@ -3,6 +3,7 @@ package entity
 import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/entity/model"
 	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
+	"github.com/sunist-c/genius-invokation-simulator-backend/model/context"
 	"testing"
 )
 
@@ -150,15 +151,19 @@ func TestCostSub(t *testing.T) {
 }
 
 type testCard struct {
-	id uint
+	id uint64
 	t  enum.CardType
 }
 
-func (t testCard) ID() uint { return t.id }
+func (t *testCard) TypeID() uint64 { return t.id }
 
-func (t testCard) Type() enum.CardType { return t.t }
+func (t *testCard) InjectTypeID(id uint64) { t.id = id }
 
-func newTestCard(id uint, t enum.CardType) model.Card { return testCard{id: id, t: t} }
+func (t *testCard) Type() enum.CardType { return t.t }
+
+func (t *testCard) Cost() map[enum.ElementType]uint { return map[enum.ElementType]uint{} }
+
+func newTestCard(id uint64, t enum.CardType) model.Card { return &testCard{id: id, t: t} }
 
 func TestCardDeckGet(t *testing.T) {
 	food := newTestCard(1, enum.CardFood)
@@ -270,7 +275,7 @@ func TestCardDeckReset(t *testing.T) {
 		name       string
 		cards      []model.Card
 		got        int
-		holdings   []uint
+		holdings   []uint64
 		wantCard   model.Card
 		wantResult bool
 	}{
@@ -278,7 +283,7 @@ func TestCardDeckReset(t *testing.T) {
 			name:       "TestCardDeckReset-1",
 			cards:      []model.Card{food, companion, item},
 			got:        3,
-			holdings:   []uint{},
+			holdings:   []uint64{},
 			wantCard:   food,
 			wantResult: true,
 		},
@@ -286,7 +291,7 @@ func TestCardDeckReset(t *testing.T) {
 			name:       "TestCardDeckReset-2",
 			cards:      []model.Card{food, companion, item},
 			got:        3,
-			holdings:   []uint{1, 2, 3},
+			holdings:   []uint64{1, 2, 3},
 			wantCard:   nil,
 			wantResult: false,
 		},
@@ -294,7 +299,7 @@ func TestCardDeckReset(t *testing.T) {
 			name:       "TestCardDeckReset-3",
 			cards:      []model.Card{food, companion, item},
 			got:        0,
-			holdings:   []uint{1, 2},
+			holdings:   []uint64{1, 2},
 			wantCard:   item,
 			wantResult: true,
 		},
@@ -371,11 +376,11 @@ func TestCardDeckShuffle(t *testing.T) {
 func TestPlayerChainNext(t *testing.T) {
 	pc := newPlayerChain()
 	for i := 0; i < 3; i++ {
-		pc.add(uint(i))
+		pc.add(uint64(i))
 	}
 
 	t.Run("TestPlayerChainNext-1", func(t *testing.T) {
-		for i := uint(0); i < 30; i++ {
+		for i := uint64(0); i < 30; i++ {
 			if exist, gotten := pc.next(); !exist || gotten != i%3 {
 				t.Errorf("failed in TestPlayerChainNext")
 			}
@@ -384,8 +389,8 @@ func TestPlayerChainNext(t *testing.T) {
 
 	t.Run("TestPlayerChainNext-2", func(t *testing.T) {
 		pc.complete(0)
-		tag := uint(1)
-		for i := uint(0); i < 30; i++ {
+		tag := uint64(1)
+		for i := uint64(0); i < 30; i++ {
 			if exist, gotten := pc.next(); !exist || gotten != tag {
 				t.Errorf("failed in TestPlayerChainNext")
 			} else {
@@ -411,4 +416,78 @@ func TestPlayerChainNext(t *testing.T) {
 			}
 		}
 	})
+}
+
+type testEvent struct {
+	id      uint64
+	trigger enum.TriggerType
+	enable  bool
+	handler func(*context.CallbackContext)
+}
+
+func (t *testEvent) TypeID() uint64 { return t.id }
+
+func (t *testEvent) InjectTypeID(id uint64) { t.id = id }
+
+func (t *testEvent) TriggerAt() enum.TriggerType { return t.trigger }
+
+func (t *testEvent) CanTriggered(callbackContext context.CallbackContext) bool { return t.enable }
+
+func (t *testEvent) NeedClear() bool { return true }
+
+func (t *testEvent) Callback(ctx *context.CallbackContext) { t.handler(ctx) }
+
+func newTestEvent(id uint64, trigger enum.TriggerType, enable bool, handler func(callbackContext *context.CallbackContext)) model.Event {
+	return &testEvent{id: id, trigger: trigger, enable: enable, handler: handler}
+}
+
+func TestEventMapExecute(t *testing.T) {
+	switchCharacterEnabled := newTestEvent(0, enum.AfterAttack, true, func(ctx *context.CallbackContext) { ctx.SwitchCharacter(114514) })
+	changeOperatedEnabled := newTestEvent(1, enum.AfterSwitch, true, func(ctx *context.CallbackContext) { ctx.ChangeOperated(false) })
+	switchCharacterDisabled := newTestEvent(2, enum.AfterAttack, false, func(ctx *context.CallbackContext) { ctx.SwitchCharacter(114514) })
+	changeOperatedDisabled := newTestEvent(3, enum.AfterSwitch, false, func(ctx *context.CallbackContext) { ctx.ChangeOperated(false) })
+
+	testCases := []struct {
+		name      string
+		triggers  []model.Event
+		call      enum.TriggerType
+		judgeFunc func(*context.CallbackContext) bool
+		want      bool
+	}{
+		{
+			name:     "TestEventMapExecute-1",
+			triggers: []model.Event{switchCharacterEnabled, changeOperatedEnabled},
+			call:     enum.AfterAttack,
+			judgeFunc: func(ctx *context.CallbackContext) bool {
+				status, target := ctx.SwitchCharacterResult()
+				return status && target == 114514
+			},
+			want: true,
+		},
+		{
+			name:     "TestEventMapExecute-2",
+			triggers: []model.Event{switchCharacterDisabled, changeOperatedDisabled},
+			call:     enum.AfterAttack,
+			judgeFunc: func(ctx *context.CallbackContext) bool {
+				status, target := ctx.SwitchCharacterResult()
+				return status && target == 114514
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			m := NewEventMap()
+			for _, trigger := range tt.triggers {
+				m.AddEvent(trigger)
+			}
+
+			ctx := context.NewCallbackContext()
+			m.Call(tt.call, ctx)
+			if got := tt.judgeFunc(ctx); got != tt.want {
+				t.Errorf("incorrect execute result: got %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

@@ -12,13 +12,17 @@ import (
 	"time"
 )
 
+type Cacheable interface {
+	ID() uint64
+}
+
 // performanceMap 高性能的并发安全KV存储
-type performanceMap[T any] struct {
-	slices    map[byte]*performanceMapSlice[uint, Factory[T]] // slices 存储Persistent的分表
-	indexes   map[byte]*performanceMapSlice[string, uint]     // indexes 存储索引的分表
-	subTables uint                                            // subTables 子表数量，不得大于256
-	mutex     sync.Mutex                                      // mutex 控制idIndex的锁
-	idIndex   uint                                            // idIndex 当前的自动生成ID
+type performanceMap[T Cacheable] struct {
+	slices    map[byte]*performanceMapSlice[uint64, Factory[T]] // slices 存储Persistent的分表
+	indexes   map[byte]*performanceMapSlice[string, uint64]     // indexes 存储索引的分表
+	subTables byte                                              // subTables 子表数量，不得大于256
+	mutex     sync.Mutex                                        // mutex 控制idIndex的锁
+	idIndex   uint64                                            // idIndex 当前的自动生成ID
 }
 
 // Load 将records加载到performanceMap中，耗时操作，写锁
@@ -27,7 +31,7 @@ func (p *performanceMap[T]) Load(records []FactoryPersistenceRecord) {
 		if record.ID != 0 && record.UID != "" {
 			// 更新索引和Persistent分表
 			entity := NewFactory[T](record.ID, record.UID)
-			slice, index := p.hashUint(record.ID), p.hashString(record.UID)
+			slice, index := p.hashUint64(record.ID), p.hashString(record.UID)
 			p.slices[slice].add(record.ID, entity)
 			p.indexes[index].add(record.UID, record.ID)
 
@@ -42,8 +46,8 @@ func (p *performanceMap[T]) Load(records []FactoryPersistenceRecord) {
 }
 
 // QueryByID 根据ID获取工厂，只返回可用结果
-func (p *performanceMap[T]) QueryByID(id uint) (has bool, result Factory[T]) {
-	slice := p.hashUint(id)
+func (p *performanceMap[T]) QueryByID(id uint64) (has bool, result Factory[T]) {
+	slice := p.hashUint64(id)
 	if ok, entity := p.slices[slice].get(id); ok {
 		if entity.Enable() {
 			return true, entity
@@ -72,7 +76,7 @@ func (p *performanceMap[T]) Register(ctor func() T) (success bool) {
 	index := p.hashString(uid)
 
 	if ok, id := p.indexes[index].get(uid); ok {
-		slice := p.hashUint(id)
+		slice := p.hashUint64(id)
 		if has, record := p.slices[slice].get(id); has {
 			if !record.Enable() {
 				// 如果能找到UID，并且没有enable，说明是持久化文件中读取的，需要进行注册且不改变ID
@@ -93,7 +97,7 @@ func (p *performanceMap[T]) Register(ctor func() T) (success bool) {
 	} else {
 		// 如果没有找到UID记录，说明是新记录，直接写入
 		id := p.generateID()
-		slice := p.hashUint(id)
+		slice := p.hashUint64(id)
 		p.indexes[index].add(uid, id)
 		record := NewFactory[T](id, uid)
 		record.set(id, uid, ctor)
@@ -105,7 +109,7 @@ func (p *performanceMap[T]) Register(ctor func() T) (success bool) {
 // Flush 将performanceMap中的数据全部取出，耗时操作，读锁
 func (p *performanceMap[T]) Flush() (records []FactoryPersistenceRecord) {
 	records = []FactoryPersistenceRecord{}
-	for i := uint(0); i < p.subTables; i++ {
+	for i := byte(0); i < p.subTables; i++ {
 		cache := p.indexes[byte(i)].toMap()
 		for uid, id := range cache {
 			records = append(records, FactoryPersistenceRecord{ID: id, UID: uid})
@@ -115,18 +119,18 @@ func (p *performanceMap[T]) Flush() (records []FactoryPersistenceRecord) {
 	return records
 }
 
-// hashUint 将一个uint类型的key哈希为byte
-func (p *performanceMap[T]) hashUint(id uint) byte {
-	return byte(id % p.subTables)
+// hashUint64 将一个uint64类型的key哈希为byte
+func (p *performanceMap[T]) hashUint64(id uint64) byte {
+	return byte(id % uint64(p.subTables))
 }
 
 // hashString 将一个string类型的key哈希为byte
 func (p *performanceMap[T]) hashString(s string) byte {
-	sum := uint(0)
+	sum := uint64(0)
 	for _, b := range []byte(s) {
-		sum += uint(b)
+		sum += uint64(b)
 	}
-	return p.hashUint(sum)
+	return p.hashUint64(sum)
 }
 
 // generateUID 根据entity的包和类型生成其UID
@@ -138,7 +142,7 @@ func (p *performanceMap[T]) generateUID(entity T) (uid string) {
 }
 
 // generateID 生成一个自增的ID
-func (p *performanceMap[T]) generateID() (id uint) {
+func (p *performanceMap[T]) generateID() (id uint64) {
 	p.mutex.Lock()
 	p.idIndex += 1
 	id = p.idIndex
@@ -146,40 +150,40 @@ func (p *performanceMap[T]) generateID() (id uint) {
 	return id
 }
 
-func newPerformanceMap[T any]() *performanceMap[T] {
+func newPerformanceMap[T Cacheable]() *performanceMap[T] {
 	entity := &performanceMap[T]{
-		slices:    map[byte]*performanceMapSlice[uint, Factory[T]]{},
-		indexes:   map[byte]*performanceMapSlice[string, uint]{},
-		subTables: 256,
+		slices:    map[byte]*performanceMapSlice[uint64, Factory[T]]{},
+		indexes:   map[byte]*performanceMapSlice[string, uint64]{},
+		subTables: 255,
 		mutex:     sync.Mutex{},
 		idIndex:   0,
 	}
 
-	for i := uint(0); i < entity.subTables; i++ {
-		entity.slices[byte(i)] = newPerformanceMapSlice[uint, Factory[T]]()
-		entity.indexes[byte(i)] = newPerformanceMapSlice[string, uint]()
+	for i := byte(0); i < entity.subTables; i++ {
+		entity.slices[i] = newPerformanceMapSlice[uint64, Factory[T]]()
+		entity.indexes[i] = newPerformanceMapSlice[string, uint64]()
 	}
 
 	return entity
 }
 
 // newPerformanceMapWithOpts 使用指定的子表数量新建performanceMap，subTables的取值范围为[1,256]
-func newPerformanceMapWithOpts[T any](subTables uint) (success bool, entity *performanceMap[T]) {
-	if subTables > 256 || subTables == 0 {
+func newPerformanceMapWithOpts[T Cacheable](subTables uint) (success bool, entity *performanceMap[T]) {
+	if subTables > 255 || subTables == 0 {
 		return false, nil
 	}
 
 	entity = &performanceMap[T]{
-		slices:    map[byte]*performanceMapSlice[uint, Factory[T]]{},
-		indexes:   map[byte]*performanceMapSlice[string, uint]{},
-		subTables: subTables,
+		slices:    map[byte]*performanceMapSlice[uint64, Factory[T]]{},
+		indexes:   map[byte]*performanceMapSlice[string, uint64]{},
+		subTables: byte(subTables),
 		mutex:     sync.Mutex{},
 		idIndex:   0,
 	}
 
-	for i := uint(0); i < entity.subTables; i++ {
-		entity.slices[byte(i)] = newPerformanceMapSlice[uint, Factory[T]]()
-		entity.indexes[byte(i)] = newPerformanceMapSlice[string, uint]()
+	for i := byte(0); i < entity.subTables; i++ {
+		entity.slices[byte(i)] = newPerformanceMapSlice[uint64, Factory[T]]()
+		entity.indexes[byte(i)] = newPerformanceMapSlice[string, uint64]()
 	}
 
 	return true, entity
@@ -257,15 +261,15 @@ func newPerformanceMapSlice[index comparable, cache any]() *performanceMapSlice[
 type Factory[entity any] interface {
 	Ctor() func() entity
 	Enable() bool
-	ID() uint
+	ID() uint64
 	UID() string
 
-	set(id uint, uid string, ctor func() entity)
+	set(id uint64, uid string, ctor func() entity)
 	enable()
 	disable()
 }
 
-func NewFactory[entity any](id uint, uid string) Factory[entity] {
+func NewFactory[entity any](id uint64, uid string) Factory[entity] {
 	return &factory[entity]{
 		id:     id,
 		uid:    uid,
@@ -278,7 +282,7 @@ func NewFactory[entity any](id uint, uid string) Factory[entity] {
 type factory[entity any] struct {
 	ctor   func() entity
 	status bool
-	id     uint
+	id     uint64
 	uid    string
 }
 
@@ -290,7 +294,7 @@ func (p *factory[entity]) Enable() bool {
 	return p.status
 }
 
-func (p *factory[entity]) ID() uint {
+func (p *factory[entity]) ID() uint64 {
 	return p.id
 }
 
@@ -298,7 +302,7 @@ func (p *factory[entity]) UID() string {
 	return p.uid
 }
 
-func (p *factory[entity]) set(id uint, uid string, ctor func() entity) {
+func (p *factory[entity]) set(id uint64, uid string, ctor func() entity) {
 	p.id, p.uid, p.ctor = id, uid, ctor
 }
 
@@ -311,7 +315,7 @@ func (p *factory[entity]) enable() {
 }
 
 // factoryPersistence 持久化接口的实现
-type factoryPersistence[T any] struct {
+type factoryPersistence[T Cacheable] struct {
 	impl *performanceMap[T]
 	exit chan struct{}
 }
@@ -365,7 +369,7 @@ func (p *factoryPersistence[T]) Load(filePath string) (err error) {
 	}
 }
 
-func (p *factoryPersistence[T]) QueryByID(id uint) (has bool, result Factory[T]) {
+func (p *factoryPersistence[T]) QueryByID(id uint64) (has bool, result Factory[T]) {
 	return p.impl.QueryByID(id)
 }
 
@@ -389,7 +393,7 @@ func (p *factoryPersistence[T]) Flush(flushPath string, flushFile string) (err e
 	}
 }
 
-func newFactoryPersistence[T any]() FactoryPersistence[T] {
+func newFactoryPersistence[T Cacheable]() FactoryPersistence[T] {
 	return &factoryPersistence[T]{
 		impl: newPerformanceMap[T](),
 		exit: make(chan struct{}, 1),

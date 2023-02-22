@@ -1,16 +1,23 @@
 package message
 
-import "github.com/sunist-c/genius-invokation-simulator-backend/persistence"
+type CardDeck struct {
+	ID               uint64   `json:"id"`
+	OwnerUID         uint64   `json:"owner_uid"`
+	RequiredPackages []string `json:"required_packages"`
+	Cards            []uint64 `json:"cards"`
+	Characters       []uint64 `json:"characters"`
+}
 
 type LoginResponse struct {
-	PlayerUID       uint                   `json:"player_uid"`
-	Success         bool                   `json:"success"`
-	PlayerNickName  string                 `json:"player_nick_name"`
-	PlayerCardDecks []persistence.CardDeck `json:"player_card_decks"`
+	PlayerUID       uint64     `json:"player_uid"`
+	Success         bool       `json:"success"`
+	PlayerNickName  string     `json:"player_nick_name"`
+	PlayerCardDecks []CardDeck `json:"player_card_decks"`
 }
 
 type LoginRequest struct {
-	Password string `json:"password"`
+	PlayerUID uint64 `json:"player_uid"`
+	Password  string `json:"password"`
 }
 
 type RegisterRequest struct {
@@ -19,7 +26,7 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	PlayerUID      uint   `json:"player_uid"`
+	PlayerUID      uint64 `json:"player_uid"`
 	PlayerNickName string `json:"player_nick_name"`
 }
 

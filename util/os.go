@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -54,10 +53,15 @@ func GetMacAddresses() (macAddr []net.Interface, err error) {
 func GetUintMacAddress(mac net.Interface) (addr uint64, err error) {
 	macAddrArr := strings.Split(mac.HardwareAddr.String(), ":")
 	macAddr := strings.Join(macAddrArr, "")
+
+	// mac地址为空，考虑到权限问题，设置mac地址为随机变量
 	if macAddr == "" {
-		return 0, fmt.Errorf("nil mac address")
+		macPartBits := uint64(1<<48) - 1
+		addr = GenerateHashWithOpts[net.Interface, uint64](mac)
+		return addr & macPartBits, nil
 	}
 
+	// mac地址非空，则正常计算mac的48位数值
 	if addr, err = strconv.ParseUint(macAddr, 16, 64); err != nil {
 		return 0, err
 	} else {

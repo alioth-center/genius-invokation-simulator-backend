@@ -8,6 +8,8 @@ import (
 )
 
 func TestNextID(t *testing.T) {
+	SetDebugFlag(true)
+
 	t.Run("TestNextID", func(t *testing.T) {
 		for i := 0; i < 65536; i++ {
 			if got := NextID(); got != uint16(i+1) {
@@ -20,6 +22,8 @@ func TestNextID(t *testing.T) {
 }
 
 func TestUseID(t *testing.T) {
+	SetDebugFlag(true)
+
 	t.Run("TestUseID", func(t *testing.T) {
 		UseID(2)
 		UseID(5)

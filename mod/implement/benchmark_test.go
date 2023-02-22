@@ -7,6 +7,7 @@ import (
 
 func BenchmarkTestNewCharacterWithOpts(b *testing.B) {
 	SetDebugFlag(true)
+
 	for i := 0; i < b.N; i++ {
 		NewCharacterWithOpts(
 			WithCharacterID(1),

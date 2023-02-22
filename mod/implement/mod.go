@@ -99,18 +99,22 @@ func InitMetaData() {
 }
 
 func flushMetadata() error {
-	metadata.UpdatedAt = time.Now()
-	if oStream, err := yaml.Marshal(metadata); err != nil {
-		// 序列化metadata.yml失败，实际环境不存在这种情况
-		return fmt.Errorf("marshal metadata.yml failed: %v", err)
-	} else if file, err := os.OpenFile(metadataPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755); err != nil {
-		// 无法打开metadata.yml，实际环境不存在这种情况
-		return fmt.Errorf("cannot open metadata.yml: %v", err)
-	} else if _, err := file.Write(oStream); err != nil {
-		// 无法写入metadata.yml，实际环境不存在这种情况
-		return fmt.Errorf("cannot write metadata.yml: %v", err)
+	if !debugFlag {
+		metadata.UpdatedAt = time.Now()
+		if oStream, err := yaml.Marshal(metadata); err != nil {
+			// 序列化metadata.yml失败，实际环境不存在这种情况
+			return fmt.Errorf("marshal metadata.yml failed: %v", err)
+		} else if file, err := os.OpenFile(metadataPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755); err != nil {
+			// 无法打开metadata.yml，实际环境不存在这种情况
+			return fmt.Errorf("cannot open metadata.yml: %v", err)
+		} else if _, err := file.Write(oStream); err != nil {
+			// 无法写入metadata.yml，实际环境不存在这种情况
+			return fmt.Errorf("cannot write metadata.yml: %v", err)
+		} else {
+			// 成功写入metadata.yml
+			return nil
+		}
 	} else {
-		// 成功写入metadata.yml
 		return nil
 	}
 }

@@ -16,7 +16,7 @@ func TestNextID(t *testing.T) {
 		}
 	})
 
-	usedID = map[uint16]bool{}
+	metadata.UsedID = map[uint16]bool{}
 }
 
 func TestUseID(t *testing.T) {
@@ -33,7 +33,7 @@ func TestUseID(t *testing.T) {
 		}
 	})
 
-	usedID = map[uint16]bool{}
+	metadata.UsedID = map[uint16]bool{}
 }
 
 func TestNewCharacterWithOpts(t *testing.T) {

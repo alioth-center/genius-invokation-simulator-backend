@@ -158,3 +158,6 @@ Temporary Items
 
 # go.sum
 go.sum
+
+# metadata
+/**/metadata.yml

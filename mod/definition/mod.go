@@ -7,10 +7,12 @@ type Mod interface {
 	SummonFactory
 	CardFactory
 	RuleFactory
+	LanguagePackFactory
 	RegisterCharacter(character Character)
 	RegisterSkill(skill Skill)
 	RegisterEvent(event Event)
 	RegisterSummon(summon Summon)
 	RegisterCard(card Card)
 	RegisterRule(rule Rule)
+	AttachLanguagePack(languagePack LanguagePack)
 }

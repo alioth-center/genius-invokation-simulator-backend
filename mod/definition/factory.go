@@ -13,13 +13,17 @@ type EventFactory interface {
 }
 
 type SkillFactory interface {
-	ProduceSkill() []Skill
+	ProduceSkills() []Skill
 }
 
 type CardFactory interface {
-	ProduceCard() []Card
+	ProduceCards() []Card
 }
 
 type RuleFactory interface {
-	ProduceRule() []Rule
+	ProduceRules() []Rule
+}
+
+type LanguagePackFactory interface {
+	ProduceLanguagePacks() []LanguagePack
 }

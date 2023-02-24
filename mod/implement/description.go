@@ -265,6 +265,50 @@ func NewCardDescriptionWithOpts(options ...CardDescriptionOptions) definition.Ca
 	return impl
 }
 
+type SummonDescriptionImpl struct {
+	DescriptionImpl
+	summonName        string
+	summonDescription string
+}
+
+func (impl *SummonDescriptionImpl) SummonName() string {
+	return impl.summonName
+}
+
+func (impl *SummonDescriptionImpl) SummonDescription() string {
+	return impl.summonDescription
+}
+
+type SummonDescriptionOptions func(option *SummonDescriptionImpl)
+
+func WithSummonDescriptionID(id uint16) SummonDescriptionOptions {
+	return func(option *SummonDescriptionImpl) {
+		opt := WithDescriptionID(id)
+		opt(&option.DescriptionImpl)
+	}
+}
+
+func WithSummonDescriptionName(name string) SummonDescriptionOptions {
+	return func(option *SummonDescriptionImpl) {
+		option.summonName = name
+	}
+}
+
+func WithSummonDescriptionDescription(description string) SummonDescriptionOptions {
+	return func(option *SummonDescriptionImpl) {
+		option.summonDescription = description
+	}
+}
+
+func NewSummonDescriptionWithOpts(options ...SummonDescriptionOptions) definition.SummonDescription {
+	impl := &SummonDescriptionImpl{}
+	for _, option := range options {
+		option(impl)
+	}
+
+	return impl
+}
+
 type ModifierDescriptionImpl struct {
 	DescriptionImpl
 	modifierName        string

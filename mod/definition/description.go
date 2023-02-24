@@ -34,6 +34,12 @@ type CardDescription interface {
 	CardDescription() string
 }
 
+type SummonDescription interface {
+	Description
+	SummonName() string
+	SummonDescription() string
+}
+
 type ModifierDescription interface {
 	Description
 	ModifierName() string

@@ -75,38 +75,7 @@
 
 ## 7. 功能特性
 
-- [x] 游戏基本玩法
-    - [ ] 元素反应
-    - [x] 角色与技能
-    - [ ] 圣遗物与武器
-    - [ ] 场景和伙伴
-    - [ ] 召唤物
-    - [x] 卡牌与元素转化
-- [ ] 游戏拓展玩法
-    - [x] 多人游戏(玩家`N>=2`，队伍`N>=2`)
-    - [ ] 创建对局
-    - [ ] 匹配对局
-    - [ ] 游戏内通信
-    - [ ] 观战模式
-    - [ ] 比赛模式
-    - [ ] 作战记录
-- [x] 自定义Mod支持
-    - [x] Go/Lua支持
-    - [x] 自定义角色与卡牌
-    - [x] 自定义规则
-- [x] 多种通信协议连接
-    - [x] websocket接口
-    - [x] http/https接口
-    - [ ] udp/kcp接口
-    - [ ] rpc接口
-- [ ] 分布式支持
-    - [ ] 自动化部署
-    - [ ] 服务注册与服务发现
-    - [ ] 服务端负载均衡
-- [ ] 管理功能
-    - [ ] 公告与通知
-    - [ ] IP追踪/封禁
-    - [ ] QPS/TPS限制器
+转到我们的[文档](https://sunist-c.github.io/genius-invokation-simulator-backend/)查看最新的功能特性
 
 ## 8. 开源许可
 
@@ -116,4 +85,4 @@
 
 感谢 [JetBrains](https://www.jetbrains.com) 为本项目提供的 [Open Source development license(s)](https://www.jetbrains.com/community/opensource/#support)
 
-<img width="50%" src="https://resources.jetbrains.com/storage/products/company/brand/logos/GoLand.png" alt="GoLand logo."/>
+<img width="75px" src="https://resources.jetbrains.com.cn/storage/products/company/brand/logos/GoLand_icon.svg" alt="GoLand logo."/><img width="50px" src="https://resources.jetbrains.com.cn/storage/products/company/brand/logos/IntelliJ_IDEA_icon.svg" alt="IntelliJ_IDEA logo."/><img width="50px" src="https://resources.jetbrains.com.cn/storage/products/company/brand/logos/WebStorm_icon.svg" alt="WebStorm logo."/><img width="50px" src="https://resources.jetbrains.com.cn/storage/products/company/brand/logos/PyCharm_icon.svg" alt="PyCharm logo."/>

@@ -91,25 +91,24 @@ func TestRunCardImplementsTestingFunction(t *testing.T) {
 type victorCalculator struct{}
 
 func (impl victorCalculator) CalculateVictors(players []model.Player) (has bool, victors []model.Player) {
-	return
+	return has, victors
 }
 
 type reactionCalculator struct{}
 
 func (impl reactionCalculator) ReactionCalculate(types []enum.ElementType) (reaction enum.Reaction, elementRemains []enum.ElementType) {
-	return
+	return reaction, elementRemains
 }
 
 func (impl reactionCalculator) DamageCalculate(reaction enum.Reaction, targetCharacter model.Character, ctx *context.DamageContext) {
-	return
 }
 
 func (impl reactionCalculator) EffectCalculate(reaction enum.Reaction, targetPlayer model.Player) (ctx *context.CallbackContext) {
-	return
+	return ctx
 }
 
 func (impl reactionCalculator) Attach(originalElements []enum.ElementType, newElement enum.ElementType) (resultElements []enum.ElementType) {
-	return
+	return resultElements
 }
 
 func (impl reactionCalculator) Relative(reaction enum.Reaction, relativeElement enum.ElementType) bool {

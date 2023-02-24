@@ -5,6 +5,29 @@ import (
 	"github.com/sunist-c/genius-invokation-simulator-backend/mod/definition"
 )
 
+func LanguageEnumToString(language enum.Language) string {
+	switch language {
+	case enum.ChineseSimplified:
+		return "ChineseSimplified"
+	case enum.ChineseTraditional:
+		return "ChineseTraditional"
+	case enum.English:
+		return "English"
+	case enum.French:
+		return "French"
+	case enum.German:
+		return "German"
+	case enum.Japanese:
+		return "Japanese"
+	case enum.Korean:
+		return "Korean"
+	case enum.Russian:
+		return "Russian"
+	default:
+		return "Unknown"
+	}
+}
+
 type LanguagePackImpl struct {
 	language             enum.Language
 	modDescription       definition.ModDescription
@@ -12,6 +35,7 @@ type LanguagePackImpl struct {
 	skillDescription     map[uint64]definition.SkillDescription
 	eventDescription     map[uint64]definition.EventDescription
 	cardDescription      map[uint64]definition.CardDescription
+	summonDescription    map[uint64]definition.SummonDescription
 	modifierDescription  map[uint64]definition.ModifierDescription
 }
 
@@ -56,6 +80,15 @@ func (impl *LanguagePackImpl) GetCardDescription(longID uint64) (has bool, descr
 	}
 
 	desc, exist := impl.cardDescription[longID]
+	return exist, desc
+}
+
+func (impl *LanguagePackImpl) GetSummonDescription(longID uint64) (has bool, description definition.SummonDescription) {
+	if impl.summonDescription == nil {
+		impl.summonDescription = map[uint64]definition.SummonDescription{}
+	}
+
+	desc, exist := impl.summonDescription[longID]
 	return exist, desc
 }
 

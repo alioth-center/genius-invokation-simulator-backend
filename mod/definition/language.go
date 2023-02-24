@@ -9,6 +9,7 @@ type LanguagePack interface {
 	GetSkillDescription(longID uint64) (has bool, description SkillDescription)
 	GetEventDescription(longID uint64) (has bool, description EventDescription)
 	GetCardDescription(longID uint64) (has bool, description CardDescription)
+	GetSummonDescription(longID uint64) (has bool, description SummonDescription)
 	GetModifierDescription(longID uint64) (has bool, description ModifierDescription)
 	AddCharacterDescription(description CharacterDescription)
 	AddSkillDescription(description SkillDescription)

@@ -29,6 +29,32 @@ func TestCheckRepeatEntityIDTestingFunction(t *testing.T) {
 	t.Run("TestCheckRepeatEntityID", CheckRepeatEntityIDTestingFunction(mod))
 }
 
+func TestCheckDescriptionsTestingFunction(t *testing.T) {
+	languageEnglish := implement.NewLanguagePackWithOpts(
+		implement.WithLanguagePackLanguage(enum.English),
+	)
+	languageChinese := implement.NewLanguagePackWithOpts(
+		implement.WithLanguagePackLanguage(enum.ChineseSimplified),
+	)
+
+	keqingDescription := implement.NewCharacterDescriptionWithOpts(
+		// 注释掉Options测试结果则为fatal
+		implement.WithCharacterDescriptionID(1),
+		implement.WithCharacterDescriptionName("刻晴"),
+		implement.WithCharacterDescriptionDescription(`璃月七星之一，玉衡星。对「帝君一言而决的璃月」颇有微词——但实际上，神挺欣赏她这样的人。`),
+		implement.WithCharacterDescriptionStory(`岩王帝君为璃月港带来繁荣昌盛，他的治世威名化作演义传记为人津津乐道。然而，身为离神最近的人之一，刻晴似乎是最缺乏敬畏心的那个。`),
+		implement.WithCharacterDescriptionTitle("玉衡星"),
+	)
+	languageChinese.AddCharacterDescription(keqingDescription)
+
+	mod := implement.NewMod()
+	mod.RegisterCharacter(implement.NewCharacterWithOpts(implement.WithCharacterID(1)))
+	mod.AttachLanguagePack(languageEnglish)
+	mod.AttachLanguagePack(languageChinese)
+
+	t.Run("TestCheckDescriptions", CheckDescriptionsTestingFunction(mod))
+}
+
 func TestRunCharacterImplementsTestingFunction(t *testing.T) {
 	mod := implement.NewMod()
 

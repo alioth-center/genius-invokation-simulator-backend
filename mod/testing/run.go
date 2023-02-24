@@ -97,7 +97,7 @@ func RunSkillImplementsTestingFunction(mod definition.Mod) func(t *testing.T) {
 	}
 
 	return func(t *testing.T) {
-		skills := mod.ProduceSkill()
+		skills := mod.ProduceSkills()
 		tests := make([]testCase, len(skills))
 		for i, skill := range skills {
 			tests[i] = testCase{
@@ -197,7 +197,7 @@ func RunCardImplementsTestingFunction(mod definition.Mod) func(t *testing.T) {
 	}
 
 	return func(t *testing.T) {
-		cards := mod.ProduceCard()
+		cards := mod.ProduceCards()
 		tests := make([]testCase, len(cards))
 		for i, card := range cards {
 			tests[i] = testCase{
@@ -254,7 +254,7 @@ func RunRuleImplementsTestingFunction(mod definition.Mod) func(t *testing.T) {
 	}
 
 	return func(t *testing.T) {
-		rules := mod.ProduceRule()
+		rules := mod.ProduceRules()
 		tests := make([]testCase, len(rules))
 		for i, rule := range rules {
 			tests[i] = testCase{

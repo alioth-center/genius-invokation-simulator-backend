@@ -2,6 +2,7 @@ package implement
 
 import (
 	"fmt"
+	"github.com/sunist-c/genius-invokation-simulator-backend/mod/definition"
 	"github.com/sunist-c/genius-invokation-simulator-backend/util"
 	"gopkg.in/yaml.v2"
 	"os"
@@ -186,4 +187,9 @@ func UseID(want uint16) (success bool, result uint16) {
 		// 分配失败，ID溢出，报panic
 		panic("entity id overflow")
 	}
+}
+
+func RegisterMod(mod definition.Mod) (success bool) {
+	// todo: implement me
+	panic("not implemented yet")
 }

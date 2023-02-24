@@ -18,7 +18,7 @@ func (impl *ModImpl) ProduceCharacters() []definition.Character {
 		impl.characters = map[uint64]definition.Character{}
 	}
 
-	result := make([]definition.Character, len(impl.characters), 0)
+	result := make([]definition.Character, 0, len(impl.characters))
 	for _, character := range impl.characters {
 		result = append(result, character)
 	}
@@ -31,7 +31,7 @@ func (impl *ModImpl) ProduceSkill() []definition.Skill {
 		impl.skills = map[uint64]definition.Skill{}
 	}
 
-	result := make([]definition.Skill, len(impl.skills), 0)
+	result := make([]definition.Skill, 0, len(impl.skills))
 	for _, skill := range impl.skills {
 		result = append(result, skill)
 	}
@@ -44,7 +44,7 @@ func (impl *ModImpl) ProduceEvents() []definition.Event {
 		impl.events = map[uint64]definition.Event{}
 	}
 
-	result := make([]definition.Event, len(impl.events), 0)
+	result := make([]definition.Event, 0, len(impl.events))
 	for _, event := range impl.events {
 		result = append(result, event)
 	}
@@ -57,7 +57,7 @@ func (impl *ModImpl) ProduceSummons() []definition.Summon {
 		impl.summons = map[uint64]definition.Summon{}
 	}
 
-	result := make([]definition.Summon, len(impl.summons), 0)
+	result := make([]definition.Summon, 0, len(impl.summons))
 	for _, summon := range impl.summons {
 		result = append(result, summon)
 	}
@@ -70,7 +70,7 @@ func (impl *ModImpl) ProduceCard() []definition.Card {
 		impl.cards = map[uint64]definition.Card{}
 	}
 
-	result := make([]definition.Card, len(impl.cards), 0)
+	result := make([]definition.Card, 0, len(impl.cards))
 	for _, card := range impl.cards {
 		result = append(result, card)
 	}
@@ -83,7 +83,7 @@ func (impl *ModImpl) ProduceRule() []definition.Rule {
 		impl.rules = map[uint64]definition.Rule{}
 	}
 
-	result := make([]definition.Rule, len(impl.rules), 0)
+	result := make([]definition.Rule, 0, len(impl.rules))
 	for _, rule := range impl.rules {
 		result = append(result, rule)
 	}
@@ -124,4 +124,9 @@ func NewMod() definition.Mod {
 		cards:      map[uint64]definition.Card{},
 		rules:      map[uint64]definition.Rule{},
 	}
+}
+
+func RegisterMod(mod definition.Mod) (success bool) {
+	// todo: implement me
+	panic("not implemented yet")
 }

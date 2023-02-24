@@ -1,6 +1,7 @@
 package implement
 
 import (
+	"github.com/sunist-c/genius-invokation-simulator-backend/enum"
 	"github.com/sunist-c/genius-invokation-simulator-backend/mod/definition"
 )
 
@@ -11,6 +12,7 @@ type ModImpl struct {
 	summons    map[uint64]definition.Summon
 	cards      map[uint64]definition.Card
 	rules      map[uint64]definition.Rule
+	languages  map[enum.Language]definition.LanguagePack
 }
 
 func (impl *ModImpl) ProduceCharacters() []definition.Character {
@@ -26,7 +28,7 @@ func (impl *ModImpl) ProduceCharacters() []definition.Character {
 	return result
 }
 
-func (impl *ModImpl) ProduceSkill() []definition.Skill {
+func (impl *ModImpl) ProduceSkills() []definition.Skill {
 	if impl.skills == nil {
 		impl.skills = map[uint64]definition.Skill{}
 	}
@@ -65,7 +67,7 @@ func (impl *ModImpl) ProduceSummons() []definition.Summon {
 	return result
 }
 
-func (impl *ModImpl) ProduceCard() []definition.Card {
+func (impl *ModImpl) ProduceCards() []definition.Card {
 	if impl.cards == nil {
 		impl.cards = map[uint64]definition.Card{}
 	}
@@ -78,7 +80,7 @@ func (impl *ModImpl) ProduceCard() []definition.Card {
 	return result
 }
 
-func (impl *ModImpl) ProduceRule() []definition.Rule {
+func (impl *ModImpl) ProduceRules() []definition.Rule {
 	if impl.rules == nil {
 		impl.rules = map[uint64]definition.Rule{}
 	}
@@ -91,19 +93,48 @@ func (impl *ModImpl) ProduceRule() []definition.Rule {
 	return result
 }
 
+func (impl *ModImpl) ProduceLanguagePacks() []definition.LanguagePack {
+	if impl.languages == nil {
+		impl.languages = map[enum.Language]definition.LanguagePack{}
+	}
+
+	result := make([]definition.LanguagePack, 0, len(impl.languages))
+	for _, languagePack := range impl.languages {
+		result = append(result, languagePack)
+	}
+
+	return result
+}
+
 func (impl *ModImpl) RegisterCharacter(character definition.Character) {
+	if impl.characters == nil {
+		impl.characters = map[uint64]definition.Character{}
+	}
+
 	impl.characters[character.TypeID()] = character
 }
 
 func (impl *ModImpl) RegisterSkill(skill definition.Skill) {
+	if impl.skills == nil {
+		impl.skills = map[uint64]definition.Skill{}
+	}
+
 	impl.skills[skill.TypeID()] = skill
 }
 
 func (impl *ModImpl) RegisterEvent(event definition.Event) {
+	if impl.events == nil {
+		impl.events = map[uint64]definition.Event{}
+	}
+
 	impl.events[event.TypeID()] = event
 }
 
 func (impl *ModImpl) RegisterSummon(summon definition.Summon) {
+	if impl.summons == nil {
+		impl.summons = map[uint64]definition.Summon{}
+	}
+
 	impl.summons[summon.TypeID()] = summon
 }
 
@@ -115,6 +146,10 @@ func (impl *ModImpl) RegisterRule(rule definition.Rule) {
 	impl.rules[rule.TypeID()] = rule
 }
 
+func (impl *ModImpl) AttachLanguagePack(languagePack definition.LanguagePack) {
+	impl.languages[languagePack.Language()] = languagePack
+}
+
 func NewMod() definition.Mod {
 	return &ModImpl{
 		characters: map[uint64]definition.Character{},
@@ -123,10 +158,6 @@ func NewMod() definition.Mod {
 		summons:    map[uint64]definition.Summon{},
 		cards:      map[uint64]definition.Card{},
 		rules:      map[uint64]definition.Rule{},
+		languages:  map[enum.Language]definition.LanguagePack{},
 	}
-}
-
-func RegisterMod(mod definition.Mod) (success bool) {
-	// todo: implement me
-	panic("not implemented yet")
 }

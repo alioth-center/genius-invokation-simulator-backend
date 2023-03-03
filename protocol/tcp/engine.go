@@ -4,16 +4,17 @@ import(
 	"fmt"
 	"net"
 	"./tcpinterface"
-	"./config"
+	"github.com/gin-gonic/gin"
 )
 
-func (c TcpConnection)Upgrade(ctx *gin.Context) net.Conn{
-	listen,err := net.Listen("tcp",TcpConfig.GetConfig().ip_addr+":"+TcpConfig.GetConfig().port)
+func (c TcpConnection)Upgrade(ctx *gin.Context,port string) net.Conn{
+	ip_addr:=ctx.Request.Header.Get("X-Forwarded-For") 
+	listen,err := net.Listen("tcp",ip_addr+":"+port)
 	if err != nil {
 		fmt.Println("start error,err:",err)
 		return
 	}
-	defer listene.Close()
+	defer listen.Close()
     
 	for {
 		conn,err := listen.Accept()
@@ -34,7 +35,7 @@ func (c TcpConnection)Read(conn net.Conn) chan []byte{
 		return
 	}
 	ch := make(chan []byte)
-	ch<- buf[:n]
+	ch <- buf[:n]
 	return ch
 }
 

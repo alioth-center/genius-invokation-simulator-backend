@@ -3,7 +3,7 @@ package tcpinterface
 import "net"
 
 type TcpConnection interface{
-	Upgrade()
+	Upgrade(ctx *gin.Context) net.Conn
 
 	Read() chan []byte
 

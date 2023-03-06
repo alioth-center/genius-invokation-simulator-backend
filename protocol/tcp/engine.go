@@ -3,7 +3,7 @@ package tcp
 import(
 	"fmt"
 	"net"
-	"./tcpinterface"
+	"github.com/SWUdaishipeng/genius-invokation-simulator-backend/tree/master/protocol/tcp/tcpinterface"
 	"github.com/gin-gonic/gin"
 )
 

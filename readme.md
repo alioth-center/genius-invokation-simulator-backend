@@ -1,5 +1,7 @@
 # Genius Invokation Simulator Backend
 
+> 5.29: 项目还在更新，稍安勿躁，目前在研究老米的新版本
+
 ## 1. 综述
 
 ### 1.1 概况
